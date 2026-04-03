@@ -8,11 +8,15 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 global $wpdb;
 
-// Drop the migration queue table.
+// -------------------------------------------------------------------------
+// 1. Drop the migration queue table.
+// -------------------------------------------------------------------------
 $table = $wpdb->prefix . 'r2_offload_migration_queue';
 $wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
 
-// Delete all plugin options.
+// -------------------------------------------------------------------------
+// 2. Delete all plugin wp_options rows.
+// -------------------------------------------------------------------------
 $option_keys = [
     'r2_offload_account_id',
     'r2_offload_access_key_id',
@@ -30,43 +34,64 @@ $option_keys = [
     'r2_offload_multipart_concurrency',
     'r2_offload_migration_paused',
     'r2_offload_db_version',
-];
-
-foreach ( $option_keys as $key ) {
-    delete_option( $key );
-}
-
-// Delete daily stats options.
-$wpdb->query(
-    "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'r2_offload_stats_%'"
-);
-
-// Delete all attachment postmeta.
-$wpdb->query(
-    "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_r2_offload_%'"
-);
-
-// Delete bulk-restore and bulk-local-delete transient options.
-$extra_options = [
+    // Bulk restore queue.
     'r2_offload_restore_queue',
     'r2_offload_restore_total',
     'r2_offload_restore_done',
     'r2_offload_restore_failed',
     'r2_offload_restore_paused',
+    // Bulk local-delete queue.
     'r2_offload_local_del_queue',
     'r2_offload_local_del_total',
     'r2_offload_local_del_done',
     'r2_offload_local_del_failed',
     'r2_offload_local_del_paused',
 ];
-foreach ( $extra_options as $opt ) {
-    delete_option( $opt );
+
+foreach ( $option_keys as $key ) {
+    delete_option( $key );
 }
 
-// Clear any scheduled cron events.
+// Catch any dynamic options not in the list above (e.g. daily stats).
+$wpdb->query(
+    "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'r2_offload_%'"
+);
+
+// -------------------------------------------------------------------------
+// 3. Delete all attachment postmeta written by the plugin.
+// -------------------------------------------------------------------------
+$wpdb->query(
+    "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_r2_offload_%'"
+);
+
+// -------------------------------------------------------------------------
+// 4. Clear scheduled cron events and transient locks.
+// -------------------------------------------------------------------------
 wp_clear_scheduled_hook( 'r2_offload_process_batch' );
 wp_clear_scheduled_hook( 'r2_offload_process_restore_batch' );
 wp_clear_scheduled_hook( 'r2_offload_process_local_delete_batch' );
 delete_transient( 'r2_offload_batch_lock' );
 delete_transient( 'r2_offload_restore_lock' );
 delete_transient( 'r2_offload_local_del_lock' );
+
+// -------------------------------------------------------------------------
+// 5. Delete local log files written to {uploads}/r2-offload-logs/.
+// -------------------------------------------------------------------------
+$upload_dir = wp_upload_dir();
+$log_dir    = trailingslashit( $upload_dir['basedir'] ) . 'r2-offload-logs';
+
+if ( is_dir( $log_dir ) ) {
+    // Delete every file inside the directory first, then remove the directory itself.
+    $files = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator( $log_dir, RecursiveDirectoryIterator::SKIP_DOTS ),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ( $files as $file ) {
+        if ( $file->isDir() ) {
+            rmdir( $file->getRealPath() );
+        } else {
+            wp_delete_file( $file->getRealPath() );
+        }
+    }
+    rmdir( $log_dir );
+}

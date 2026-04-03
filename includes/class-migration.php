@@ -198,22 +198,18 @@ class Migration {
             wp_send_json_error( [ 'message' => __( 'Account ID must contain only hex characters (0-9, a-f).', 'cloudflare-r2-offload' ) ] );
         }
 
-        // Secret key: keep existing if placeholder or empty; otherwise always encrypt the
-        // raw value directly — never call sanitize_secret_key() here as that path can
-        // double-encrypt if the stored value happens to match. We encrypt once, period.
-        if ( $secret_raw === '' || $secret_raw === '__R2_SECRET_UNCHANGED__' ) {
-            $secret_to_store = get_option( 'r2_offload_secret_access_key', '' );
-        } else {
-            // Always treat the submitted value as a plaintext key and encrypt it fresh.
-            // delete_option first to clear any double-encrypted value before storing.
-            delete_option( 'r2_offload_secret_access_key' );
-            $secret_to_store = $this->settings->encrypt_for_ajax( sanitize_text_field( $secret_raw ) );
-        }
+        // Always wipe the stored secret before saving so we never accumulate
+        // encryption layers regardless of what was there before.
+        delete_option( 'r2_offload_secret_access_key' );
 
-        update_option( 'r2_offload_account_id',         $account_id );
-        update_option( 'r2_offload_access_key_id',      $key_id );
-        update_option( 'r2_offload_secret_access_key',  $secret_to_store );
-        update_option( 'r2_offload_bucket',             $bucket );
+        // sanitize_secret_key is the single place that encrypts. Pass it the raw
+        // value (or the placeholder/empty to keep nothing). It encrypts exactly once.
+        $secret_to_store = $this->settings->sanitize_secret_key( $secret_raw );
+
+        update_option( 'r2_offload_account_id',        $account_id );
+        update_option( 'r2_offload_access_key_id',     $key_id );
+        update_option( 'r2_offload_secret_access_key', $secret_to_store );
+        update_option( 'r2_offload_bucket',            $bucket );
 
         // Flush the settings cache so test_connection reads the new values immediately.
         $this->settings->flush_cache();

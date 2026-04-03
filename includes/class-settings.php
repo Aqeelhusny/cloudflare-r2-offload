@@ -228,13 +228,6 @@ class Settings {
     // Encryption helpers (AES-256-CBC, key = wp_salt)
     // -------------------------------------------------------------------------
 
-    /**
-     * Public wrapper for use by AJAX handlers that need to encrypt a raw key directly.
-     */
-    public function encrypt_for_ajax( string $plaintext ): string {
-        return $this->encrypt( $plaintext );
-    }
-
     private function encrypt( string $plaintext ): string {
         $key    = substr( hash( 'sha256', wp_salt( 'auth' ), true ), 0, 32 );
         $iv     = openssl_random_pseudo_bytes( 16 );

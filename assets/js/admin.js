@@ -305,6 +305,38 @@
     });
 
     // =========================================================================
+    // Save credentials (AJAX — submits only the R2 Connection fields)
+    // =========================================================================
+
+    $('#r2-save-credentials').on('click', function () {
+        var $btn    = $(this);
+        var $result = $('#r2-connection-result');
+        var origText = $btn.text();
+
+        $btn.prop('disabled', true).text(R2Offload.i18n.saving || 'Saving…');
+        $result.text('').removeClass('r2-ok r2-fail');
+
+        $.post(R2Offload.ajaxUrl, {
+            action:                      'r2_offload_save_credentials',
+            nonce:                       R2Offload.nonce,
+            r2_offload_account_id:       $('#r2_account_id').val(),
+            r2_offload_access_key_id:    $('#r2_access_key_id').val(),
+            r2_offload_secret_access_key: $('#r2_secret_key').val(),
+            r2_offload_bucket:           $('#r2_bucket').val()
+        }, function (res) {
+            $btn.prop('disabled', false).text(origText);
+            if (res.success) {
+                $result.text('✓ ' + (res.data && res.data.message || 'Credentials saved.')).addClass('r2-ok');
+            } else {
+                $result.text('✗ ' + (res.data && res.data.message || 'Save failed.')).addClass('r2-fail');
+            }
+        }).fail(function () {
+            $btn.prop('disabled', false).text(origText);
+            $result.text('Request failed.').addClass('r2-fail');
+        });
+    });
+
+    // =========================================================================
     // Connection test
     // =========================================================================
 

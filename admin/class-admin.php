@@ -140,6 +140,8 @@ class Admin {
             'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'r2_offload_nonce' ),
             'i18n'     => [
+                // Credentials.
+                'saving'                => __( 'Saving…', 'cloudflare-r2-offload' ),
                 // Migration.
                 'starting'              => __( 'Starting migration…', 'cloudflare-r2-offload' ),
                 'pausing'               => __( 'Pausing…', 'cloudflare-r2-offload' ),

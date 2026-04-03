@@ -21,6 +21,7 @@ class Migration {
 
     public function register_hooks(): void {
         $actions = [
+            'r2_offload_save_credentials',
             'r2_offload_start_migration',
             'r2_offload_pause_migration',
             'r2_offload_resume_migration',
@@ -183,6 +184,39 @@ class Migration {
                 (int) $updated
             ),
         ] );
+    }
+
+    private function ajax_save_credentials(): void {
+        $account_id = isset( $_POST['r2_offload_account_id'] )        ? sanitize_text_field( wp_unslash( $_POST['r2_offload_account_id'] ) )        : '';
+        $key_id     = isset( $_POST['r2_offload_access_key_id'] )      ? sanitize_text_field( wp_unslash( $_POST['r2_offload_access_key_id'] ) )      : '';
+        $secret_raw = isset( $_POST['r2_offload_secret_access_key'] )  ? trim( wp_unslash( (string) $_POST['r2_offload_secret_access_key'] ) )        : '';
+        $bucket     = isset( $_POST['r2_offload_bucket'] )             ? sanitize_text_field( wp_unslash( $_POST['r2_offload_bucket'] ) )             : '';
+
+        // Account ID: strip whitespace, enforce hex.
+        $account_id = strtolower( trim( $account_id ) );
+        if ( $account_id && ! preg_match( '/^[a-f0-9]+$/i', $account_id ) ) {
+            wp_send_json_error( [ 'message' => __( 'Account ID must contain only hex characters (0-9, a-f).', 'cloudflare-r2-offload' ) ] );
+        }
+
+        // Secret key: keep existing if placeholder or empty; otherwise encrypt fresh value.
+        if ( $secret_raw === '' || $secret_raw === '__R2_SECRET_UNCHANGED__' ) {
+            $secret_to_store = get_option( 'r2_offload_secret_access_key', '' );
+        } else {
+            $existing = get_option( 'r2_offload_secret_access_key', '' );
+            $secret_to_store = ( $existing && $secret_raw === $existing )
+                ? $existing
+                : $this->settings->sanitize_secret_key( $secret_raw );
+        }
+
+        update_option( 'r2_offload_account_id',         $account_id );
+        update_option( 'r2_offload_access_key_id',      $key_id );
+        update_option( 'r2_offload_secret_access_key',  $secret_to_store );
+        update_option( 'r2_offload_bucket',             $bucket );
+
+        // Flush the settings cache so test_connection reads the new values immediately.
+        $this->settings->flush_cache();
+
+        wp_send_json_success( [ 'message' => __( 'Credentials saved.', 'cloudflare-r2-offload' ) ] );
     }
 
     private function ajax_test_connection(): void {

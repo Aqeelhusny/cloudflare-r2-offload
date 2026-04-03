@@ -64,8 +64,12 @@ class SettingsPage {
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e( 'Test Connection', 'cloudflare-r2-offload' ); ?></th>
+                        <th scope="row"><?php esc_html_e( 'Actions', 'cloudflare-r2-offload' ); ?></th>
                         <td>
+                            <button type="button" id="r2-save-credentials" class="button button-primary">
+                                <?php esc_html_e( 'Save Credentials', 'cloudflare-r2-offload' ); ?>
+                            </button>
+                            &nbsp;
                             <button type="button" id="r2-test-connection" class="button button-secondary">
                                 <?php esc_html_e( 'Test Connection', 'cloudflare-r2-offload' ); ?>
                             </button>

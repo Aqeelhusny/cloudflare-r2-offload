@@ -164,20 +164,14 @@ class Settings {
         // Strip leading/trailing whitespace — frequent with copy-paste.
         $value = trim( (string) $value );
 
-        // Empty or the placeholder string → keep whatever is already stored.
-        // We use a plain ASCII placeholder in the form (see SettingsPage) so this
-        // comparison is always byte-safe regardless of browser encoding.
+        // Empty or the placeholder → keep whatever is already stored.
         if ( $value === '' || $value === '__R2_SECRET_UNCHANGED__' ) {
             return get_option( 'r2_offload_secret_access_key', '' );
         }
 
-        // If the stored value is already our base64-encoded ciphertext AND the submitted
-        // value matches it exactly, the user somehow submitted the raw ciphertext — keep it.
-        $existing = get_option( 'r2_offload_secret_access_key', '' );
-        if ( $existing && $value === $existing ) {
-            return $existing;
-        }
-
+        // At this point the user has typed/pasted a new raw key — always encrypt it fresh.
+        // We intentionally do NOT check against the stored ciphertext here; that check was
+        // the source of double-encryption when the comparison failed on minor differences.
         return $this->encrypt( sanitize_text_field( $value ) );
     }
 
@@ -233,6 +227,13 @@ class Settings {
     // -------------------------------------------------------------------------
     // Encryption helpers (AES-256-CBC, key = wp_salt)
     // -------------------------------------------------------------------------
+
+    /**
+     * Public wrapper for use by AJAX handlers that need to encrypt a raw key directly.
+     */
+    public function encrypt_for_ajax( string $plaintext ): string {
+        return $this->encrypt( $plaintext );
+    }
 
     private function encrypt( string $plaintext ): string {
         $key    = substr( hash( 'sha256', wp_salt( 'auth' ), true ), 0, 32 );

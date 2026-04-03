@@ -198,14 +198,16 @@ class Migration {
             wp_send_json_error( [ 'message' => __( 'Account ID must contain only hex characters (0-9, a-f).', 'cloudflare-r2-offload' ) ] );
         }
 
-        // Secret key: keep existing if placeholder or empty; otherwise encrypt fresh value.
+        // Secret key: keep existing if placeholder or empty; otherwise always encrypt the
+        // raw value directly — never call sanitize_secret_key() here as that path can
+        // double-encrypt if the stored value happens to match. We encrypt once, period.
         if ( $secret_raw === '' || $secret_raw === '__R2_SECRET_UNCHANGED__' ) {
             $secret_to_store = get_option( 'r2_offload_secret_access_key', '' );
         } else {
-            $existing = get_option( 'r2_offload_secret_access_key', '' );
-            $secret_to_store = ( $existing && $secret_raw === $existing )
-                ? $existing
-                : $this->settings->sanitize_secret_key( $secret_raw );
+            // Always treat the submitted value as a plaintext key and encrypt it fresh.
+            // delete_option first to clear any double-encrypted value before storing.
+            delete_option( 'r2_offload_secret_access_key' );
+            $secret_to_store = $this->settings->encrypt_for_ajax( sanitize_text_field( $secret_raw ) );
         }
 
         update_option( 'r2_offload_account_id',         $account_id );

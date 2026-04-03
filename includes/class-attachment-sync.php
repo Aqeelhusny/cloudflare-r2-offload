@@ -140,6 +140,133 @@ class AttachmentSync {
     }
 
     /**
+     * Restore all files for a synced attachment from R2 back to the local server.
+     * Downloads the original + every tracked size into the correct wp-uploads path.
+     * Post meta is updated: _r2_offload_local_deleted is cleared on success.
+     *
+     * @param int $attachment_id
+     * @return array{ restored: int, failed: int, skipped: int }
+     */
+    public function restore_from_r2( int $attachment_id ): array {
+        $result = [ 'restored' => 0, 'failed' => 0, 'skipped' => 0 ];
+
+        if ( ! $this->settings->is_configured() ) {
+            $result['skipped']++;
+            return $result;
+        }
+
+        $keys_json = get_post_meta( $attachment_id, '_r2_offload_keys', true );
+        if ( ! $keys_json ) {
+            $this->logger->warning( 'Restore skipped: no R2 keys on record.', [ 'attachment_id' => $attachment_id ] );
+            $result['skipped']++;
+            return $result;
+        }
+
+        $r2_keys = json_decode( $keys_json, true );
+        if ( ! is_array( $r2_keys ) || empty( $r2_keys ) ) {
+            $result['skipped']++;
+            return $result;
+        }
+
+        $upload_dir  = wp_upload_dir();
+        $base_dir    = trailingslashit( $upload_dir['basedir'] );
+        $path_prefix = $this->settings->get_path_prefix();
+        // Build prefix with trailing slash for stripping.
+        $prefix_strip = $path_prefix ? trailingslashit( $path_prefix ) : '';
+
+        foreach ( $r2_keys as $r2_key ) {
+            // Derive local path from R2 key by stripping the path prefix.
+            $relative   = $prefix_strip ? ltrim( substr( $r2_key, strlen( $prefix_strip ) ), '/' ) : ltrim( $r2_key, '/' );
+            $local_path = $base_dir . $relative;
+
+            // If the file already exists locally, skip — nothing to restore.
+            if ( file_exists( $local_path ) ) {
+                $result['skipped']++;
+                continue;
+            }
+
+            // Ensure the directory exists.
+            $dir = dirname( $local_path );
+            if ( ! is_dir( $dir ) ) {
+                wp_mkdir_p( $dir );
+            }
+
+            $ok = $this->r2->download_file( $r2_key, $local_path );
+            if ( $ok ) {
+                $result['restored']++;
+            } else {
+                $result['failed']++;
+                $this->logger->error( 'Restore: download from R2 failed.', [
+                    'attachment_id' => $attachment_id,
+                    'key'           => $r2_key,
+                    'local'         => $local_path,
+                ] );
+            }
+        }
+
+        if ( $result['failed'] === 0 && $result['restored'] > 0 ) {
+            // Clear the local-deleted flag so URLs fall back to local if CDN is removed.
+            delete_post_meta( $attachment_id, '_r2_offload_local_deleted' );
+            $this->logger->info( 'Attachment restored from R2.', [
+                'attachment_id' => $attachment_id,
+                'restored'      => $result['restored'],
+            ] );
+        }
+
+        return $result;
+    }
+
+    /**
+     * Delete all local files for a synced attachment.
+     * Sets _r2_offload_local_deleted = 1 so the status is visible in the UI.
+     * Only operates on attachments that are confirmed synced to R2.
+     *
+     * @param int $attachment_id
+     * @return array{ deleted: int, skipped: int }
+     */
+    public function delete_local_for_attachment( int $attachment_id ): array {
+        $result = [ 'deleted' => 0, 'skipped' => 0 ];
+
+        // Safety guard — never delete local files if the attachment is not confirmed synced.
+        if ( get_post_meta( $attachment_id, '_r2_offload_synced', true ) !== '1' ) {
+            $result['skipped']++;
+            return $result;
+        }
+
+        $attached = get_post_meta( $attachment_id, '_wp_attached_file', true );
+        if ( ! $attached ) {
+            $result['skipped']++;
+            return $result;
+        }
+
+        $metadata   = wp_get_attachment_metadata( $attachment_id );
+        $upload_dir = wp_upload_dir();
+        $base_dir   = trailingslashit( $upload_dir['basedir'] );
+
+        // Collect local paths the same way collect_files() does.
+        $all_files = $this->collect_files( $attached, $metadata, $base_dir, $this->settings->get_path_prefix() );
+
+        foreach ( array_keys( $all_files ) as $local_path ) {
+            if ( ! file_exists( $local_path ) ) {
+                $result['skipped']++;
+                continue;
+            }
+            wp_delete_file( $local_path );
+            $result['deleted']++;
+        }
+
+        if ( $result['deleted'] > 0 ) {
+            update_post_meta( $attachment_id, '_r2_offload_local_deleted', '1' );
+            $this->logger->info( 'Local files deleted after R2 sync.', [
+                'attachment_id' => $attachment_id,
+                'deleted'       => $result['deleted'],
+            ] );
+        }
+
+        return $result;
+    }
+
+    /**
      * Remove all R2 objects for an attachment and clean up post meta.
      */
     public function desync_attachment( int $attachment_id ): bool {
@@ -155,6 +282,7 @@ class AttachmentSync {
         delete_post_meta( $attachment_id, '_r2_offload_synced_at' );
         delete_post_meta( $attachment_id, '_r2_offload_retry_count' );
         delete_post_meta( $attachment_id, '_r2_offload_error' );
+        delete_post_meta( $attachment_id, '_r2_offload_local_deleted' );
         return true;
     }
 

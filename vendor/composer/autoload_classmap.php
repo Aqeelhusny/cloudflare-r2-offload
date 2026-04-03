@@ -1379,6 +1379,7 @@ return array(
     'R2Offload\\AttachmentSync' => $baseDir . '/includes/class-attachment-sync.php',
     'R2Offload\\BatchProcessor' => $baseDir . '/includes/class-batch-processor.php',
     'R2Offload\\ErrorLogger' => $baseDir . '/includes/class-error-logger.php',
+    'R2Offload\\MediaLibrary' => $baseDir . '/includes/class-media-library.php',
     'R2Offload\\Migration' => $baseDir . '/includes/class-migration.php',
     'R2Offload\\Plugin' => $baseDir . '/includes/class-plugin.php',
     'R2Offload\\R2Client' => $baseDir . '/includes/class-r2-client.php',

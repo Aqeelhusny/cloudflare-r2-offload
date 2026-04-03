@@ -50,6 +50,37 @@ class R2Client {
     }
 
     /**
+     * Download an R2 object and write it to a local path.
+     * Uses streaming (SaveAs) so large files do not exhaust PHP memory.
+     *
+     * @param string $r2_key     Object key in R2.
+     * @param string $local_path Absolute path to write the file to.
+     * @return bool
+     */
+    public function download_file( string $r2_key, string $local_path ): bool {
+        $client = $this->get_client();
+        if ( ! $client ) {
+            return false;
+        }
+        try {
+            $client->getObject( [
+                'Bucket' => $this->settings->get_bucket(),
+                'Key'    => $r2_key,
+                'SaveAs' => $local_path,
+            ] );
+            return true;
+        } catch ( AwsException $e ) {
+            $this->logger->error( 'R2 getObject (download) failed.', [
+                'key'     => $r2_key,
+                'local'   => $local_path,
+                'code'    => $e->getAwsErrorCode(),
+                'message' => $e->getMessage(),
+            ] );
+            return false;
+        }
+    }
+
+    /**
      * Delete a single file from R2.
      */
     public function delete_file( string $r2_key ): bool {

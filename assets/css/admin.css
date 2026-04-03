@@ -130,6 +130,28 @@
     margin: 12px 0 24px;
 }
 
+/* ---- R2 Status badges (Media Library column) ---- */
+.r2-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.75em;
+    font-weight: 700;
+    letter-spacing: .03em;
+}
+
+.r2-badge--synced { background: #00a32a; color: #fff; }
+.r2-badge--r2only { background: #0073aa; color: #fff; }
+.r2-badge--none   { background: #787c82; color: #fff; }
+.r2-badge--error  { background: #d63638; color: #fff; }
+
+/* ---- Progress bar colour variants ---- */
+.r2-progress-bar-fill--restore { background: #0073aa; }
+.r2-progress-bar-fill--delete  { background: #d63638; }
+
+/* ---- stat card variant for R2-only count ---- */
+.r2-stat--r2only { border-left: 4px solid #0073aa; }
+
 /* ---- Logs ---- */
 .r2-logs-section {
     margin-top: 32px;

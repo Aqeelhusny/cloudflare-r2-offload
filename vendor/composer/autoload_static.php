@@ -1462,6 +1462,7 @@ class ComposerStaticIniteef413ebe6c628aba7a6c84362faddfa
         'R2Offload\\AttachmentSync' => __DIR__ . '/../..' . '/includes/class-attachment-sync.php',
         'R2Offload\\BatchProcessor' => __DIR__ . '/../..' . '/includes/class-batch-processor.php',
         'R2Offload\\ErrorLogger' => __DIR__ . '/../..' . '/includes/class-error-logger.php',
+        'R2Offload\\MediaLibrary' => __DIR__ . '/../..' . '/includes/class-media-library.php',
         'R2Offload\\Migration' => __DIR__ . '/../..' . '/includes/class-migration.php',
         'R2Offload\\Plugin' => __DIR__ . '/../..' . '/includes/class-plugin.php',
         'R2Offload\\R2Client' => __DIR__ . '/../..' . '/includes/class-r2-client.php',

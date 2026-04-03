@@ -12,9 +12,13 @@ class BatchProcessor {
     private Settings       $settings;
     private ErrorLogger    $logger;
 
-    const CRON_HOOK  = 'r2_offload_process_batch';
-    const LOCK_KEY   = 'r2_offload_batch_lock';
-    const LOCK_TTL   = 300; // 5 minutes
+    const CRON_HOOK         = 'r2_offload_process_batch';
+    const RESTORE_HOOK      = 'r2_offload_process_restore_batch';
+    const LOCAL_DEL_HOOK    = 'r2_offload_process_local_delete_batch';
+    const LOCK_KEY          = 'r2_offload_batch_lock';
+    const RESTORE_LOCK_KEY  = 'r2_offload_restore_lock';
+    const LOCAL_DEL_LOCK    = 'r2_offload_local_del_lock';
+    const LOCK_TTL          = 300; // 5 minutes
 
     public function __construct( AttachmentSync $sync, Settings $settings, ErrorLogger $logger ) {
         $this->sync     = $sync;
@@ -23,7 +27,9 @@ class BatchProcessor {
     }
 
     public function register_hooks(): void {
-        add_action( self::CRON_HOOK, [ $this, 'process_batch' ] );
+        add_action( self::CRON_HOOK,      [ $this, 'process_batch' ] );
+        add_action( self::RESTORE_HOOK,   [ $this, 'process_restore_batch' ] );
+        add_action( self::LOCAL_DEL_HOOK, [ $this, 'process_local_delete_batch' ] );
     }
 
     /**
@@ -129,6 +135,120 @@ class BatchProcessor {
         } else {
             do_action( 'r2_offload_migration_complete' );
             $this->logger->info( 'Migration complete.' );
+        }
+    }
+
+    // =========================================================================
+    // Bulk Restore batch — downloads files from R2 back to the server.
+    // =========================================================================
+
+    public function process_restore_batch(): void {
+        if ( get_option( 'r2_offload_restore_paused' ) ) {
+            return;
+        }
+        if ( get_transient( self::RESTORE_LOCK_KEY ) ) {
+            return;
+        }
+        set_transient( self::RESTORE_LOCK_KEY, 1, self::LOCK_TTL );
+
+        try {
+            $this->run_restore_batch();
+        } finally {
+            delete_transient( self::RESTORE_LOCK_KEY );
+        }
+    }
+
+    private function run_restore_batch(): void {
+        $queue      = (array) get_option( 'r2_offload_restore_queue', [] );
+        $batch_size = $this->settings->get_batch_size();
+        $batch      = array_splice( $queue, 0, $batch_size );
+
+        if ( empty( $batch ) ) {
+            do_action( 'r2_offload_restore_complete' );
+            $this->logger->info( 'Bulk restore complete.' );
+            return;
+        }
+
+        // Persist the remaining queue immediately.
+        update_option( 'r2_offload_restore_queue', $queue, false );
+
+        $done   = (int) get_option( 'r2_offload_restore_done',   0 );
+        $failed = (int) get_option( 'r2_offload_restore_failed', 0 );
+
+        foreach ( $batch as $attachment_id ) {
+            if ( function_exists( 'wp_cache_flush_runtime' ) ) {
+                wp_cache_flush_runtime();
+            }
+
+            $result = $this->sync->restore_from_r2( (int) $attachment_id );
+            $done  += $result['restored'];
+            $failed += $result['failed'];
+        }
+
+        update_option( 'r2_offload_restore_done',   $done,   false );
+        update_option( 'r2_offload_restore_failed', $failed, false );
+
+        if ( ! empty( $queue ) ) {
+            wp_schedule_single_event( time() + 5, self::RESTORE_HOOK );
+        } else {
+            do_action( 'r2_offload_restore_complete' );
+            $this->logger->info( 'Bulk restore complete.', [ 'done' => $done, 'failed' => $failed ] );
+        }
+    }
+
+    // =========================================================================
+    // Bulk Local-Delete batch — removes local files for synced attachments.
+    // =========================================================================
+
+    public function process_local_delete_batch(): void {
+        if ( get_option( 'r2_offload_local_del_paused' ) ) {
+            return;
+        }
+        if ( get_transient( self::LOCAL_DEL_LOCK ) ) {
+            return;
+        }
+        set_transient( self::LOCAL_DEL_LOCK, 1, self::LOCK_TTL );
+
+        try {
+            $this->run_local_delete_batch();
+        } finally {
+            delete_transient( self::LOCAL_DEL_LOCK );
+        }
+    }
+
+    private function run_local_delete_batch(): void {
+        $queue      = (array) get_option( 'r2_offload_local_del_queue', [] );
+        $batch_size = $this->settings->get_batch_size();
+        $batch      = array_splice( $queue, 0, $batch_size );
+
+        if ( empty( $batch ) ) {
+            do_action( 'r2_offload_local_delete_complete' );
+            $this->logger->info( 'Bulk local-delete complete.' );
+            return;
+        }
+
+        update_option( 'r2_offload_local_del_queue', $queue, false );
+
+        $done   = (int) get_option( 'r2_offload_local_del_done',   0 );
+        $failed = (int) get_option( 'r2_offload_local_del_failed', 0 );
+
+        foreach ( $batch as $attachment_id ) {
+            if ( function_exists( 'wp_cache_flush_runtime' ) ) {
+                wp_cache_flush_runtime();
+            }
+
+            $result = $this->sync->delete_local_for_attachment( (int) $attachment_id );
+            $done  += $result['deleted'];
+        }
+
+        update_option( 'r2_offload_local_del_done',   $done,   false );
+        update_option( 'r2_offload_local_del_failed', $failed, false );
+
+        if ( ! empty( $queue ) ) {
+            wp_schedule_single_event( time() + 5, self::LOCAL_DEL_HOOK );
+        } else {
+            do_action( 'r2_offload_local_delete_complete' );
+            $this->logger->info( 'Bulk local-delete complete.', [ 'done' => $done ] );
         }
     }
 }

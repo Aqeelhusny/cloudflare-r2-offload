@@ -140,15 +140,35 @@ class Admin {
             'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'r2_offload_nonce' ),
             'i18n'     => [
-                'starting'      => __( 'Starting migration…', 'cloudflare-r2-offload' ),
-                'pausing'       => __( 'Pausing…', 'cloudflare-r2-offload' ),
-                'resuming'      => __( 'Resuming…', 'cloudflare-r2-offload' ),
-                'cancelling'    => __( 'Cancelling…', 'cloudflare-r2-offload' ),
-                'complete'      => __( 'Migration complete!', 'cloudflare-r2-offload' ),
-                'confirmCancel' => __( 'Cancel the migration? Progress will be lost.', 'cloudflare-r2-offload' ),
-                'confirmDelete' => __( 'Delete all logs? This cannot be undone.', 'cloudflare-r2-offload' ),
-                'confirmDeleteFile' => __( 'Delete this file from R2? This cannot be undone.', 'cloudflare-r2-offload' ),
-                'copied'        => __( 'URL copied!', 'cloudflare-r2-offload' ),
+                // Migration.
+                'starting'              => __( 'Starting migration…', 'cloudflare-r2-offload' ),
+                'pausing'               => __( 'Pausing…', 'cloudflare-r2-offload' ),
+                'resuming'              => __( 'Resuming…', 'cloudflare-r2-offload' ),
+                'cancelling'            => __( 'Cancelling…', 'cloudflare-r2-offload' ),
+                'complete'              => __( 'Migration complete!', 'cloudflare-r2-offload' ),
+                'confirmCancel'         => __( 'Cancel the migration? Progress will be lost.', 'cloudflare-r2-offload' ),
+                // Logs.
+                'confirmDelete'         => __( 'Delete all logs? This cannot be undone.', 'cloudflare-r2-offload' ),
+                // File manager.
+                'confirmDeleteFile'     => __( 'Delete this file from R2? This cannot be undone.', 'cloudflare-r2-offload' ),
+                'copied'                => __( 'URL copied!', 'cloudflare-r2-offload' ),
+                // Restore.
+                'confirmRestoreMissing' => __( 'Download all R2-only files back to the server?', 'cloudflare-r2-offload' ),
+                'confirmRestoreAll'     => __( 'Re-download ALL synced files from R2 to the server? This may take a long time.', 'cloudflare-r2-offload' ),
+                'confirmRestoreSingle'  => __( 'Restore this file from R2 to the server?', 'cloudflare-r2-offload' ),
+                'restoreStarting'       => __( 'Restore queued — processing in background…', 'cloudflare-r2-offload' ),
+                'restoring'             => __( 'Restoring…', 'cloudflare-r2-offload' ),
+                'restoreFailed'         => __( 'Restore failed', 'cloudflare-r2-offload' ),
+                'restoreFromR2'         => __( 'Restore from R2', 'cloudflare-r2-offload' ),
+                // Local delete.
+                'confirmLocalDelete'    => __( 'Delete local copies of ALL synced files? Files will still be served from R2. This cannot be undone without using the Restore feature.', 'cloudflare-r2-offload' ),
+                'confirmDeleteLocal'    => __( 'Delete the local copy of this file? It will only be served from R2.', 'cloudflare-r2-offload' ),
+                'localDeleteStarting'   => __( 'Local delete queued — processing in background…', 'cloudflare-r2-offload' ),
+                'localDeleteComplete'   => __( 'All local files deleted.', 'cloudflare-r2-offload' ),
+                'deleteFailed'          => __( 'Delete failed', 'cloudflare-r2-offload' ),
+                // Status badges.
+                'statusSynced'          => __( 'Synced', 'cloudflare-r2-offload' ),
+                'statusR2Only'          => __( 'R2 only', 'cloudflare-r2-offload' ),
             ],
         ] );
     }

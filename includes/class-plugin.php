@@ -65,8 +65,11 @@ class Plugin {
         $this->batch_processor = new BatchProcessor( $this->sync, $this->settings, $this->logger );
         $this->batch_processor->register_hooks();
 
-        // Admin-only classes.
+        // Media Library row/bulk actions (admin only).
         if ( is_admin() ) {
+            $media_library = new MediaLibrary( $this->sync, $this->settings );
+            $media_library->register_hooks();
+
             $admin = new Admin\Admin( $this->settings, $this->logger, $this->r2 );
             $admin->register();
         }
@@ -95,7 +98,11 @@ class Plugin {
      */
     public static function deactivate(): void {
         wp_clear_scheduled_hook( BatchProcessor::CRON_HOOK );
+        wp_clear_scheduled_hook( BatchProcessor::RESTORE_HOOK );
+        wp_clear_scheduled_hook( BatchProcessor::LOCAL_DEL_HOOK );
         delete_transient( BatchProcessor::LOCK_KEY );
+        delete_transient( BatchProcessor::RESTORE_LOCK_KEY );
+        delete_transient( BatchProcessor::LOCAL_DEL_LOCK );
     }
 
     // -------------------------------------------------------------------------

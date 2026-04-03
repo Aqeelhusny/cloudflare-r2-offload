@@ -46,6 +46,27 @@ $wpdb->query(
     "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_r2_offload_%'"
 );
 
+// Delete bulk-restore and bulk-local-delete transient options.
+$extra_options = [
+    'r2_offload_restore_queue',
+    'r2_offload_restore_total',
+    'r2_offload_restore_done',
+    'r2_offload_restore_failed',
+    'r2_offload_restore_paused',
+    'r2_offload_local_del_queue',
+    'r2_offload_local_del_total',
+    'r2_offload_local_del_done',
+    'r2_offload_local_del_failed',
+    'r2_offload_local_del_paused',
+];
+foreach ( $extra_options as $opt ) {
+    delete_option( $opt );
+}
+
 // Clear any scheduled cron events.
 wp_clear_scheduled_hook( 'r2_offload_process_batch' );
+wp_clear_scheduled_hook( 'r2_offload_process_restore_batch' );
+wp_clear_scheduled_hook( 'r2_offload_process_local_delete_batch' );
 delete_transient( 'r2_offload_batch_lock' );
+delete_transient( 'r2_offload_restore_lock' );
+delete_transient( 'r2_offload_local_del_lock' );

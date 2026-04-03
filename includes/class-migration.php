@@ -29,6 +29,15 @@ class Migration {
             'r2_offload_retry_failed',
             'r2_offload_test_connection',
             'r2_offload_delete_logs',
+            // Feature: Restore from R2 → server (single attachment).
+            'r2_offload_restore_attachment',
+            // Feature: Delete local file for a single synced attachment (row action).
+            'r2_offload_delete_local_single',
+            // Feature: Bulk restore all R2-only files back to server.
+            'r2_offload_start_restore_all',
+            // Feature: Bulk delete local files for all already-synced attachments.
+            'r2_offload_start_local_delete',
+            'r2_offload_local_delete_status',
         ];
         foreach ( $actions as $action ) {
             add_action( "wp_ajax_{$action}", [ $this, 'handle_ajax' ] );
@@ -200,5 +209,181 @@ class Migration {
         }
 
         wp_send_json_success( [ 'message' => __( 'Logs deleted.', 'cloudflare-r2-offload' ) ] );
+    }
+
+    // =========================================================================
+    // Feature: Restore single attachment from R2 → local server
+    // Called from the Media Library row action.
+    // =========================================================================
+
+    private function ajax_restore_attachment(): void {
+        $attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
+
+        if ( ! $attachment_id ) {
+            wp_send_json_error( [ 'message' => __( 'Invalid attachment ID.', 'cloudflare-r2-offload' ) ] );
+        }
+
+        if ( get_post_meta( $attachment_id, '_r2_offload_synced', true ) !== '1' ) {
+            wp_send_json_error( [ 'message' => __( 'This attachment is not synced to R2.', 'cloudflare-r2-offload' ) ] );
+        }
+
+        $result = $this->sync->restore_from_r2( $attachment_id );
+
+        if ( $result['failed'] > 0 ) {
+            wp_send_json_error( [
+                'message' => sprintf(
+                    /* translators: %d: failed count */
+                    __( 'Restore completed with %d failure(s). Check the logs.', 'cloudflare-r2-offload' ),
+                    $result['failed']
+                ),
+                'result'  => $result,
+            ] );
+        }
+
+        wp_send_json_success( [
+            'message' => sprintf(
+                /* translators: %d: restored count */
+                __( '%d file(s) restored to the server.', 'cloudflare-r2-offload' ),
+                $result['restored']
+            ),
+            'result'  => $result,
+        ] );
+    }
+
+    // =========================================================================
+    // Feature: Bulk restore ALL synced attachments from R2 → local server.
+    // Runs synchronously for up to 30s then schedules a cron for the remainder.
+    // Uses the existing migration queue table with a dedicated context flag.
+    // =========================================================================
+
+    private function ajax_start_restore_all(): void {
+        global $wpdb;
+
+        // Find all synced attachments whose local files are missing (local_deleted = 1)
+        // OR all synced attachments regardless — user can choose via a POST param.
+        $only_missing = isset( $_POST['only_missing'] ) ? (bool) absint( $_POST['only_missing'] ) : true;
+
+        if ( $only_missing ) {
+            $ids = $wpdb->get_col(
+                "SELECT pm.post_id
+                 FROM {$wpdb->postmeta} pm
+                 WHERE pm.meta_key = '_r2_offload_synced' AND pm.meta_value = '1'
+                   AND EXISTS (
+                       SELECT 1 FROM {$wpdb->postmeta} pm2
+                       WHERE pm2.post_id = pm.post_id
+                         AND pm2.meta_key = '_r2_offload_local_deleted' AND pm2.meta_value = '1'
+                   )"
+            );
+        } else {
+            $ids = $wpdb->get_col(
+                "SELECT post_id FROM {$wpdb->postmeta}
+                 WHERE meta_key = '_r2_offload_synced' AND meta_value = '1'"
+            );
+        }
+
+        if ( empty( $ids ) ) {
+            wp_send_json_success( [ 'message' => __( 'No attachments need restoring.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
+        }
+
+        // Store the list in an option; the batch cron will drain it.
+        update_option( 'r2_offload_restore_queue', array_map( 'intval', $ids ), false );
+        update_option( 'r2_offload_restore_total',  count( $ids ), false );
+        update_option( 'r2_offload_restore_done',   0, false );
+        update_option( 'r2_offload_restore_failed', 0, false );
+        delete_option( 'r2_offload_restore_paused' );
+
+        wp_schedule_single_event( time() + 2, 'r2_offload_process_restore_batch' );
+
+        $this->logger->info( 'Bulk restore started.', [ 'total' => count( $ids ) ] );
+
+        wp_send_json_success( [
+            'message' => sprintf(
+                /* translators: %d: number of attachments */
+                __( 'Restore started. %d attachments queued.', 'cloudflare-r2-offload' ),
+                count( $ids )
+            ),
+            'total'   => count( $ids ),
+        ] );
+    }
+
+    // =========================================================================
+    // Feature: Bulk auto-delete local files for all already-synced attachments.
+    // This is the "free up server disk space" action for sites that completed
+    // migration BEFORE enabling the "delete local" setting.
+    // =========================================================================
+
+    private function ajax_start_local_delete(): void {
+        global $wpdb;
+
+        // Only target attachments that are synced AND still have local files
+        // (i.e., _r2_offload_local_deleted is not set).
+        $ids = $wpdb->get_col(
+            "SELECT pm.post_id
+             FROM {$wpdb->postmeta} pm
+             WHERE pm.meta_key = '_r2_offload_synced' AND pm.meta_value = '1'
+               AND NOT EXISTS (
+                   SELECT 1 FROM {$wpdb->postmeta} pm2
+                   WHERE pm2.post_id = pm.post_id
+                     AND pm2.meta_key = '_r2_offload_local_deleted' AND pm2.meta_value = '1'
+               )"
+        );
+
+        if ( empty( $ids ) ) {
+            wp_send_json_success( [ 'message' => __( 'No local files to delete — all synced attachments are already R2-only.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
+        }
+
+        update_option( 'r2_offload_local_del_queue',  array_map( 'intval', $ids ), false );
+        update_option( 'r2_offload_local_del_total',  count( $ids ), false );
+        update_option( 'r2_offload_local_del_done',   0, false );
+        update_option( 'r2_offload_local_del_failed', 0, false );
+        delete_option( 'r2_offload_local_del_paused' );
+
+        wp_schedule_single_event( time() + 2, 'r2_offload_process_local_delete_batch' );
+
+        $this->logger->info( 'Bulk local-delete started.', [ 'total' => count( $ids ) ] );
+
+        wp_send_json_success( [
+            'message' => sprintf(
+                /* translators: %d: number */
+                __( 'Local delete started. %d attachments queued.', 'cloudflare-r2-offload' ),
+                count( $ids )
+            ),
+            'total'   => count( $ids ),
+        ] );
+    }
+
+    private function ajax_local_delete_status(): void {
+        wp_send_json_success( [
+            'total'  => (int) get_option( 'r2_offload_local_del_total',  0 ),
+            'done'   => (int) get_option( 'r2_offload_local_del_done',   0 ),
+            'failed' => (int) get_option( 'r2_offload_local_del_failed', 0 ),
+            'paused' => (bool) get_option( 'r2_offload_local_del_paused', false ),
+        ] );
+    }
+
+    /**
+     * Delete local files for a single synced attachment (Media Library row action).
+     */
+    private function ajax_delete_local_single(): void {
+        $attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
+
+        if ( ! $attachment_id ) {
+            wp_send_json_error( [ 'message' => __( 'Invalid attachment ID.', 'cloudflare-r2-offload' ) ] );
+        }
+
+        if ( get_post_meta( $attachment_id, '_r2_offload_synced', true ) !== '1' ) {
+            wp_send_json_error( [ 'message' => __( 'Attachment is not synced to R2.', 'cloudflare-r2-offload' ) ] );
+        }
+
+        $result = $this->sync->delete_local_for_attachment( $attachment_id );
+
+        wp_send_json_success( [
+            'message' => sprintf(
+                /* translators: %d: files deleted */
+                __( '%d local file(s) deleted.', 'cloudflare-r2-offload' ),
+                $result['deleted']
+            ),
+            'result'  => $result,
+        ] );
     }
 }

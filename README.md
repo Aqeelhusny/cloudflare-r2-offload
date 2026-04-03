@@ -1,6 +1,6 @@
 # Cloudflare R2 Offload
 
-A production-grade WordPress plugin that offloads your entire media library to **Cloudflare R2** object storage. Supports custom CDN domains, bulk migration of existing media, WooCommerce compatibility, an advanced file manager, upload stats, and optimized multipart uploads.
+A production-grade WordPress plugin that offloads your entire media library to **Cloudflare R2** object storage. Supports custom CDN domains, bulk migration of existing media, restore files from R2 back to the server, auto-delete local files after upload, WooCommerce compatibility, an advanced file manager, upload stats, and optimized multipart uploads.
 
 ---
 
@@ -9,14 +9,17 @@ A production-grade WordPress plugin that offloads your entire media library to *
 - **Full media offload** — uploads the original file and every registered image size (thumbnail, medium, large, custom sizes) using the same `YYYY/MM/` directory structure WordPress uses
 - **New uploads** — automatically syncs to R2 the moment a file is uploaded, after all image sizes have been generated
 - **Bulk migration** — migrates your entire existing media library in the background via WP-Cron batches with Start / Pause / Resume / Cancel / Retry controls
+- **Restore from R2 to server** — download files from R2 back to the local server at any time; supports single attachment, bulk selected, or restore all
+- **Auto-delete local files** — free up server disk space by deleting local copies of files already safely stored on R2; works per-upload automatically or as a bulk operation for your entire library
 - **Custom CDN domain** — serve files from your own domain (e.g. `cdn.yourdomain.com`) instead of the R2 public URL
 - **URL rewriting** — rewrites all URLs: attachment URLs, srcset, `the_content`, and WooCommerce product image responses
-- **WooCommerce compatible** — handles WooCommerce image sizes (`woocommerce_thumbnail`, `woocommerce_single`, `woocommerce_gallery_thumbnail`), REST API responses, and HPOS
+- **WooCommerce compatible** — handles WooCommerce image sizes, REST API responses, HPOS, and lazy-regenerated sizes
 - **Optimized multipart upload** — files under 5 MB use a single request; larger files use AWS SDK `MultipartUploader` with parallel part uploads and automatic retry
 - **Advanced file manager** — browse, filter, copy URLs, and delete objects directly in the R2 bucket (enable/disable toggle)
 - **Upload stats dashboard** — 30-day chart of uploads, bytes offloaded, and failures
-- **Structured logging** — JSON-lines log files with log viewer and one-click delete in the admin
+- **Structured logging** — JSON-lines log files with in-admin log viewer and one-click delete
 - **Secure credential storage** — secret key encrypted at rest with AES-256-CBC
+- **Media Library integration** — R2 Status column, per-attachment row actions, and bulk actions directly in the WordPress Media Library
 
 ---
 
@@ -110,7 +113,7 @@ Click **Test Connection** to verify your credentials before saving.
 | Field | Default | Description |
 |---|---|---|
 | Auto-upload New Media | On | Sync every new upload to R2 immediately after WordPress generates all image sizes |
-| Delete Local Files | Off | Delete local files after a confirmed upload to R2. **Irreversible — only enable if R2 is your sole storage.** |
+| Delete Local Files | Off | Automatically delete local files after each confirmed upload to R2. **Irreversible without using Restore. Only enable if R2 is your sole storage.** |
 | Enable File Manager | Off | Show the R2 File Manager and log viewer in the admin menu |
 | Migration Batch Size | 10 | Attachments processed per WP-Cron batch (1–50). Lower values are safer on shared hosting |
 | Multipart Upload Threshold | 5 MB | Files larger than this use multipart upload. Minimum 5 MB (AWS/R2 requirement) |
@@ -132,6 +135,74 @@ Go to **R2 Offload → Migration**.
 7. If some items fail after 3 retries they are marked **Failed** — click **Retry Failed** to re-queue them
 
 > **Large libraries:** For sites with 10,000+ attachments, increase PHP memory limit (`define('WP_MEMORY_LIMIT', '256M')`) and ensure WP-Cron is running reliably (consider a real cron job calling `wp-cron.php` instead of the default browser-triggered cron).
+
+---
+
+## Restore Files from R2 to Server
+
+The restore feature downloads files from R2 back to the local server. Use it if you previously deleted local files and need to recover them, want to switch hosting providers, or plan to stop using R2.
+
+Go to **R2 Offload → Migration → Restore Files from R2 to Server**.
+
+### Options
+
+| Button | What it does |
+|---|---|
+| **Restore Missing Files from R2** | Downloads only files marked as R2-only (local copy was deleted). Fastest and safest option for recovery. |
+| **Restore ALL Synced Files from R2** | Re-downloads every synced attachment regardless of whether a local copy exists. Use for full server-side recovery. |
+
+Both options queue a WP-Cron background job so large libraries do not time out. A progress bar shows live status.
+
+### Single attachment restore
+
+In the **Media Library** (list view):
+
+- Attachments with no local copy show a **blue "R2 only"** badge in the R2 Status column
+- Click the **Restore from R2** row action to download that file back immediately (AJAX — no page reload)
+- Select multiple attachments and use **Bulk Actions → R2: Restore to server**
+
+### How it works internally
+
+The plugin reads the `_r2_offload_keys` post meta (the list of all R2 object keys for that attachment), derives the correct local path for each key, creates any missing `YYYY/MM/` subdirectories, and streams the file down using `GetObject` with `SaveAs` — so large files never exhaust PHP memory. Files that already exist locally are skipped.
+
+---
+
+## Auto-Delete Local Files
+
+Reclaim server disk space by removing local copies of files that are safely stored on R2.
+
+> **This is irreversible without using the Restore feature.** Ensure your R2 bucket and CDN are working correctly before proceeding.
+
+### Option 1 — Per-upload (automatic)
+
+Enable **Settings → Behavior → Delete Local Files**. Every file is deleted from the server immediately after a confirmed upload to R2. The `_r2_offload_local_deleted` post meta is set to `1` so the Media Library shows the correct status.
+
+### Option 2 — Bulk delete (for existing synced media)
+
+For sites that completed migration before enabling the auto-delete setting, or that want to free up space after a bulk migration:
+
+Go to **R2 Offload → Migration → Delete Local Files (Free Up Server Space)** and click **Delete Local Files for All Synced Attachments**.
+
+This queues a WP-Cron background job that processes attachments in batches. A live progress bar shows deleted file count. Only attachments confirmed synced to R2 (`_r2_offload_synced = 1`) are processed — unsynced attachments are never touched.
+
+### Option 3 — Single attachment
+
+In the **Media Library** (list view):
+
+- Synced attachments that still have a local copy show a **"Delete local file"** row action (in red)
+- Click it to delete the local copy immediately (AJAX — no page reload). The row action changes to **Restore from R2** automatically.
+- Select multiple attachments and use **Bulk Actions → R2: Delete local files**
+
+### R2 Status column
+
+The Media Library gains an **R2 Status** column showing:
+
+| Badge | Colour | Meaning |
+|---|---|---|
+| Synced | Green | File is on R2 and local copy exists |
+| R2 only | Blue | File is on R2, local copy has been deleted |
+| Not synced | Grey | File has not been uploaded to R2 |
+| Error | Red | Last upload attempt failed (hover for details) |
 
 ---
 
@@ -160,6 +231,36 @@ Shows a 30-day bar chart of daily upload counts and failures, plus summary cards
 - Uploads in the last 30 days
 - Total bytes offloaded in the last 30 days
 - Total failures in the last 30 days
+
+---
+
+## Media Library Integration
+
+The plugin integrates directly into the WordPress Media Library list view with no separate page needed for common single-file operations.
+
+### R2 Status column
+
+Visible at a glance for every attachment — see badge descriptions in the [Auto-Delete Local Files](#auto-delete-local-files) section above.
+
+### Row actions
+
+Available when hovering over an attachment in list mode:
+
+| Action | Shown when | What it does |
+|---|---|---|
+| Restore from R2 | Local file deleted (R2 only) | Downloads file back from R2 to server (AJAX) |
+| Delete local file | Synced, local copy exists | Deletes local copy, marks as R2 only (AJAX) |
+
+### Bulk actions
+
+Available in the bulk action dropdown:
+
+| Bulk Action | What it does |
+|---|---|
+| R2: Restore to server | Restores selected synced attachments from R2 |
+| R2: Delete local files | Deletes local copies of selected synced attachments |
+
+Results are shown as an admin notice with restored/deleted counts and any failure warnings.
 
 ---
 
@@ -240,11 +341,36 @@ add_filter( 'r2_offload_multipart_part_size', fn() => 10 * 1024 * 1024 );
 // Change multipart concurrency.
 add_filter( 'r2_offload_multipart_concurrency', fn() => 5 );
 
-// Fired when the migration queue is fully drained.
+// Fired when the upload migration queue is fully drained.
 add_action( 'r2_offload_migration_complete', function () {
-    // e.g. send a notification email
+    // e.g. send a Slack notification
+} );
+
+// Fired when a bulk restore job finishes.
+add_action( 'r2_offload_restore_complete', function () {
+    // e.g. log to an external service
+} );
+
+// Fired when a bulk local-delete job finishes.
+add_action( 'r2_offload_local_delete_complete', function () {
+    // e.g. update a server monitoring metric
 } );
 ```
+
+---
+
+## Post Meta Reference
+
+The plugin stores the following post meta keys on each attachment post:
+
+| Meta Key | Value | Description |
+|---|---|---|
+| `_r2_offload_synced` | `1` | Attachment is fully synced to R2 |
+| `_r2_offload_keys` | JSON array | All R2 object keys for this attachment (original + every size) |
+| `_r2_offload_synced_at` | Unix timestamp | Time of last successful sync |
+| `_r2_offload_local_deleted` | `1` | Local files have been deleted; file lives on R2 only |
+| `_r2_offload_retry_count` | integer | Number of failed upload attempts |
+| `_r2_offload_error` | string | Last error message from a failed sync |
 
 ---
 
@@ -254,22 +380,23 @@ add_action( 'r2_offload_migration_complete', function () {
 - **Nonce verification:** Every AJAX endpoint verifies `wp_nonce` via `check_ajax_referer()`.
 - **Capability check:** All admin pages and AJAX endpoints require `manage_options`.
 - **Output escaping:** All admin output uses `esc_html()`, `esc_attr()`, `esc_url()`.
+- **Restore safety:** `restore_from_r2()` only downloads files whose keys are recorded in `_r2_offload_keys` — no arbitrary path traversal is possible.
+- **Delete safety:** `delete_local_for_attachment()` checks `_r2_offload_synced = 1` before deleting anything — unsynced attachments are never touched.
 - **Vendor directory:** The `vendor/` directory contains a `.htaccess` with `deny from all` to prevent direct PHP execution.
 - **Log directory:** The local log directory (`wp-content/uploads/r2-offload-logs/`) is protected by `.htaccess` and `index.php`.
-- **Local file deletion:** Only triggered after a confirmed successful upload. The option is opt-in and clearly labelled as irreversible.
 
 ---
 
 ## Uninstalling
 
-Deactivating the plugin stops background processing and clears scheduled cron events. Your R2 files and WordPress media library are left untouched.
+Deactivating the plugin stops all background processing and clears scheduled cron events. Your R2 files and WordPress media library are left untouched.
 
 **Deleting** the plugin via WordPress admin triggers `uninstall.php`, which:
 
 - Drops the `{prefix}r2_offload_migration_queue` database table
-- Deletes all `r2_offload_*` options from `wp_options`
+- Deletes all `r2_offload_*` options from `wp_options` (including restore and local-delete queue state)
 - Deletes all `_r2_offload_*` post meta from `wp_postmeta`
-- Clears scheduled cron events
+- Clears all scheduled cron events (migration, restore, local-delete)
 
 > **R2 objects are NOT deleted** — your files remain in R2 and continue to be served from your CDN. If you want to clean up R2 objects, use the File Manager before deleting the plugin, or manage them directly in the Cloudflare dashboard.
 
@@ -279,42 +406,54 @@ Deactivating the plugin stops background processing and clears scheduled cron ev
 
 ```
 cloudflare-r2-offload/
-├── cloudflare-r2-offload.php          # Plugin bootstrap, constants, hooks
+├── cloudflare-r2-offload.php          # Plugin bootstrap, constants, HPOS declaration
 ├── composer.json                       # AWS SDK v3 dependency
 ├── uninstall.php                       # Cleanup on plugin deletion
 ├── vendor/                             # AWS SDK + Guzzle (Composer)
 ├── includes/
 │   ├── class-plugin.php               # Singleton orchestrator
-│   ├── class-settings.php             # Settings registration + encryption
-│   ├── class-r2-client.php            # S3Client wrapper (single + multipart upload)
-│   ├── class-attachment-sync.php      # Core upload logic for one attachment
-│   ├── class-upload-handler.php       # WP/WooCommerce upload hooks
-│   ├── class-url-rewriter.php         # URL rewriting filters
-│   ├── class-migration.php            # Bulk migration AJAX handlers
-│   ├── class-batch-processor.php      # WP-Cron batch engine
+│   ├── class-settings.php             # Settings registration + AES-256-CBC encryption
+│   ├── class-r2-client.php            # S3Client wrapper (upload, download, delete, list)
+│   ├── class-attachment-sync.php      # Upload, restore, and local-delete per attachment
+│   ├── class-upload-handler.php       # WP/WooCommerce upload + delete hooks
+│   ├── class-url-rewriter.php         # URL rewriting filters (WP + WooCommerce)
+│   ├── class-media-library.php        # Media Library column, row actions, bulk actions
+│   ├── class-migration.php            # All AJAX handlers (migration, restore, local-delete)
+│   ├── class-batch-processor.php      # WP-Cron engines for migration, restore, local-delete
 │   └── class-error-logger.php         # JSON-lines structured logger
 ├── admin/
 │   ├── class-admin.php                # Menu registration + asset enqueue
 │   ├── class-settings-page.php        # Settings form
-│   ├── class-migration-page.php       # Migration dashboard
+│   ├── class-migration-page.php       # Migration, restore, and local-delete dashboard
 │   ├── class-stats-page.php           # Stats chart
 │   └── class-file-manager-page.php    # R2 file browser + log viewer
 └── assets/
     ├── css/admin.css
-    └── js/admin.js                    # Migration polling + file manager JS
+    └── js/admin.js                    # Migration, restore, local-delete, file manager JS
 ```
 
 ---
 
 ## Changelog
 
+### 1.1.0
+- **New:** Restore files from R2 to server — single attachment (row action), bulk selected, restore missing, or restore all
+- **New:** Auto-delete local files per-upload (automatic) and bulk delete for entire synced library
+- **New:** Media Library R2 Status column with Synced / R2 only / Not synced / Error badges
+- **New:** Media Library row actions — Restore from R2 / Delete local file (AJAX, no page reload)
+- **New:** Media Library bulk actions — R2: Restore to server / R2: Delete local files
+- **New:** `_r2_offload_local_deleted` post meta tracking
+- **New:** Three independent WP-Cron batch engines (migration, bulk restore, bulk local-delete) each with their own lock and progress tracking
+- **Fix:** WooCommerce compatibility — HPOS declaration, REST API URL rewriting, lazy image size regeneration handling
+- **Fix:** Multipart upload threshold sanitizer now correctly converts MB to bytes
+- **Fix:** Multisite URL cache no longer stale after `switch_to_blog()`
+
 ### 1.0.0
 - Initial release
 - Full media library offload to Cloudflare R2
 - Bulk migration with WP-Cron batching (pause/resume/retry)
 - Custom CDN domain URL rewriting
-- WooCommerce compatibility (HPOS, image sizes, REST API)
-- Multipart upload with configurable threshold and concurrency
+- Optimized multipart upload with configurable threshold and concurrency
 - Advanced file manager with R2 object browser
 - 30-day upload stats dashboard
 - Structured JSON-lines logging with in-admin viewer

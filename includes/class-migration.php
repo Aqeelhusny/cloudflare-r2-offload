@@ -198,12 +198,8 @@ class Migration {
             wp_send_json_error( [ 'message' => __( 'Account ID must contain only hex characters (0-9, a-f).', 'cloudflare-r2-offload' ) ] );
         }
 
-        // Always wipe the stored secret before saving so we never accumulate
-        // encryption layers regardless of what was there before.
-        delete_option( 'r2_offload_secret_access_key' );
-
-        // sanitize_secret_key is the single place that encrypts. Pass it the raw
-        // value (or the placeholder/empty to keep nothing). It encrypts exactly once.
+        // sanitize_secret_key is the single source of encryption. It detects the
+        // 'r2enc:' prefix and refuses to re-encrypt an already-encrypted value.
         $secret_to_store = $this->settings->sanitize_secret_key( $secret_raw );
 
         update_option( 'r2_offload_account_id',        $account_id );

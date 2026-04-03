@@ -169,9 +169,15 @@ class Settings {
             return get_option( 'r2_offload_secret_access_key', '' );
         }
 
-        // At this point the user has typed/pasted a new raw key — always encrypt it fresh.
-        // We intentionally do NOT check against the stored ciphertext here; that check was
-        // the source of double-encryption when the comparison failed on minor differences.
+        // Already encrypted by us — do not re-encrypt. This happens when WordPress
+        // calls this sanitizer on a value that was saved by ajax_save_credentials
+        // and then re-submitted via the main settings form with the placeholder.
+        // The prefix 'r2enc:' is our canary — only our encrypt() produces it.
+        if ( strpos( $value, 'r2enc:' ) === 0 ) {
+            return $value;
+        }
+
+        // Raw plaintext key — encrypt once.
         return $this->encrypt( sanitize_text_field( $value ) );
     }
 
@@ -235,10 +241,16 @@ class Settings {
         if ( $cipher === false ) {
             return '';
         }
-        return base64_encode( $iv . $cipher );
+        // Prefix 'r2enc:' acts as a canary so sanitize_secret_key() can detect
+        // an already-encrypted value and refuse to encrypt it a second time.
+        return 'r2enc:' . base64_encode( $iv . $cipher );
     }
 
     private function decrypt( string $ciphertext ): string {
+        // Strip the canary prefix before decoding.
+        if ( strpos( $ciphertext, 'r2enc:' ) === 0 ) {
+            $ciphertext = substr( $ciphertext, 6 );
+        }
         $data = base64_decode( $ciphertext, true );
         if ( $data === false || strlen( $data ) < 17 ) {
             return '';

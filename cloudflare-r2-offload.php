@@ -3,8 +3,8 @@
  * Plugin Name: Cloudflare R2 Offload
  * Plugin URI:  https://github.com/yourvendor/cloudflare-r2-offload
  * Description: Offload your entire WordPress media library to Cloudflare R2 with custom CDN domain support, bulk migration, file manager, upload stats, and optimized multipart uploads.
- * Version:     1.0.0
- * Author:      Your Name
+ * Version:     1.0.1
+ * Author:      Aqeel Husny
  * Author URI:  https://yoursite.com
  * License:     GPL-2.0+
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html

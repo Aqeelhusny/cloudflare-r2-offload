@@ -170,7 +170,13 @@ class R2Client {
             return [ 'success' => false, 'message' => __( 'Could not build R2 client — check credentials.', 'cloudflare-r2-offload' ) ];
         }
         try {
-            $client->headBucket( [ 'Bucket' => $this->settings->get_bucket() ] );
+            // HeadBucket requires Admin Read on R2 tokens and will 403 with standard
+            // Object Read & Write tokens. ListObjectsV2 (MaxKeys=1) works with any
+            // token that has object-level read access and is the correct test for R2.
+            $client->listObjectsV2( [
+                'Bucket'  => $this->settings->get_bucket(),
+                'MaxKeys' => 1,
+            ] );
             return [ 'success' => true, 'message' => __( 'Connection successful.', 'cloudflare-r2-offload' ) ];
         } catch ( AwsException $e ) {
             return [

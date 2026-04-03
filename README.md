@@ -1,0 +1,326 @@
+# Cloudflare R2 Offload
+
+A production-grade WordPress plugin that offloads your entire media library to **Cloudflare R2** object storage. Supports custom CDN domains, bulk migration of existing media, WooCommerce compatibility, an advanced file manager, upload stats, and optimized multipart uploads.
+
+---
+
+## Features
+
+- **Full media offload** — uploads the original file and every registered image size (thumbnail, medium, large, custom sizes) using the same `YYYY/MM/` directory structure WordPress uses
+- **New uploads** — automatically syncs to R2 the moment a file is uploaded, after all image sizes have been generated
+- **Bulk migration** — migrates your entire existing media library in the background via WP-Cron batches with Start / Pause / Resume / Cancel / Retry controls
+- **Custom CDN domain** — serve files from your own domain (e.g. `cdn.yourdomain.com`) instead of the R2 public URL
+- **URL rewriting** — rewrites all URLs: attachment URLs, srcset, `the_content`, and WooCommerce product image responses
+- **WooCommerce compatible** — handles WooCommerce image sizes (`woocommerce_thumbnail`, `woocommerce_single`, `woocommerce_gallery_thumbnail`), REST API responses, and HPOS
+- **Optimized multipart upload** — files under 5 MB use a single request; larger files use AWS SDK `MultipartUploader` with parallel part uploads and automatic retry
+- **Advanced file manager** — browse, filter, copy URLs, and delete objects directly in the R2 bucket (enable/disable toggle)
+- **Upload stats dashboard** — 30-day chart of uploads, bytes offloaded, and failures
+- **Structured logging** — JSON-lines log files with log viewer and one-click delete in the admin
+- **Secure credential storage** — secret key encrypted at rest with AES-256-CBC
+
+---
+
+## Requirements
+
+| Requirement | Minimum |
+|---|---|
+| PHP | 7.4 |
+| WordPress | 5.8 |
+| WooCommerce *(optional)* | 6.0 |
+| Cloudflare account | Free tier or above |
+| Composer | 2.x (for development / building) |
+
+---
+
+## Installation
+
+### Option A — Upload the built plugin (recommended for production)
+
+1. Download or clone this repository
+2. Run `composer install --no-dev --optimize-autoloader` inside the `cloudflare-r2-offload/` directory
+3. Zip the entire `cloudflare-r2-offload/` directory
+4. In WordPress Admin go to **Plugins → Add New → Upload Plugin** and upload the zip
+5. Activate **Cloudflare R2 Offload**
+
+### Option B — Direct folder copy
+
+1. Copy the `cloudflare-r2-offload/` directory into `wp-content/plugins/`
+2. Ensure the `vendor/` directory is present (run `composer install --no-dev` if not)
+3. Activate the plugin from **Plugins → Installed Plugins**
+
+> **Note:** The `vendor/` directory is required. The plugin will show an admin notice and refuse to load if it is missing.
+
+---
+
+## Cloudflare R2 Setup
+
+### 1. Create an R2 bucket
+
+1. Log in to [Cloudflare Dashboard](https://dash.cloudflare.com)
+2. Navigate to **R2 Object Storage → Create bucket**
+3. Choose a bucket name (e.g. `my-site-media`) — must be lowercase letters, numbers, and hyphens only
+4. Select a storage region or leave as **Automatic**
+
+### 2. Generate R2 API credentials
+
+1. Go to **R2 Object Storage → Manage R2 API Tokens**
+2. Click **Create API Token**
+3. Set permissions to **Object Read & Write** scoped to your bucket
+4. Copy the **Access Key ID** and **Secret Access Key** — the secret is only shown once
+
+### 3. (Optional) Set up a custom domain
+
+To serve files from `cdn.yourdomain.com`:
+
+1. In your R2 bucket settings go to **Settings → Custom Domains → Connect Domain**
+2. Add your subdomain (e.g. `cdn.yourdomain.com`)
+3. Cloudflare will automatically add the required DNS record if your domain is on Cloudflare
+
+Alternatively, use a **Cloudflare Worker** or a standard CNAME to your R2 bucket's public hostname.
+
+> **Recommended:** Do not enable the R2 public URL directly. Use a Cloudflare custom domain so files are served via Cloudflare's CDN edge network with caching.
+
+---
+
+## Plugin Configuration
+
+Go to **R2 Offload → Settings** in your WordPress admin.
+
+### R2 Connection
+
+| Field | Description |
+|---|---|
+| Account ID | Your 32-character Cloudflare Account ID (found in the Cloudflare dashboard URL or Overview page) |
+| Access Key ID | The R2 API token Access Key ID |
+| Secret Access Key | The R2 API token Secret Access Key — stored encrypted, never echoed back |
+| Bucket Name | Your R2 bucket name |
+
+Click **Test Connection** to verify your credentials before saving.
+
+### Delivery
+
+| Field | Description |
+|---|---|
+| Custom Domain | Hostname only, no scheme — e.g. `cdn.yourdomain.com`. Leave empty to use the R2 public URL |
+| URL Scheme | `https` (recommended) or `http` |
+| Path Prefix | Object key prefix in R2. Should match your WordPress upload path — default: `wp-content/uploads` |
+
+### Behavior
+
+| Field | Default | Description |
+|---|---|---|
+| Auto-upload New Media | On | Sync every new upload to R2 immediately after WordPress generates all image sizes |
+| Delete Local Files | Off | Delete local files after a confirmed upload to R2. **Irreversible — only enable if R2 is your sole storage.** |
+| Enable File Manager | Off | Show the R2 File Manager and log viewer in the admin menu |
+| Migration Batch Size | 10 | Attachments processed per WP-Cron batch (1–50). Lower values are safer on shared hosting |
+| Multipart Upload Threshold | 5 MB | Files larger than this use multipart upload. Minimum 5 MB (AWS/R2 requirement) |
+| Multipart Concurrency | 3 | Number of parallel part uploads per file (1–10) |
+| Excluded MIME Types | — | One MIME type per line — these file types will not be uploaded to R2 (e.g. `video/mp4`) |
+
+---
+
+## Bulk Migration (Existing Media)
+
+Go to **R2 Offload → Migration**.
+
+1. The stats bar shows your total attachment count and how many are already synced
+2. Click **Start Migration** — all unsynced attachments are queued in the database
+3. WP-Cron processes them in batches in the background
+4. The progress bar updates every 3 seconds automatically
+5. Use **Pause** / **Resume** to control the migration without losing progress
+6. Use **Cancel** to stop and clear the queue entirely
+7. If some items fail after 3 retries they are marked **Failed** — click **Retry Failed** to re-queue them
+
+> **Large libraries:** For sites with 10,000+ attachments, increase PHP memory limit (`define('WP_MEMORY_LIMIT', '256M')`) and ensure WP-Cron is running reliably (consider a real cron job calling `wp-cron.php` instead of the default browser-triggered cron).
+
+---
+
+## File Manager
+
+Enable via **R2 Offload → Settings → Enable File Manager**.
+
+Once enabled, the **File Manager** submenu appears with:
+
+- Paginated list of all objects in your R2 bucket (50 per page)
+- Prefix/folder navigation with filter bar
+- **Copy URL** — copies the full CDN URL to clipboard
+- **Delete** — removes the object from R2 (with confirmation)
+- **Activity Logs** panel showing the last 20 log entries
+- **Delete Logs** button — removes all local log files (with confirmation)
+
+---
+
+## Stats Dashboard
+
+Go to **R2 Offload → Stats**.
+
+Shows a 30-day bar chart of daily upload counts and failures, plus summary cards:
+
+- Total files currently on R2
+- Uploads in the last 30 days
+- Total bytes offloaded in the last 30 days
+- Total failures in the last 30 days
+
+---
+
+## WooCommerce Compatibility
+
+The plugin is fully compatible with WooCommerce and declares:
+
+- **HPOS** (High-Performance Order Storage) compatibility
+- **Cart & Checkout Blocks** compatibility
+
+### What is covered
+
+| WooCommerce Feature | How it's handled |
+|---|---|
+| Product images | `wp_get_attachment_image_src` filter — same as standard WP images |
+| Product gallery thumbnails | `woocommerce_single_product_image_thumbnail_html` filter |
+| WooCommerce image sizes (`woocommerce_thumbnail`, `woocommerce_single`, `woocommerce_gallery_thumbnail`) | Detected automatically in `$metadata['sizes']` — uploaded with all other sizes |
+| REST API product image URLs | `woocommerce_rest_prepare_product_object` and `woocommerce_rest_prepare_product_variation_object` filters |
+| WooCommerce image regeneration | Re-sync only uploads genuinely new sizes; already-uploaded files are skipped |
+| WooCommerce placeholder image | Never rewritten — it has no attachment ID |
+| Multisite + `switch_to_blog()` | URL caches invalidated correctly per blog |
+
+---
+
+## How URL Rewriting Works
+
+When a file is synced to R2, the attachment's `_r2_offload_synced` post meta is set to `1`.
+
+Every WordPress URL filter checks this meta:
+
+```
+wp_get_attachment_url(123)
+    → UrlRewriter::rewrite_url()
+        → is_synced(123) === true
+        → str_replace(
+              "https://yoursite.com/wp-content/uploads",
+              "https://cdn.yourdomain.com/wp-content/uploads",
+              $url
+          )
+        → "https://cdn.yourdomain.com/wp-content/uploads/2024/03/photo.jpg"
+```
+
+The same replacement is applied to srcset, `the_content`, product gallery HTML, and REST API responses.
+
+If a file has **not** been synced, the original local URL is returned unchanged — the site continues to work normally during and after a partial migration.
+
+---
+
+## Multipart Upload
+
+Files below the configured threshold (default 5 MB) use a standard single-request `PutObject`.
+
+Files at or above the threshold use `Aws\S3\MultipartUploader`:
+
+- Part size: 5 MB (minimum allowed by R2/S3)
+- Concurrency: configurable (default 3 parallel parts)
+- On failure: automatic `AbortMultipartUpload` + up to 3 retry attempts with exponential backoff
+- Both part size and concurrency are filterable:
+  ```php
+  add_filter( 'r2_offload_multipart_part_size',   fn() => 10 * 1024 * 1024 ); // 10 MB parts
+  add_filter( 'r2_offload_multipart_concurrency', fn() => 5 );
+  ```
+
+---
+
+## Developer Filters & Actions
+
+```php
+// Change migration batch size programmatically.
+add_filter( 'r2_offload_batch_size', fn() => 20 );
+
+// Change multipart upload threshold (in bytes).
+add_filter( 'r2_offload_multipart_threshold', fn() => 25 * 1024 * 1024 ); // 25 MB
+
+// Change multipart part size (in bytes, min 5 MB).
+add_filter( 'r2_offload_multipart_part_size', fn() => 10 * 1024 * 1024 );
+
+// Change multipart concurrency.
+add_filter( 'r2_offload_multipart_concurrency', fn() => 5 );
+
+// Fired when the migration queue is fully drained.
+add_action( 'r2_offload_migration_complete', function () {
+    // e.g. send a notification email
+} );
+```
+
+---
+
+## Security
+
+- **Credential encryption:** The R2 secret key is encrypted with AES-256-CBC using `wp_salt('auth')` as the key material before being stored in `wp_options`. It is never echoed back to the browser — the settings form shows a placeholder.
+- **Nonce verification:** Every AJAX endpoint verifies `wp_nonce` via `check_ajax_referer()`.
+- **Capability check:** All admin pages and AJAX endpoints require `manage_options`.
+- **Output escaping:** All admin output uses `esc_html()`, `esc_attr()`, `esc_url()`.
+- **Vendor directory:** The `vendor/` directory contains a `.htaccess` with `deny from all` to prevent direct PHP execution.
+- **Log directory:** The local log directory (`wp-content/uploads/r2-offload-logs/`) is protected by `.htaccess` and `index.php`.
+- **Local file deletion:** Only triggered after a confirmed successful upload. The option is opt-in and clearly labelled as irreversible.
+
+---
+
+## Uninstalling
+
+Deactivating the plugin stops background processing and clears scheduled cron events. Your R2 files and WordPress media library are left untouched.
+
+**Deleting** the plugin via WordPress admin triggers `uninstall.php`, which:
+
+- Drops the `{prefix}r2_offload_migration_queue` database table
+- Deletes all `r2_offload_*` options from `wp_options`
+- Deletes all `_r2_offload_*` post meta from `wp_postmeta`
+- Clears scheduled cron events
+
+> **R2 objects are NOT deleted** — your files remain in R2 and continue to be served from your CDN. If you want to clean up R2 objects, use the File Manager before deleting the plugin, or manage them directly in the Cloudflare dashboard.
+
+---
+
+## File Structure
+
+```
+cloudflare-r2-offload/
+├── cloudflare-r2-offload.php          # Plugin bootstrap, constants, hooks
+├── composer.json                       # AWS SDK v3 dependency
+├── uninstall.php                       # Cleanup on plugin deletion
+├── vendor/                             # AWS SDK + Guzzle (Composer)
+├── includes/
+│   ├── class-plugin.php               # Singleton orchestrator
+│   ├── class-settings.php             # Settings registration + encryption
+│   ├── class-r2-client.php            # S3Client wrapper (single + multipart upload)
+│   ├── class-attachment-sync.php      # Core upload logic for one attachment
+│   ├── class-upload-handler.php       # WP/WooCommerce upload hooks
+│   ├── class-url-rewriter.php         # URL rewriting filters
+│   ├── class-migration.php            # Bulk migration AJAX handlers
+│   ├── class-batch-processor.php      # WP-Cron batch engine
+│   └── class-error-logger.php         # JSON-lines structured logger
+├── admin/
+│   ├── class-admin.php                # Menu registration + asset enqueue
+│   ├── class-settings-page.php        # Settings form
+│   ├── class-migration-page.php       # Migration dashboard
+│   ├── class-stats-page.php           # Stats chart
+│   └── class-file-manager-page.php    # R2 file browser + log viewer
+└── assets/
+    ├── css/admin.css
+    └── js/admin.js                    # Migration polling + file manager JS
+```
+
+---
+
+## Changelog
+
+### 1.0.0
+- Initial release
+- Full media library offload to Cloudflare R2
+- Bulk migration with WP-Cron batching (pause/resume/retry)
+- Custom CDN domain URL rewriting
+- WooCommerce compatibility (HPOS, image sizes, REST API)
+- Multipart upload with configurable threshold and concurrency
+- Advanced file manager with R2 object browser
+- 30-day upload stats dashboard
+- Structured JSON-lines logging with in-admin viewer
+
+---
+
+## License
+
+GPL-2.0+. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html).

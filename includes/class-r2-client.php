@@ -147,6 +147,24 @@ class R2Client {
      * @return array{ success: bool, message: string }
      */
     public function test_connection(): array {
+        // Surface exactly which credential is missing before attempting to build a client.
+        $missing = [];
+        if ( ! $this->settings->get_account_id() )        { $missing[] = 'Account ID'; }
+        if ( ! $this->settings->get_access_key_id() )     { $missing[] = 'Access Key ID'; }
+        if ( ! $this->settings->get_secret_access_key() ) { $missing[] = 'Secret Access Key'; }
+        if ( ! $this->settings->get_bucket() )            { $missing[] = 'Bucket Name'; }
+
+        if ( $missing ) {
+            return [
+                'success' => false,
+                'message' => sprintf(
+                    /* translators: %s: comma-separated list of missing fields */
+                    __( 'Missing required fields: %s. Save your settings first, then test.', 'cloudflare-r2-offload' ),
+                    implode( ', ', $missing )
+                ),
+            ];
+        }
+
         $client = $this->get_client( true );
         if ( ! $client ) {
             return [ 'success' => false, 'message' => __( 'Could not build R2 client — check credentials.', 'cloudflare-r2-offload' ) ];

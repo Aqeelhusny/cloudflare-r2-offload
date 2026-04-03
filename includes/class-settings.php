@@ -149,19 +149,35 @@ class Settings {
     }
 
     public function sanitize_account_id( $value ): string {
-        $value = sanitize_text_field( $value );
-        // Cloudflare account IDs are 32-char hex strings.
-        if ( $value && ! preg_match( '/^[a-f0-9]{32}$/', $value ) ) {
-            add_settings_error( 'r2_offload_account_id', 'invalid', __( 'Account ID must be a 32-character hex string.', 'cloudflare-r2-offload' ) );
+        // Strip whitespace — users frequently copy-paste with a trailing space.
+        $value = trim( sanitize_text_field( $value ) );
+        // Cloudflare Account IDs are hex strings, typically 32 chars but can vary.
+        // We validate presence of only hex characters rather than a fixed length
+        // so future Cloudflare account ID formats don't silently break the plugin.
+        if ( $value && ! preg_match( '/^[a-f0-9]+$/i', $value ) ) {
+            add_settings_error( 'r2_offload_account_id', 'invalid', __( 'Account ID must contain only hex characters (0-9, a-f).', 'cloudflare-r2-offload' ) );
         }
-        return $value;
+        return strtolower( $value );
     }
 
     public function sanitize_secret_key( $value ): string {
-        // If the user submitted the placeholder, keep the existing stored value.
-        if ( $value === '••••••••' || $value === '' ) {
+        // Strip leading/trailing whitespace — frequent with copy-paste.
+        $value = trim( (string) $value );
+
+        // Empty or the placeholder string → keep whatever is already stored.
+        // We use a plain ASCII placeholder in the form (see SettingsPage) so this
+        // comparison is always byte-safe regardless of browser encoding.
+        if ( $value === '' || $value === '__R2_SECRET_UNCHANGED__' ) {
             return get_option( 'r2_offload_secret_access_key', '' );
         }
+
+        // If the stored value is already our base64-encoded ciphertext AND the submitted
+        // value matches it exactly, the user somehow submitted the raw ciphertext — keep it.
+        $existing = get_option( 'r2_offload_secret_access_key', '' );
+        if ( $existing && $value === $existing ) {
+            return $existing;
+        }
+
         return $this->encrypt( sanitize_text_field( $value ) );
     }
 

@@ -186,9 +186,18 @@ class Migration {
     }
 
     private function ajax_test_connection(): void {
-        // Re-instantiate R2Client to ensure fresh credentials (user may have just saved).
-        $r2     = Plugin::get_instance()->r2;
-        $result = $r2->test_connection();
+        // Flush the settings in-request cache so we read the values currently in the DB,
+        // not the values that were in the DB when the plugin booted. This is critical when
+        // the user saves settings and then immediately clicks Test Connection in the same
+        // page load (or when the AJAX request reuses a persistent PHP-FPM opcode cache).
+        $plugin = Plugin::get_instance();
+        $plugin->settings->flush_cache();
+
+        // Build a completely fresh R2Client — do NOT reuse the singleton's cached client
+        // which was instantiated at boot time with the old (possibly empty) credentials.
+        $fresh_r2 = new \R2Offload\R2Client( $plugin->settings, $plugin->logger );
+        $result   = $fresh_r2->test_connection();
+
         if ( $result['success'] ) {
             wp_send_json_success( $result );
         } else {

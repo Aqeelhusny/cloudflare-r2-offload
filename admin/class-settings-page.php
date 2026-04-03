@@ -48,10 +48,10 @@ class SettingsPage {
                         <td>
                             <?php $has_secret = ! empty( get_option( 'r2_offload_secret_access_key', '' ) ); ?>
                             <input type="password" id="r2_secret_key" name="r2_offload_secret_access_key"
-                                   value="<?php echo $has_secret ? esc_attr( '••••••••' ) : ''; ?>"
+                                   value="<?php echo $has_secret ? '__R2_SECRET_UNCHANGED__' : ''; ?>"
                                    class="regular-text" autocomplete="new-password" />
                             <?php if ( $has_secret ) : ?>
-                                <p class="description"><?php esc_html_e( 'Leave unchanged to keep the existing secret key.', 'cloudflare-r2-offload' ); ?></p>
+                                <p class="description"><?php esc_html_e( 'A secret key is saved. Clear this field and enter a new one to replace it, or leave it as-is to keep the existing key.', 'cloudflare-r2-offload' ); ?></p>
                             <?php endif; ?>
                         </td>
                     </tr>

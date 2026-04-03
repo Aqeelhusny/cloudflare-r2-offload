@@ -165,6 +165,11 @@ class R2Client {
             ];
         }
 
+        $account_id = $this->settings->get_account_id();
+        $key_id     = $this->settings->get_access_key_id();
+        $secret     = $this->settings->get_secret_access_key();
+        $bucket     = $this->settings->get_bucket();
+
         $client = $this->get_client( true );
         if ( ! $client ) {
             return [ 'success' => false, 'message' => __( 'Could not build R2 client — check credentials.', 'cloudflare-r2-offload' ) ];
@@ -174,7 +179,7 @@ class R2Client {
             // Object Read & Write tokens. ListObjectsV2 (MaxKeys=1) works with any
             // token that has object-level read access and is the correct test for R2.
             $client->listObjectsV2( [
-                'Bucket'  => $this->settings->get_bucket(),
+                'Bucket'  => $bucket,
                 'MaxKeys' => 1,
             ] );
             return [ 'success' => true, 'message' => __( 'Connection successful.', 'cloudflare-r2-offload' ) ];
@@ -186,6 +191,15 @@ class R2Client {
                     __( 'R2 error: %s', 'cloudflare-r2-offload' ),
                     $e->getAwsErrorCode() ?: $e->getMessage()
                 ),
+                // Diagnostic info — helps identify credential mismatches.
+                // Shows only safe metadata, never the full secret.
+                'debug' => [
+                    'account_id'    => $account_id,
+                    'access_key_id' => $key_id,
+                    'secret_length' => strlen( $secret ),
+                    'secret_start'  => $secret ? substr( $secret, 0, 4 ) . '…' : '(empty)',
+                    'bucket'        => $bucket,
+                ],
             ];
         }
     }

@@ -354,7 +354,15 @@
             if (res.success) {
                 $result.text('✓ ' + res.data.message).addClass('r2-ok');
             } else {
-                $result.text('✗ ' + (res.data && res.data.message)).addClass('r2-fail');
+                var msg = '✗ ' + (res.data && res.data.message || 'Error');
+                if (res.data && res.data.debug) {
+                    var d = res.data.debug;
+                    msg += '\n[account_id: ' + d.account_id +
+                           ' | key_id: ' + d.access_key_id +
+                           ' | secret: ' + d.secret_start + ' (' + d.secret_length + ' chars)' +
+                           ' | bucket: ' + d.bucket + ']';
+                }
+                $result.text(msg).addClass('r2-fail').css('white-space', 'pre-wrap');
             }
         }).fail(function () {
             $btn.prop('disabled', false);

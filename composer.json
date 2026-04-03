@@ -1,0 +1,22 @@
+{
+    "name": "yourvendor/cloudflare-r2-offload",
+    "description": "WordPress plugin to offload media library to Cloudflare R2",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0+",
+    "require": {
+        "php": ">=7.4",
+        "aws/aws-sdk-php": "^3.0"
+    },
+    "autoload": {
+        "classmap": [
+            "includes/",
+            "admin/"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "vendor-dir": "vendor"
+    },
+    "prefer-stable": true
+}

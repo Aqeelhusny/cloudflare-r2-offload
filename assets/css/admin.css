@@ -1,0 +1,152 @@
+/* ============================================================
+   Cloudflare R2 Offload — Admin Styles
+   ============================================================ */
+
+.r2-offload-wrap {
+    max-width: 900px;
+}
+
+.r2-section-title {
+    border-top: 1px solid #ddd;
+    padding-top: 16px;
+    margin-top: 24px;
+    font-size: 1.1em;
+}
+
+/* ---- Stats bar ---- */
+.r2-stats-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.r2-stat {
+    flex: 1 1 150px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 16px 20px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+
+.r2-stat--success { border-left: 4px solid #00a32a; }
+.r2-stat--error   { border-left: 4px solid #d63638; }
+.r2-stat--pending { border-left: 4px solid #dba617; }
+
+.r2-stat-number {
+    display: block;
+    font-size: 2em;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #1d2327;
+}
+
+.r2-stat-label {
+    display: block;
+    font-size: 0.8em;
+    color: #646970;
+    margin-top: 4px;
+}
+
+/* ---- Progress bar ---- */
+.r2-progress-wrap {
+    margin: 16px 0;
+}
+
+.r2-progress-bar-track {
+    background: #f0f0f1;
+    border-radius: 4px;
+    height: 20px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.r2-progress-bar-fill {
+    height: 100%;
+    background: #00a32a;
+    transition: width 0.4s ease;
+    min-width: 0;
+}
+
+.r2-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85em;
+    color: #646970;
+    margin-top: 4px;
+}
+
+/* ---- Controls ---- */
+.r2-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0 24px;
+}
+
+/* ---- Messages ---- */
+.r2-message {
+    padding: 10px 16px;
+    border-radius: 4px;
+    margin: 8px 0;
+}
+
+.r2-inline-result {
+    margin-left: 10px;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.r2-ok   { color: #00a32a; }
+.r2-fail { color: #d63638; }
+
+/* ---- Chart ---- */
+.r2-chart-wrap {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 20px;
+    margin: 16px 0 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+
+/* ---- File Manager ---- */
+.r2-fm-filter {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 16px 0;
+    flex-wrap: wrap;
+}
+
+.r2-fm-table td,
+.r2-fm-table th {
+    word-break: break-all;
+}
+
+.r2-fm-pagination {
+    margin: 12px 0 24px;
+}
+
+/* ---- Logs ---- */
+.r2-logs-section {
+    margin-top: 32px;
+    border-top: 1px solid #ddd;
+    padding-top: 16px;
+}
+
+.r2-log-level {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.75em;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.r2-log-error   .r2-log-level { background: #d63638; color: #fff; }
+.r2-log-warning .r2-log-level { background: #dba617; color: #fff; }
+.r2-log-info    .r2-log-level { background: #0073aa; color: #fff; }
+.r2-log-debug   .r2-log-level { background: #787c82; color: #fff; }

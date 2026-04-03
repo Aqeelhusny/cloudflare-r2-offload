@@ -86,9 +86,34 @@
         ajaxAction('r2_offload_start_migration', '#r2-btn-start', R2Offload.i18n.starting, function (data) {
             showMessage(data.message, 'success');
             $('#r2-btn-pause').show();
+            $('#r2-btn-run-now').show();
             $('#r2-btn-cancel').show();
             $('#r2-progress-wrap').show();
             startPolling();
+        });
+    });
+
+    $('#r2-btn-run-now').on('click', function () {
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Processing…');
+        $.post(R2Offload.ajaxUrl, {
+            action: 'r2_offload_run_batch_now',
+            nonce:  R2Offload.nonce
+        }, function (res) {
+            $btn.prop('disabled', false).text('Process Batch Now');
+            if (res.success) {
+                showMessage(res.data.message, 'success');
+                updateProgress(res.data);
+                if (res.data.pending === 0 && res.data.processing === 0) {
+                    $('#r2-btn-run-now').hide();
+                    stopPolling();
+                }
+            } else {
+                showMessage((res.data && res.data.message) || 'Batch failed.', 'error');
+            }
+        }).fail(function () {
+            $btn.prop('disabled', false).text('Process Batch Now');
+            showMessage('Request failed.', 'error');
         });
     });
 

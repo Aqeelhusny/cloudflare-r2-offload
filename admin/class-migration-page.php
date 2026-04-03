@@ -81,6 +81,11 @@ class MigrationPage {
                 <button type="button" id="r2-btn-start" class="button button-primary">
                     <?php esc_html_e( 'Start Migration', 'cloudflare-r2-offload' ); ?>
                 </button>
+                <button type="button" id="r2-btn-run-now" class="button"
+                        style="<?php echo $pending > 0 ? '' : 'display:none;'; ?>"
+                        title="<?php esc_attr_e( 'Manually process one batch now — use this if cron is not running.', 'cloudflare-r2-offload' ); ?>">
+                    <?php esc_html_e( 'Process Batch Now', 'cloudflare-r2-offload' ); ?>
+                </button>
                 <button type="button" id="r2-btn-pause" class="button"
                         style="<?php echo ( ! $paused && $pending > 0 ) ? '' : 'display:none;'; ?>">
                     <?php esc_html_e( 'Pause', 'cloudflare-r2-offload' ); ?>

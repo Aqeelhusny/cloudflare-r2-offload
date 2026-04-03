@@ -22,6 +22,7 @@ class Migration {
     public function register_hooks(): void {
         $actions = [
             'r2_offload_save_credentials',
+            'r2_offload_run_batch_now',
             'r2_offload_start_migration',
             'r2_offload_pause_migration',
             'r2_offload_resume_migration',
@@ -66,6 +67,41 @@ class Migration {
     // AJAX handlers
     // -------------------------------------------------------------------------
 
+    /**
+     * Synchronously process one batch right now — bypasses cron scheduling.
+     * Used for debugging and for hosts where WP-Cron is unreliable.
+     */
+    private function ajax_run_batch_now(): void {
+        $plugin = Plugin::get_instance();
+
+        // Force-delete the lock so a stuck previous run doesn't block us.
+        delete_transient( 'r2_offload_batch_lock' );
+
+        $plugin->batch_processor->process_batch();
+
+        // Return current status after processing.
+        global $wpdb;
+        $table = $wpdb->prefix . 'r2_offload_migration_queue';
+        $counts = $wpdb->get_results(
+            "SELECT status, COUNT(*) as cnt FROM `{$table}` GROUP BY status",
+            OBJECT_K
+        );
+        $total      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
+        $complete   = isset( $counts['complete'] )   ? (int) $counts['complete']->cnt   : 0;
+        $failed     = isset( $counts['failed'] )     ? (int) $counts['failed']->cnt     : 0;
+        $pending    = isset( $counts['pending'] )    ? (int) $counts['pending']->cnt    : 0;
+        $processing = isset( $counts['processing'] ) ? (int) $counts['processing']->cnt : 0;
+
+        wp_send_json_success( [
+            'message'    => sprintf( __( 'Batch processed. Complete: %d, Pending: %d, Failed: %d', 'cloudflare-r2-offload' ), $complete, $pending + $processing, $failed ),
+            'total'      => $total,
+            'complete'   => $complete,
+            'failed'     => $failed,
+            'pending'    => $pending,
+            'processing' => $processing,
+        ] );
+    }
+
     private function ajax_start_migration(): void {
         global $wpdb;
 
@@ -104,8 +140,10 @@ class Migration {
             );
         }
 
-        // Schedule first batch.
-        wp_schedule_single_event( time() + 2, 'r2_offload_process_batch' );
+        // Schedule first batch and immediately trigger cron via loopback so it
+        // fires even on hosts where WP-Cron is not triggered by real traffic.
+        wp_schedule_single_event( time(), 'r2_offload_process_batch' );
+        spawn_cron();
 
         $this->logger->info( 'Migration started.', [ 'total' => count( $ids ) ] );
 
@@ -127,7 +165,8 @@ class Migration {
 
     private function ajax_resume_migration(): void {
         delete_option( 'r2_offload_migration_paused' );
-        wp_schedule_single_event( time() + 2, 'r2_offload_process_batch' );
+        wp_schedule_single_event( time(), 'r2_offload_process_batch' );
+        spawn_cron();
         $this->logger->info( 'Migration resumed.' );
         wp_send_json_success( [ 'message' => __( 'Migration resumed.', 'cloudflare-r2-offload' ) ] );
     }

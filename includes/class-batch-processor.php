@@ -93,10 +93,17 @@ class BatchProcessor {
                 wp_cache_flush();
             }
 
-            $result = $this->sync->sync_attachment( $attachment_id );
+            $result   = $this->sync->sync_attachment( $attachment_id );
             $item_now = current_time( 'mysql', true );
 
-            if ( $result['failed'] === 0 && $result['uploaded'] >= 0 ) {
+            // Treat a skipped-only result (not configured, excluded MIME, etc.) as a
+            // failure so it doesn't silently pass as complete with 0 uploads.
+            $is_success = $result['failed'] === 0 && ( $result['uploaded'] > 0 || $result['skipped'] > 0 );
+            // But pure-skip due to already-synced (skipped > 0, uploaded = 0) is fine —
+            // only flag as failure if nothing happened at all (all zeros = config problem).
+            $is_nothing = $result['uploaded'] === 0 && $result['failed'] === 0 && $result['skipped'] === 0;
+
+            if ( $is_success && ! $is_nothing ) {
                 $wpdb->update(
                     $table,
                     [ 'status' => 'complete', 'updated_at' => $item_now ],
@@ -107,7 +114,9 @@ class BatchProcessor {
             } else {
                 $retry_count = (int) $item->retry_count + 1;
                 $new_status  = $retry_count >= 3 ? 'failed' : 'pending';
-                $error_msg   = "Uploaded: {$result['uploaded']}, Failed: {$result['failed']}";
+                $error_msg   = $is_nothing
+                    ? 'Skipped: plugin not configured or credentials invalid.'
+                    : "Uploaded: {$result['uploaded']}, Failed: {$result['failed']}";
 
                 $wpdb->update(
                     $table,
@@ -130,8 +139,8 @@ class BatchProcessor {
         );
 
         if ( $pending_count > 0 ) {
-            // Schedule next batch in 5 seconds.
             wp_schedule_single_event( time() + 5, self::CRON_HOOK );
+            spawn_cron();
         } else {
             do_action( 'r2_offload_migration_complete' );
             $this->logger->info( 'Migration complete.' );

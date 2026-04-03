@@ -11,15 +11,15 @@ class Plugin {
     private static ?Plugin $instance = null;
 
     // Public for internal cross-class access (e.g. Migration -> R2Client).
-    public Settings       $settings;
-    public ErrorLogger    $logger;
-    public R2Client       $r2;
-    public AttachmentSync $sync;
+    public Settings        $settings;
+    public ErrorLogger     $logger;
+    public R2Client        $r2;
+    public AttachmentSync  $sync;
+    public BatchProcessor  $batch_processor;
 
-    private UploadHandler   $upload_handler;
-    private UrlRewriter     $url_rewriter;
-    private Migration       $migration;
-    private BatchProcessor  $batch_processor;
+    private UploadHandler  $upload_handler;
+    private UrlRewriter    $url_rewriter;
+    private Migration      $migration;
 
     private function __construct() {
         $this->boot();

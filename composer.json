@@ -4,10 +4,10 @@
     "type": "wordpress-plugin",
     "license": "GPL-2.0+",
     "require": {
-        "php": ">=7.4",
-        "aws/aws-sdk-php": "^3.0"
+        "php": ">=7.4"
     },
     "require-dev": {
+        "aws/aws-sdk-php": "^3.0",
         "brianhenryie/strauss": "^0.19"
     },
     "autoload": {
@@ -37,14 +37,13 @@
         }
     },
     "scripts": {
-        "post-install-cmd": [
-            "@strauss"
-        ],
-        "post-update-cmd": [
-            "@strauss"
-        ],
         "strauss": [
             "vendor/bin/strauss"
+        ],
+        "prefix-deps": [
+            "@composer install",
+            "@strauss",
+            "@composer dump-autoload --optimize"
         ]
     },
     "config": {

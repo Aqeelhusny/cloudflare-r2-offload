@@ -399,7 +399,7 @@
     // File manager — folder tree toggle
     // =========================================================================
 
-    $(document).on('click', '.r2-fm-folder-header', function () {
+    $(document).on('click', '.r2-fm-folder-header, .r2-fm-image-header', function () {
         var $header = $(this);
         var $body   = $('#' + $header.data('target'));
         var $icon   = $header.find('.r2-fm-folder-toggle');
@@ -409,11 +409,11 @@
 
     // Expand All / Collapse All
     $(document).on('click', '#r2-fm-expand-all', function () {
-        $('.r2-fm-folder-body').slideDown(200);
+        $('.r2-fm-folder-body, .r2-fm-image-body').slideDown(200);
         $('.r2-fm-folder-toggle').removeClass('dashicons-arrow-right-alt2').addClass('dashicons-arrow-down-alt2');
     });
     $(document).on('click', '#r2-fm-collapse-all', function () {
-        $('.r2-fm-folder-body').slideUp(200);
+        $('.r2-fm-folder-body, .r2-fm-image-body').slideUp(200);
         $('.r2-fm-folder-toggle').removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-right-alt2');
     });
 

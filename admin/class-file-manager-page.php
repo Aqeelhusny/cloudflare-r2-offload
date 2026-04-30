@@ -53,21 +53,60 @@ class FileManagerPage {
                 <?php endif; ?>
             </form>
 
-            <!-- Object tree -->
+            <!-- Object tree — grouped by base image -->
             <?php if ( empty( $objects ) ) : ?>
                 <p><?php esc_html_e( 'No objects found.', 'cloudflare-r2-offload' ); ?></p>
             <?php else : ?>
             <?php
-                // Group objects into a folder tree.
-                $tree = [];
+                // --------------------------------------------------------
+                // Group objects by base image name.
+                //
+                // WordPress generates thumbnails as:  name-300x300.jpg
+                // The original is:                     name.jpg
+                //
+                // We strip the -WxH suffix to find the base name, then
+                // group originals + thumbnails under one image card.
+                // --------------------------------------------------------
+                $image_groups = [];
+
                 foreach ( $objects as $obj ) {
                     $key = $obj['Key'] ?? '';
                     if ( ! $key ) continue;
-                    $dir = dirname( $key );
-                    if ( $dir === '.' ) $dir = '/';
-                    $tree[ $dir ][] = $obj;
+
+                    $filename = basename( $key );
+                    $dir      = dirname( $key );
+
+                    // Strip -WxH suffix to derive base image name.
+                    $base_name = preg_replace( '/-\d+x\d+(?=\.\w+$)/', '', $filename );
+                    $group_key = ( $dir !== '.' ? $dir . '/' : '' ) . $base_name;
+
+                    if ( ! isset( $image_groups[ $group_key ] ) ) {
+                        $image_groups[ $group_key ] = [
+                            'dir'       => $dir !== '.' ? $dir : '',
+                            'base_name' => $base_name,
+                            'original'  => null,
+                            'sizes'     => [],
+                        ];
+                    }
+
+                    $is_thumb = (bool) preg_match( '/-\d+x\d+\.\w+$/', $filename );
+                    if ( $is_thumb ) {
+                        // Extract the dimension label.
+                        preg_match( '/-(\d+x\d+)\.\w+$/', $filename, $m );
+                        $obj['_dimension'] = $m[1] ?? '';
+                        $image_groups[ $group_key ]['sizes'][] = $obj;
+                    } else {
+                        $image_groups[ $group_key ]['original'] = $obj;
+                    }
                 }
-                ksort( $tree );
+
+                ksort( $image_groups );
+
+                // Summary stats.
+                $total_images = count( $image_groups );
+                $total_files  = count( $objects );
+                $total_size   = 0;
+                foreach ( $objects as $o ) { $total_size += (int) ( $o['Size'] ?? 0 ); }
             ?>
 
             <div class="r2-fm-toolbar">
@@ -79,83 +118,130 @@ class FileManagerPage {
                 </button>
                 <span class="r2-fm-folder-meta" style="align-self:center;">
                     <?php
-                    $total_folders = count( $tree );
-                    $total_files   = count( $objects );
-                    $total_size    = 0;
-                    foreach ( $objects as $o ) { $total_size += (int) ( $o['Size'] ?? 0 ); }
                     printf(
-                        esc_html__( '%1$d folders, %2$d files, %3$s total', 'cloudflare-r2-offload' ),
-                        $total_folders,
+                        esc_html__( '%1$d images, %2$d files, %3$s total', 'cloudflare-r2-offload' ),
+                        $total_images,
                         $total_files,
                         esc_html( $this->format_bytes( $total_size ) )
                     );
                     ?>
                 </span>
             </div>
+
             <div class="r2-fm-tree">
-                <?php foreach ( $tree as $folder => $folder_objects ) :
-                    $file_count  = count( $folder_objects );
-                    $folder_size = 0;
-                    foreach ( $folder_objects as $obj ) {
-                        $folder_size += (int) ( $obj['Size'] ?? 0 );
+                <?php foreach ( $image_groups as $group_key => $group ) :
+                    $all_in_group = [];
+                    if ( $group['original'] ) $all_in_group[] = $group['original'];
+                    $all_in_group = array_merge( $all_in_group, $group['sizes'] );
+
+                    $group_file_count = count( $all_in_group );
+                    $group_size       = 0;
+                    foreach ( $all_in_group as $o ) { $group_size += (int) ( $o['Size'] ?? 0 ); }
+
+                    $card_id = 'r2-img-' . md5( $group_key );
+
+                    // Original info for the card header.
+                    $orig         = $group['original'];
+                    $orig_key     = $orig ? ( $orig['Key'] ?? '' ) : '';
+                    $orig_size    = $orig && isset( $orig['Size'] ) ? $this->format_bytes( (int) $orig['Size'] ) : '—';
+                    $orig_modified = '';
+                    if ( $orig && isset( $orig['LastModified'] ) ) {
+                        $orig_modified = $orig['LastModified'] instanceof \DateTimeInterface
+                            ? $orig['LastModified']->format( 'Y-m-d H:i' )
+                            : (string) $orig['LastModified'];
                     }
-                    $folder_id = 'r2-folder-' . md5( $folder );
+
+                    $orig_url = '';
+                    if ( $cdn_base && $orig_key ) {
+                        $relative = $path_prefix ? ltrim( substr( $orig_key, strlen( $path_prefix ) ), '/' ) : $orig_key;
+                        $orig_url = $cdn_base . '/' . $relative;
+                    }
+
+                    $thumb_count = count( $group['sizes'] );
                 ?>
-                <div class="r2-fm-folder">
-                    <div class="r2-fm-folder-header" data-target="<?php echo esc_attr( $folder_id ); ?>">
+                <div class="r2-fm-image-card">
+                    <div class="r2-fm-image-header" data-target="<?php echo esc_attr( $card_id ); ?>">
                         <span class="r2-fm-folder-toggle dashicons dashicons-arrow-right-alt2"></span>
-                        <span class="dashicons dashicons-category" style="color:#0073aa;margin-right:4px;"></span>
-                        <strong class="r2-fm-folder-name"><?php echo esc_html( $folder ); ?></strong>
-                        <span class="r2-fm-folder-meta">
-                            <?php echo esc_html( $file_count ); ?> <?php echo esc_html( _n( 'file', 'files', $file_count, 'cloudflare-r2-offload' ) ); ?>
-                            &middot; <?php echo esc_html( $this->format_bytes( $folder_size ) ); ?>
+                        <span class="dashicons dashicons-format-image" style="color:#0073aa;margin-right:6px;"></span>
+                        <div class="r2-fm-image-info">
+                            <strong class="r2-fm-image-name"><?php echo esc_html( $group['base_name'] ); ?></strong>
+                            <span class="r2-fm-image-path"><?php echo esc_html( $group['dir'] ); ?></span>
+                        </div>
+                        <span class="r2-fm-image-stats">
+                            <?php echo esc_html( $orig_size ); ?>
+                            <?php if ( $thumb_count > 0 ) : ?>
+                                &middot; <?php printf( esc_html__( '%d sizes', 'cloudflare-r2-offload' ), $thumb_count ); ?>
+                            <?php endif; ?>
+                            &middot; <?php echo esc_html( $this->format_bytes( $group_size ) ); ?> <?php esc_html_e( 'total', 'cloudflare-r2-offload' ); ?>
+                        </span>
+                        <span class="r2-fm-image-actions-inline">
+                            <?php if ( $orig_url ) : ?>
+                            <button type="button" class="button button-small r2-fm-copy" data-url="<?php echo esc_url( $orig_url ); ?>"
+                                    onclick="event.stopPropagation();">
+                                <?php esc_html_e( 'Copy URL', 'cloudflare-r2-offload' ); ?>
+                            </button>
+                            <?php endif; ?>
                         </span>
                     </div>
-                    <div class="r2-fm-folder-body" id="<?php echo esc_attr( $folder_id ); ?>" style="display:none;">
-                        <table class="wp-list-table widefat fixed striped r2-fm-table">
+
+                    <div class="r2-fm-image-body" id="<?php echo esc_attr( $card_id ); ?>" style="display:none;">
+                        <?php if ( $orig ) : ?>
+                        <div class="r2-fm-original-row">
+                            <span class="dashicons dashicons-media-default" style="color:#1d2327;margin-right:4px;vertical-align:middle;"></span>
+                            <strong><?php echo esc_html( basename( $orig_key ) ); ?></strong>
+                            <span class="r2-fm-size-tag r2-fm-size-tag--original"><?php esc_html_e( 'ORIGINAL', 'cloudflare-r2-offload' ); ?></span>
+                            <span class="r2-fm-detail"><?php echo esc_html( $orig_size ); ?></span>
+                            <span class="r2-fm-detail"><?php echo esc_html( $orig_modified ); ?></span>
+                            <span class="r2-fm-original-actions">
+                                <button type="button" class="button button-small button-link-delete r2-fm-delete"
+                                        data-key="<?php echo esc_attr( $orig_key ); ?>">
+                                    <?php esc_html_e( 'Delete', 'cloudflare-r2-offload' ); ?>
+                                </button>
+                            </span>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if ( ! empty( $group['sizes'] ) ) : ?>
+                        <table class="wp-list-table widefat fixed striped r2-fm-table r2-fm-sizes-table">
                             <thead>
                                 <tr>
-                                    <th><?php esc_html_e( 'File', 'cloudflare-r2-offload' ); ?></th>
+                                    <th><?php esc_html_e( 'Thumbnail', 'cloudflare-r2-offload' ); ?></th>
+                                    <th style="width:90px;"><?php esc_html_e( 'Dimensions', 'cloudflare-r2-offload' ); ?></th>
                                     <th style="width:80px;"><?php esc_html_e( 'Size', 'cloudflare-r2-offload' ); ?></th>
-                                    <th style="width:140px;"><?php esc_html_e( 'Last Modified', 'cloudflare-r2-offload' ); ?></th>
-                                    <th style="width:160px;"><?php esc_html_e( 'Actions', 'cloudflare-r2-offload' ); ?></th>
+                                    <th style="width:130px;"><?php esc_html_e( 'Last Modified', 'cloudflare-r2-offload' ); ?></th>
+                                    <th style="width:140px;"><?php esc_html_e( 'Actions', 'cloudflare-r2-offload' ); ?></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ( $folder_objects as $obj ) :
-                                    $key      = $obj['Key'] ?? '';
-                                    $filename = basename( $key );
-                                    $size     = isset( $obj['Size'] ) ? $this->format_bytes( (int) $obj['Size'] ) : '—';
-                                    $modified = isset( $obj['LastModified'] ) ? ( $obj['LastModified'] instanceof \DateTimeInterface ? $obj['LastModified']->format( 'Y-m-d H:i' ) : (string) $obj['LastModified'] ) : '—';
-                                    $public_url = '';
+                                <?php foreach ( $group['sizes'] as $thumb ) :
+                                    $t_key       = $thumb['Key'] ?? '';
+                                    $t_filename  = basename( $t_key );
+                                    $t_size      = isset( $thumb['Size'] ) ? $this->format_bytes( (int) $thumb['Size'] ) : '—';
+                                    $t_dim       = $thumb['_dimension'] ?? '';
+                                    $t_modified  = isset( $thumb['LastModified'] ) ? ( $thumb['LastModified'] instanceof \DateTimeInterface ? $thumb['LastModified']->format( 'Y-m-d H:i' ) : (string) $thumb['LastModified'] ) : '—';
+                                    $t_url = '';
                                     if ( $cdn_base ) {
-                                        $relative   = $path_prefix ? ltrim( substr( $key, strlen( $path_prefix ) ), '/' ) : $key;
-                                        $public_url = $cdn_base . '/' . $relative;
+                                        $t_rel = $path_prefix ? ltrim( substr( $t_key, strlen( $path_prefix ) ), '/' ) : $t_key;
+                                        $t_url = $cdn_base . '/' . $t_rel;
                                     }
-
-                                    // Detect thumbnail vs original by size suffix pattern.
-                                    $is_thumb = (bool) preg_match( '/-\d+x\d+\.\w+$/', $filename );
                                 ?>
-                                <tr data-key="<?php echo esc_attr( $key ); ?>">
-                                    <td title="<?php echo esc_attr( $key ); ?>">
-                                        <span class="dashicons <?php echo $is_thumb ? 'dashicons-format-image' : 'dashicons-media-default'; ?>"
-                                              style="font-size:16px;width:16px;height:16px;vertical-align:middle;margin-right:4px;color:<?php echo $is_thumb ? '#787c82' : '#1d2327'; ?>;"></span>
-                                        <?php echo esc_html( $filename ); ?>
-                                        <?php if ( $is_thumb ) : ?>
-                                            <span class="r2-fm-size-tag"><?php esc_html_e( 'thumb', 'cloudflare-r2-offload' ); ?></span>
-                                        <?php endif; ?>
+                                <tr data-key="<?php echo esc_attr( $t_key ); ?>">
+                                    <td title="<?php echo esc_attr( $t_key ); ?>">
+                                        <span class="dashicons dashicons-format-image" style="font-size:14px;width:14px;height:14px;vertical-align:middle;margin-right:4px;color:#787c82;"></span>
+                                        <?php echo esc_html( $t_filename ); ?>
                                     </td>
-                                    <td><?php echo esc_html( $size ); ?></td>
-                                    <td><?php echo esc_html( $modified ); ?></td>
+                                    <td><span class="r2-fm-dim-tag"><?php echo esc_html( $t_dim ); ?></span></td>
+                                    <td><?php echo esc_html( $t_size ); ?></td>
+                                    <td><?php echo esc_html( $t_modified ); ?></td>
                                     <td>
-                                        <?php if ( $public_url ) : ?>
+                                        <?php if ( $t_url ) : ?>
                                         <button type="button" class="button button-small r2-fm-copy"
-                                                data-url="<?php echo esc_url( $public_url ); ?>">
-                                            <?php esc_html_e( 'Copy URL', 'cloudflare-r2-offload' ); ?>
+                                                data-url="<?php echo esc_url( $t_url ); ?>">
+                                            <?php esc_html_e( 'Copy', 'cloudflare-r2-offload' ); ?>
                                         </button>
                                         <?php endif; ?>
                                         <button type="button" class="button button-small button-link-delete r2-fm-delete"
-                                                data-key="<?php echo esc_attr( $key ); ?>">
+                                                data-key="<?php echo esc_attr( $t_key ); ?>">
                                             <?php esc_html_e( 'Delete', 'cloudflare-r2-offload' ); ?>
                                         </button>
                                     </td>
@@ -163,6 +249,7 @@ class FileManagerPage {
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <?php endforeach; ?>

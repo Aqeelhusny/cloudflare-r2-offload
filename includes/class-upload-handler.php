@@ -66,6 +66,11 @@ class UploadHandler {
             return $metadata;
         }
 
+        if ( $this->settings->get_background_offload() ) {
+            $this->enqueue_for_background( $attachment_id );
+            return $metadata;
+        }
+
         // Always re-sync: WooCommerce may have added new sizes since the last sync.
         // AttachmentSync handles skipping individual files that are already on R2
         // (via the r2_offload_keys postmeta diff logic).
@@ -79,6 +84,49 @@ class UploadHandler {
         ] );
 
         return $metadata;
+    }
+
+    /**
+     * Enqueue an attachment for background R2 offload via WP-Cron.
+     * Inserts into the migration queue table and schedules the batch processor.
+     */
+    private function enqueue_for_background( int $attachment_id ): void {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'r2_offload_migration_queue';
+        $now   = current_time( 'mysql', true );
+
+        $exists = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT id FROM `{$table}` WHERE attachment_id = %d AND status IN ('pending', 'processing')",
+                $attachment_id
+            )
+        );
+
+        if ( $exists ) {
+            $this->logger->debug( 'Attachment already queued for background offload.', [ 'attachment_id' => $attachment_id ] );
+            return;
+        }
+
+        $wpdb->replace(
+            $table,
+            [
+                'attachment_id' => $attachment_id,
+                'status'        => 'pending',
+                'retry_count'   => 0,
+                'error_message' => null,
+                'created_at'    => $now,
+                'updated_at'    => $now,
+            ],
+            [ '%d', '%s', '%d', '%s', '%s', '%s' ]
+        );
+
+        if ( ! wp_next_scheduled( 'r2_offload_process_batch' ) ) {
+            wp_schedule_single_event( time() + 5, 'r2_offload_process_batch' );
+            spawn_cron();
+        }
+
+        $this->logger->info( 'Attachment queued for background R2 offload.', [ 'attachment_id' => $attachment_id ] );
     }
 
     /**

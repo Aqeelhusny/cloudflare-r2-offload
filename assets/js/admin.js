@@ -522,6 +522,90 @@
     });
 
     // =========================================================================
+    // Background Offload Queue — polling and log refresh
+    // =========================================================================
+
+    var bgQueuePollInterval = null;
+    var BG_QUEUE_POLL_MS = 5000;
+
+    function startBgQueuePolling() {
+        if (bgQueuePollInterval) return;
+        if (!$('#r2-bg-queue-pending').length) return;
+
+        bgQueuePollInterval = setInterval(function () {
+            if (document.hidden) return;
+            $.post(R2Offload.ajaxUrl, {
+                action: 'r2_offload_background_queue_status',
+                nonce:  R2Offload.nonce
+            }, function (res) {
+                if (!res.success) return;
+                var d = res.data;
+                $('#r2-bg-queue-pending').text(d.queue_pending || 0);
+                $('#r2-bg-queue-synced').text(d.synced || 0);
+                $('#r2-bg-queue-failed').text(d.queue_failed || 0);
+                $('#r2-bg-queue-next-cron').text(d.next_cron || '—');
+
+                // Also update the main stats cards.
+                if (d.all_attachments !== undefined) $('#r2-stat-total-attachments').text(d.all_attachments);
+                if (d.synced !== undefined) $('#r2-stat-synced').text(d.synced);
+                $('#r2-stat-pending').text(d.queue_pending || 0);
+                $('#r2-stat-failed').text(d.queue_failed || 0);
+            });
+        }, BG_QUEUE_POLL_MS);
+    }
+
+    if ($('#r2-bg-queue-pending').length) {
+        startBgQueuePolling();
+    }
+
+    function refreshBgLogs() {
+        $.post(R2Offload.ajaxUrl, {
+            action: 'r2_offload_background_queue_logs',
+            nonce:  R2Offload.nonce,
+            limit:  50
+        }, function (res) {
+            if (!res.success || !res.data.logs) return;
+            var $tbody = $('#r2-bg-logs-body');
+            $tbody.empty();
+            if (res.data.logs.length === 0) {
+                $tbody.append('<tr><td colspan="4">No log entries yet.</td></tr>');
+                return;
+            }
+            $.each(res.data.logs, function (i, log) {
+                var levelClass = '';
+                if (log.level === 'error') levelClass = 'r2-log-error';
+                else if (log.level === 'warning') levelClass = 'r2-log-warning';
+
+                var badgeClass = 'r2-log-badge r2-log-badge--' + log.level;
+                var ctx = JSON.stringify(log.context || {});
+
+                $tbody.append(
+                    '<tr class="' + levelClass + '">' +
+                    '<td>' + escHtml(log.timestamp) + '</td>' +
+                    '<td><span class="' + badgeClass + '">' + escHtml(log.level.toUpperCase()) + '</span></td>' +
+                    '<td>' + escHtml(log.message) + '</td>' +
+                    '<td><code style="font-size:11px;word-break:break-all;">' + escHtml(ctx) + '</code></td>' +
+                    '</tr>'
+                );
+            });
+        });
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    $('#r2-bg-refresh-logs').on('click', function () {
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Refreshing…');
+        refreshBgLogs();
+        setTimeout(function () {
+            $btn.prop('disabled', false).text('Refresh');
+        }, 1000);
+    });
+
+    // =========================================================================
     // Save credentials (AJAX — submits only the R2 Connection fields)
     // =========================================================================
 

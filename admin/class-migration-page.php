@@ -108,6 +108,84 @@ class MigrationPage {
             <hr style="margin:32px 0 24px;">
 
             <!-- ============================================================
+                 Feature: Background Offload Queue
+                 ============================================================ -->
+            <?php if ( $this->settings->get_background_offload() ) : ?>
+            <h2><?php esc_html_e( 'Background Offload Queue', 'cloudflare-r2-offload' ); ?></h2>
+            <p class="description">
+                <?php esc_html_e( 'New media uploads are queued and offloaded to R2 in the background via WP-Cron. This prevents upload requests from blocking while waiting for R2 transfers.', 'cloudflare-r2-offload' ); ?>
+            </p>
+
+            <div class="r2-stats-bar" style="margin:12px 0 16px;">
+                <div class="r2-stat r2-stat--pending">
+                    <span class="r2-stat-number" id="r2-bg-queue-pending"><?php echo esc_html( $pending ); ?></span>
+                    <span class="r2-stat-label"><?php esc_html_e( 'Queued', 'cloudflare-r2-offload' ); ?></span>
+                </div>
+                <div class="r2-stat r2-stat--success">
+                    <span class="r2-stat-number" id="r2-bg-queue-synced"><?php echo esc_html( $synced_all ); ?></span>
+                    <span class="r2-stat-label"><?php esc_html_e( 'Synced', 'cloudflare-r2-offload' ); ?></span>
+                </div>
+                <div class="r2-stat r2-stat--error">
+                    <span class="r2-stat-number" id="r2-bg-queue-failed"><?php echo esc_html( $failed ); ?></span>
+                    <span class="r2-stat-label"><?php esc_html_e( 'Failed', 'cloudflare-r2-offload' ); ?></span>
+                </div>
+                <div class="r2-stat">
+                    <span class="r2-stat-number" id="r2-bg-queue-next-cron">
+                        <?php
+                        $next = wp_next_scheduled( 'r2_offload_process_batch' );
+                        echo $next ? esc_html( human_time_diff( time(), $next ) ) : '—';
+                        ?>
+                    </span>
+                    <span class="r2-stat-label"><?php esc_html_e( 'Next Batch', 'cloudflare-r2-offload' ); ?></span>
+                </div>
+            </div>
+
+            <div id="r2-bg-queue-message" class="r2-message" style="display:none;"></div>
+
+            <!-- Background Queue Logs -->
+            <div id="r2-bg-logs-wrap" style="margin-top:16px;">
+                <h3>
+                    <?php esc_html_e( 'Recent Activity', 'cloudflare-r2-offload' ); ?>
+                    <button type="button" id="r2-bg-refresh-logs" class="button button-small" style="margin-left:8px;">
+                        <?php esc_html_e( 'Refresh', 'cloudflare-r2-offload' ); ?>
+                    </button>
+                </h3>
+                <table class="wp-list-table widefat fixed striped" id="r2-bg-logs-table">
+                    <thead>
+                        <tr>
+                            <th style="width:180px;"><?php esc_html_e( 'Time', 'cloudflare-r2-offload' ); ?></th>
+                            <th style="width:80px;"><?php esc_html_e( 'Level', 'cloudflare-r2-offload' ); ?></th>
+                            <th><?php esc_html_e( 'Message', 'cloudflare-r2-offload' ); ?></th>
+                            <th style="width:250px;"><?php esc_html_e( 'Context', 'cloudflare-r2-offload' ); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody id="r2-bg-logs-body">
+                        <?php
+                        $bg_logs = $this->logger->get_recent_entries( 30 );
+                        if ( empty( $bg_logs ) ) :
+                        ?>
+                        <tr><td colspan="4"><?php esc_html_e( 'No log entries yet.', 'cloudflare-r2-offload' ); ?></td></tr>
+                        <?php else :
+                            foreach ( $bg_logs as $entry ) :
+                                $level_class = '';
+                                if ( ( $entry['level'] ?? '' ) === 'error' ) $level_class = 'r2-log-error';
+                                elseif ( ( $entry['level'] ?? '' ) === 'warning' ) $level_class = 'r2-log-warning';
+                        ?>
+                        <tr class="<?php echo esc_attr( $level_class ); ?>">
+                            <td><?php echo esc_html( $entry['timestamp'] ?? '' ); ?></td>
+                            <td><span class="r2-log-badge r2-log-badge--<?php echo esc_attr( $entry['level'] ?? 'info' ); ?>"><?php echo esc_html( strtoupper( $entry['level'] ?? 'INFO' ) ); ?></span></td>
+                            <td><?php echo esc_html( $entry['message'] ?? '' ); ?></td>
+                            <td><code style="font-size:11px;word-break:break-all;"><?php echo esc_html( wp_json_encode( $entry['context'] ?? [] ) ); ?></code></td>
+                        </tr>
+                        <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr style="margin:32px 0 24px;">
+            <?php endif; ?>
+
+            <!-- ============================================================
                  Feature: Restore from R2 → Server
                  ============================================================ -->
             <h2><?php esc_html_e( 'Restore Files from R2 to Server', 'cloudflare-r2-offload' ); ?></h2>

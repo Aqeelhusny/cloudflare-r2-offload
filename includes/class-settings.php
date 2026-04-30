@@ -32,6 +32,7 @@ class Settings {
         register_setting( self::OPTION_GROUP, 'r2_offload_batch_size',           [ $this, 'sanitize_batch_size' ] );
         register_setting( self::OPTION_GROUP, 'r2_offload_multipart_threshold',  [ $this, 'sanitize_multipart_threshold' ] );
         register_setting( self::OPTION_GROUP, 'r2_offload_multipart_concurrency',[ $this, 'sanitize_concurrency' ] );
+        register_setting( self::OPTION_GROUP, 'r2_offload_background_offload',  'absint' );
     }
 
     /**
@@ -49,6 +50,7 @@ class Settings {
             'r2_offload_multipart_threshold'   => 5 * 1024 * 1024,
             'r2_offload_multipart_concurrency' => 3,
             'r2_offload_excluded_mime_types'   => [],
+            'r2_offload_background_offload'   => 0,
             'r2_offload_db_version'            => R2_OFFLOAD_DB_VERSION,
         ];
         foreach ( $defaults as $key => $value ) {
@@ -103,6 +105,10 @@ class Settings {
 
     public function get_file_manager_enabled(): bool {
         return (bool) $this->cached( 'r2_offload_file_manager_enabled', 0 );
+    }
+
+    public function get_background_offload(): bool {
+        return (bool) $this->cached( 'r2_offload_background_offload', 0 );
     }
 
     public function get_excluded_mime_types(): array {

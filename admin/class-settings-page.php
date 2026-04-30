@@ -137,6 +137,19 @@ class SettingsPage {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e( 'Background Offload', 'cloudflare-r2-offload' ); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="r2_offload_background_offload" value="1"
+                                       <?php checked( get_option( 'r2_offload_background_offload', 0 ), 1 ); ?> />
+                                <?php esc_html_e( 'Queue new uploads for background processing instead of uploading to R2 synchronously.', 'cloudflare-r2-offload' ); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e( 'Recommended for bulk uploads (e.g. 100+ images via REST API). Uploads are queued and processed via WP-Cron in batches, keeping your site responsive. Requires "Auto-upload New Media" to be enabled.', 'cloudflare-r2-offload' ); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><?php esc_html_e( 'Delete Local Files', 'cloudflare-r2-offload' ); ?></th>
                         <td>
                             <label>

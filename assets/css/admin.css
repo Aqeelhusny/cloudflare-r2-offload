@@ -366,3 +366,22 @@
     font-weight: 600;
     color: #1d2327;
 }
+
+/* ---- Log badges (background queue) ---- */
+.r2-log-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.7em;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: #fff;
+}
+
+.r2-log-badge--info    { background: #0073aa; }
+.r2-log-badge--error   { background: #d63638; }
+.r2-log-badge--warning { background: #dba617; }
+.r2-log-badge--debug   { background: #787c82; }
+
+tr.r2-log-error   { background: #fef1f1 !important; }
+tr.r2-log-warning { background: #fef8ee !important; }

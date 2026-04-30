@@ -44,6 +44,9 @@ class Migration {
             // Feature: Restore & desync — restore from R2, verify, delete from R2.
             'r2_offload_start_desync',
             'r2_offload_desync_status',
+            // Feature: Background offload queue stats and logs.
+            'r2_offload_background_queue_status',
+            'r2_offload_background_queue_logs',
         ];
         foreach ( $actions as $action ) {
             add_action( "wp_ajax_{$action}", [ $this, 'handle_ajax' ] );
@@ -555,5 +558,61 @@ class Migration {
             'failed' => (int) get_option( 'r2_offload_desync_failed', 0 ),
             'paused' => (bool) get_option( 'r2_offload_desync_paused', false ),
         ] );
+    }
+
+    // =========================================================================
+    // Feature: Background offload queue stats and logs
+    // =========================================================================
+
+    private function ajax_background_queue_status(): void {
+        global $wpdb;
+        $table = $wpdb->prefix . 'r2_offload_migration_queue';
+
+        $counts = $wpdb->get_results(
+            $wpdb->prepare( "SELECT status, COUNT(*) as cnt FROM `{$table}` WHERE %d GROUP BY status", 1 ),
+            OBJECT_K
+        );
+
+        $pending    = isset( $counts['pending'] )    ? (int) $counts['pending']->cnt    : 0;
+        $processing = isset( $counts['processing'] ) ? (int) $counts['processing']->cnt : 0;
+        $complete   = isset( $counts['complete'] )   ? (int) $counts['complete']->cnt   : 0;
+        $failed     = isset( $counts['failed'] )     ? (int) $counts['failed']->cnt     : 0;
+
+        $all_attachments = (int) $wpdb->get_var(
+            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s", 'attachment' )
+        );
+        $synced = (int) $wpdb->get_var(
+            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s", '_r2_offload_synced', '1' )
+        );
+
+        $next_cron = wp_next_scheduled( 'r2_offload_process_batch' );
+
+        wp_send_json_success( [
+            'queue_pending'    => $pending + $processing,
+            'queue_complete'   => $complete,
+            'queue_failed'     => $failed,
+            'all_attachments'  => $all_attachments,
+            'synced'           => $synced,
+            'next_cron'        => $next_cron ? human_time_diff( time(), $next_cron ) : null,
+            'is_active'        => ( $pending + $processing ) > 0,
+            'background_enabled' => $this->settings->get_background_offload(),
+        ] );
+    }
+
+    private function ajax_background_queue_logs(): void {
+        $limit   = isset( $_POST['limit'] ) ? absint( $_POST['limit'] ) : 50;
+        $entries = $this->logger->get_recent_entries( max( 10, min( 200, $limit ) ) );
+
+        $logs = [];
+        foreach ( $entries as $entry ) {
+            $logs[] = [
+                'timestamp' => $entry['timestamp'] ?? '',
+                'level'     => $entry['level'] ?? 'info',
+                'message'   => $entry['message'] ?? '',
+                'context'   => $entry['context'] ?? [],
+            ];
+        }
+
+        wp_send_json_success( [ 'logs' => $logs ] );
     }
 }

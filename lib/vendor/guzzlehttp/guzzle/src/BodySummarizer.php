@@ -1,0 +1,33 @@
+<?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 30-April-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+
+namespace R2Offload\Vendor\GuzzleHttp;
+
+use R2Offload\Vendor\Psr\Http\Message\MessageInterface;
+
+final class BodySummarizer implements BodySummarizerInterface
+{
+    /**
+     * @var int|null
+     */
+    private $truncateAt;
+
+    public function __construct(?int $truncateAt = null)
+    {
+        $this->truncateAt = $truncateAt;
+    }
+
+    /**
+     * Returns a summarized message body.
+     */
+    public function summarize(MessageInterface $message): ?string
+    {
+        return $this->truncateAt === null
+            ? Psr7\Message::bodySummary($message)
+            : Psr7\Message::bodySummary($message, $this->truncateAt);
+    }
+}

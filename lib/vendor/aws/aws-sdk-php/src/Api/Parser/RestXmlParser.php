@@ -1,0 +1,52 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 30-April-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Api\Parser;
+
+use R2Offload\Vendor\Aws\Api\StructureShape;
+use R2Offload\Vendor\Aws\Api\Service;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
+
+/**
+ * @internal Implements REST-XML parsing (e.g., S3, CloudFront, etc...)
+ */
+class RestXmlParser extends AbstractRestParser
+{
+    use PayloadParserTrait;
+
+    /**
+     * @param Service   $api    Service description
+     * @param XmlParser $parser XML body parser
+     */
+    public function __construct(Service $api, ?XmlParser $parser = null)
+    {
+        parent::__construct($api);
+        $this->parser = $parser ?: new XmlParser();
+    }
+
+    protected function payload(
+        ResponseInterface $response,
+        StructureShape $member,
+        array &$result
+    ) {
+        $body = $response->getBody();
+        if ($body->isSeekable()) {
+            $body->rewind();
+        }
+
+        $result += $this->parseMemberFromStream($body, $member, $response);
+    }
+
+    public function parseMemberFromStream(
+        StreamInterface $stream,
+        StructureShape $member,
+        $response
+    ) {
+        $xml = $this->parseXml($stream, $response);
+        return $this->parser->parse($member, $xml);
+    }
+}

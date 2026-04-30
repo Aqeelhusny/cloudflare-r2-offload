@@ -1,0 +1,43 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 30-April-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Api\Serializer;
+
+use R2Offload\Vendor\Aws\Api\Shape;
+use R2Offload\Vendor\Aws\Api\ListShape;
+
+/**
+ * @internal
+ */
+class Ec2ParamBuilder extends QueryParamBuilder
+{
+    protected function queryName(Shape $shape, $default = null)
+    {
+        return ($shape['queryName']
+            ?: ucfirst(@$shape['locationName'] ?: ""))
+                ?: $default;
+    }
+
+    protected function isFlat(Shape $shape)
+    {
+        return false;
+    }
+
+    protected function format_list(
+        ListShape $shape,
+        array $value,
+        $prefix,
+        &$query
+    ) {
+        // Handle empty list serialization
+        if (!empty($value)) {
+            $items = $shape->getMember();
+            foreach ($value as $k => $v) {
+                $this->format($items, $v, $prefix . '.' . ($k + 1), $query);
+            }
+        }
+    }
+}

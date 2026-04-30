@@ -130,6 +130,81 @@
     margin: 12px 0 24px;
 }
 
+/* ---- File Manager Tree ---- */
+.r2-fm-tree {
+    margin: 16px 0;
+}
+
+.r2-fm-folder {
+    margin-bottom: 6px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.r2-fm-folder-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    cursor: pointer;
+    user-select: none;
+    background: #f9f9f9;
+    transition: background 0.15s;
+}
+
+.r2-fm-folder-header:hover {
+    background: #f0f0f1;
+}
+
+.r2-fm-folder-toggle {
+    margin-right: 6px;
+    color: #50575e;
+    transition: transform 0.2s;
+}
+
+.r2-fm-folder-name {
+    flex: 1;
+    font-size: 13px;
+}
+
+.r2-fm-folder-meta {
+    font-size: 12px;
+    color: #646970;
+    margin-left: 12px;
+    white-space: nowrap;
+}
+
+.r2-fm-folder-body {
+    border-top: 1px solid #eee;
+}
+
+.r2-fm-folder-body .r2-fm-table {
+    border: 0;
+    box-shadow: none;
+    margin: 0;
+}
+
+.r2-fm-size-tag {
+    display: inline-block;
+    background: #f0f0f1;
+    color: #646970;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 4px;
+    vertical-align: middle;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+}
+
+.r2-fm-toolbar {
+    display: flex;
+    gap: 6px;
+    margin: 12px 0 4px;
+}
+
 /* ---- R2 Status badges (Media Library column) ---- */
 .r2-badge {
     display: inline-block;

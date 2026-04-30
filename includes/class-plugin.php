@@ -86,6 +86,12 @@ class Plugin {
         $this->batch_processor = new BatchProcessor( $this->sync, $this->settings, $this->logger );
         $this->batch_processor->register_hooks();
 
+        // File Manager AJAX handlers (must register before admin-only gate
+        // because wp_ajax_ hooks fire on admin-ajax.php which is_admin() = true,
+        // but the hooks must be registered unconditionally within boot_full).
+        $file_manager = new Admin\FileManagerPage( $this->settings, $this->r2, $this->logger );
+        $file_manager->register_hooks();
+
         // Media Library row/bulk actions (admin only).
         if ( is_admin() ) {
             $media_library = new MediaLibrary( $this->sync, $this->settings );

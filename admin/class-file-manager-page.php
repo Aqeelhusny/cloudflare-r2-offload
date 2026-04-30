@@ -17,13 +17,19 @@ class FileManagerPage {
         $this->settings = $settings;
         $this->r2       = $r2;
         $this->logger   = $logger;
+    }
 
-        // Register AJAX for file manager actions.
+    public function register_hooks(): void {
         add_action( 'wp_ajax_r2_offload_fm_list',        [ $this, 'ajax_list' ] );
         add_action( 'wp_ajax_r2_offload_fm_delete_file', [ $this, 'ajax_delete_file' ] );
     }
 
     public function render(): void {
+        // Verify nonce on filter/pagination submissions (not present on first load).
+        if ( isset( $_GET['_wpnonce'] ) ) {
+            check_admin_referer( 'r2_offload_fm_filter' );
+        }
+
         $prefix     = isset( $_GET['prefix'] ) ? sanitize_text_field( wp_unslash( $_GET['prefix'] ) ) : '';
         $cdn_base   = untrailingslashit( $this->settings->get_cdn_base_url() );
         $path_prefix = $this->settings->get_path_prefix();
@@ -42,6 +48,7 @@ class FileManagerPage {
             <!-- Filter bar -->
             <form method="get" class="r2-fm-filter">
                 <input type="hidden" name="page" value="r2-offload-file-manager" />
+                <?php wp_nonce_field( 'r2_offload_fm_filter' ); ?>
                 <input type="text" name="prefix" value="<?php echo esc_attr( $prefix ); ?>"
                        placeholder="<?php esc_attr_e( 'Filter by prefix…', 'cloudflare-r2-offload' ); ?>"
                        class="regular-text" />
@@ -258,7 +265,7 @@ class FileManagerPage {
             <!-- Pagination -->
             <div class="r2-fm-pagination">
                 <?php if ( $next ) : ?>
-                <a href="<?php echo esc_url( add_query_arg( [ 'page' => 'r2-offload-file-manager', 'prefix' => $prefix, 'token' => $next ], admin_url( 'admin.php' ) ) ); ?>"
+                <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( [ 'page' => 'r2-offload-file-manager', 'prefix' => $prefix, 'token' => $next ], admin_url( 'admin.php' ) ), 'r2_offload_fm_filter' ) ); ?>"
                    class="button">
                     <?php esc_html_e( 'Next Page →', 'cloudflare-r2-offload' ); ?>
                 </a>

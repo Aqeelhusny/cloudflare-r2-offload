@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Cloudflare R2 Offload
- * Plugin URI:  https://github.com/yourvendor/cloudflare-r2-offload
+ * Plugin URI:  https://github.com/aqeelhusny/cloudflare-r2-offload
  * Description: Offload your entire WordPress media library to Cloudflare R2 with custom CDN domain support, bulk migration, file manager, upload stats, and optimized multipart uploads.
  * Version:     1.0.1
  * Author:      Aqeel Husny
- * Author URI:  https://yoursite.com
+ * Author URI:  https://github.com/aqeelhusny
  * License:     GPL-2.0+
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: cloudflare-r2-offload
@@ -29,7 +29,7 @@ if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 }
 
 // Plugin constants.
-define( 'R2_OFFLOAD_VERSION',    '1.0.0' );
+define( 'R2_OFFLOAD_VERSION',    '1.0.1' );
 define( 'R2_OFFLOAD_PATH',       plugin_dir_path( __FILE__ ) );
 define( 'R2_OFFLOAD_URL',        plugin_dir_url( __FILE__ ) );
 define( 'R2_OFFLOAD_BASENAME',   plugin_basename( __FILE__ ) );

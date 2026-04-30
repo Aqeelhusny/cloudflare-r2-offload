@@ -71,39 +71,30 @@ class StatsPage {
                 <canvas id="r2-uploads-chart" height="100"></canvas>
             </div>
 
-            <!-- Chart.js from CDN -->
-            <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-            <script>
-            (function() {
-                var ctx = document.getElementById('r2-uploads-chart');
-                if (!ctx) return;
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: <?php echo wp_json_encode( $labels ); ?>,
-                        datasets: [
-                            {
-                                label: <?php echo wp_json_encode( __( 'Uploads', 'cloudflare-r2-offload' ) ); ?>,
-                                data: <?php echo wp_json_encode( $uploads ); ?>,
-                                backgroundColor: 'rgba(54,162,235,0.7)',
-                                borderRadius: 4,
-                            },
-                            {
-                                label: <?php echo wp_json_encode( __( 'Failures', 'cloudflare-r2-offload' ) ); ?>,
-                                data: <?php echo wp_json_encode( $failures ); ?>,
-                                backgroundColor: 'rgba(214,54,56,0.7)',
-                                borderRadius: 4,
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { position: 'top' } },
-                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                    }
-                });
-            })();
-            </script>
+            <?php
+            wp_enqueue_script(
+                'r2-offload-chartjs',
+                R2_OFFLOAD_URL . 'assets/js/chart.umd.min.js',
+                [],
+                '4.4.7',
+                true
+            );
+
+            $chart_data = wp_json_encode( [
+                'labels'   => $labels,
+                'uploads'  => $uploads,
+                'failures' => $failures,
+                'i18n'     => [
+                    'uploads'  => __( 'Uploads', 'cloudflare-r2-offload' ),
+                    'failures' => __( 'Failures', 'cloudflare-r2-offload' ),
+                ],
+            ] );
+
+            wp_add_inline_script( 'r2-offload-chartjs', sprintf(
+                '(function(){var d=%s;var ctx=document.getElementById("r2-uploads-chart");if(!ctx)return;new Chart(ctx,{type:"bar",data:{labels:d.labels,datasets:[{label:d.i18n.uploads,data:d.uploads,backgroundColor:"rgba(54,162,235,0.7)",borderRadius:4},{label:d.i18n.failures,data:d.failures,backgroundColor:"rgba(214,54,56,0.7)",borderRadius:4}]},options:{responsive:true,plugins:{legend:{position:"top"}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});})();',
+                $chart_data
+            ) );
+            ?>
         </div>
         <?php
     }

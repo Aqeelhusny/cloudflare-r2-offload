@@ -15,9 +15,11 @@ class BatchProcessor {
     const CRON_HOOK         = 'r2_offload_process_batch';
     const RESTORE_HOOK      = 'r2_offload_process_restore_batch';
     const LOCAL_DEL_HOOK    = 'r2_offload_process_local_delete_batch';
+    const DESYNC_HOOK       = 'r2_offload_process_desync_batch';
     const LOCK_KEY          = 'r2_offload_batch_lock';
     const RESTORE_LOCK_KEY  = 'r2_offload_restore_lock';
     const LOCAL_DEL_LOCK    = 'r2_offload_local_del_lock';
+    const DESYNC_LOCK       = 'r2_offload_desync_lock';
     const LOCK_TTL          = 300; // 5 minutes
     const MAX_EXECUTION_SEC = 50;  // keep under PHP max_execution_time (usually 60s)
 
@@ -31,6 +33,7 @@ class BatchProcessor {
         add_action( self::CRON_HOOK,      [ $this, 'process_batch' ] );
         add_action( self::RESTORE_HOOK,   [ $this, 'process_restore_batch' ] );
         add_action( self::LOCAL_DEL_HOOK, [ $this, 'process_local_delete_batch' ] );
+        add_action( self::DESYNC_HOOK,    [ $this, 'process_desync_batch' ] );
     }
 
     /**
@@ -321,5 +324,75 @@ class BatchProcessor {
         delete_option( 'r2_offload_local_del_done' );
         delete_option( 'r2_offload_local_del_failed' );
         delete_option( 'r2_offload_local_del_paused' );
+    }
+
+    // =========================================================================
+    // Bulk Desync batch — restore from R2, verify, then delete from R2.
+    // =========================================================================
+
+    public function process_desync_batch(): void {
+        if ( get_option( 'r2_offload_desync_paused' ) ) {
+            return;
+        }
+        if ( get_transient( self::DESYNC_LOCK ) ) {
+            return;
+        }
+        set_transient( self::DESYNC_LOCK, 1, self::LOCK_TTL );
+
+        try {
+            $this->run_desync_batch();
+        } finally {
+            delete_transient( self::DESYNC_LOCK );
+        }
+    }
+
+    private function run_desync_batch(): void {
+        $queue      = (array) get_option( 'r2_offload_desync_queue', [] );
+        $batch_size = $this->settings->get_batch_size();
+        $batch      = array_splice( $queue, 0, $batch_size );
+
+        if ( empty( $batch ) ) {
+            $this->cleanup_desync_options();
+            do_action( 'r2_offload_desync_complete' );
+            $this->logger->info( 'Bulk restore & desync complete.' );
+            return;
+        }
+
+        update_option( 'r2_offload_desync_queue', $queue, false );
+
+        $done   = (int) get_option( 'r2_offload_desync_done',   0 );
+        $failed = (int) get_option( 'r2_offload_desync_failed', 0 );
+
+        foreach ( $batch as $attachment_id ) {
+            if ( function_exists( 'wp_cache_flush_runtime' ) ) {
+                wp_cache_flush_runtime();
+            }
+
+            $result = $this->sync->restore_and_desync_attachment( (int) $attachment_id );
+            if ( $result['desynced'] ) {
+                $done++;
+            } else {
+                $failed++;
+            }
+        }
+
+        update_option( 'r2_offload_desync_done',   $done,   false );
+        update_option( 'r2_offload_desync_failed', $failed, false );
+
+        if ( ! empty( $queue ) ) {
+            wp_schedule_single_event( time() + 5, self::DESYNC_HOOK );
+        } else {
+            $this->cleanup_desync_options();
+            do_action( 'r2_offload_desync_complete' );
+            $this->logger->info( 'Bulk restore & desync complete.', [ 'done' => $done, 'failed' => $failed ] );
+        }
+    }
+
+    private function cleanup_desync_options(): void {
+        delete_option( 'r2_offload_desync_queue' );
+        delete_option( 'r2_offload_desync_total' );
+        delete_option( 'r2_offload_desync_done' );
+        delete_option( 'r2_offload_desync_failed' );
+        delete_option( 'r2_offload_desync_paused' );
     }
 }

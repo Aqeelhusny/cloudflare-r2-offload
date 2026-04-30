@@ -169,6 +169,11 @@ class Admin {
                 'localDeleteStarting'   => __( 'Local delete queued — processing in background…', 'cloudflare-r2-offload' ),
                 'localDeleteComplete'   => __( 'All local files deleted.', 'cloudflare-r2-offload' ),
                 'deleteFailed'          => __( 'Delete failed', 'cloudflare-r2-offload' ),
+                // Restore & desync.
+                'confirmDesync'         => __( 'This will restore ALL files from R2 to the server, verify them, then DELETE them from R2. Your R2 bucket will be emptied. Continue?', 'cloudflare-r2-offload' ),
+                'desyncStarting'        => __( 'Restore & desync queued — processing in background…', 'cloudflare-r2-offload' ),
+                'desyncComplete'        => __( 'All files restored and removed from R2.', 'cloudflare-r2-offload' ),
+                'desyncCompleteFailed'  => __( '%d attachment(s) failed to desync. Check the error log.', 'cloudflare-r2-offload' ),
                 // Status badges.
                 'statusSynced'          => __( 'Synced', 'cloudflare-r2-offload' ),
                 'statusR2Only'          => __( 'R2 only', 'cloudflare-r2-offload' ),

@@ -203,6 +203,34 @@ class MigrationPage {
 
             <hr style="margin:32px 0 24px;">
 
+            <!-- ============================================================
+                 Feature: Restore & Desync — restore from R2, verify, delete from R2
+                 ============================================================ -->
+            <h2><?php esc_html_e( 'Restore & Remove from R2', 'cloudflare-r2-offload' ); ?></h2>
+            <p class="description">
+                <?php esc_html_e( 'Download all synced files from R2 back to the server, verify each file exists locally, then delete the copies from R2 and remove all sync metadata. Use this to fully disconnect from R2.', 'cloudflare-r2-offload' ); ?>
+            </p>
+            <p class="description" style="color:#d63638;font-weight:600;">
+                <?php esc_html_e( 'Warning: This will remove all files from your R2 bucket and clear sync status. Your files will only exist on the local server afterwards.', 'cloudflare-r2-offload' ); ?>
+            </p>
+            <div id="r2-desync-message" class="r2-message" style="display:none;"></div>
+            <div class="r2-progress-wrap" id="r2-desync-progress-wrap" style="display:none;">
+                <div class="r2-progress-bar-track">
+                    <div class="r2-progress-bar-fill r2-progress-bar-fill--delete" id="r2-desync-fill" style="width:0%;"></div>
+                </div>
+                <div class="r2-progress-label">
+                    <span id="r2-desync-text">0 / 0</span>
+                    <span id="r2-desync-pct">0%</span>
+                </div>
+            </div>
+            <div class="r2-controls">
+                <button type="button" id="r2-btn-desync" class="button button-primary" style="background:#d63638;border-color:#d63638;">
+                    <?php esc_html_e( 'Restore & Remove All from R2', 'cloudflare-r2-offload' ); ?>
+                </button>
+            </div>
+
+            <hr style="margin:32px 0 24px;">
+
             <!-- Error log -->
             <?php if ( ! empty( $recent_errors ) ) : ?>
             <h2><?php esc_html_e( 'Recent Errors', 'cloudflare-r2-offload' ); ?></h2>

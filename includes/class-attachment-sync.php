@@ -217,6 +217,60 @@ class AttachmentSync {
     }
 
     /**
+     * Restore an attachment from R2, verify local files exist, then delete from R2
+     * and clean all sync meta. This fully disconnects the attachment from R2.
+     *
+     * @return array{ restored: int, failed: int, skipped: int, desynced: bool }
+     */
+    public function restore_and_desync_attachment( int $attachment_id ): array {
+        $restore = $this->restore_from_r2( $attachment_id );
+        $result  = array_merge( $restore, [ 'desynced' => false ] );
+
+        if ( $restore['failed'] > 0 ) {
+            $this->logger->error( 'Restore & desync aborted: restore had failures.', [
+                'attachment_id' => $attachment_id,
+                'failed'        => $restore['failed'],
+            ] );
+            return $result;
+        }
+
+        // Verify every R2 key has a corresponding local file before deleting from R2.
+        $keys_json = get_post_meta( $attachment_id, '_r2_offload_keys', true );
+        $r2_keys   = $keys_json ? (array) json_decode( $keys_json, true ) : [];
+
+        if ( ! empty( $r2_keys ) ) {
+            $upload_dir   = wp_upload_dir();
+            $base_dir     = trailingslashit( $upload_dir['basedir'] );
+            $path_prefix  = $this->settings->get_path_prefix();
+            $prefix_strip = $path_prefix ? trailingslashit( $path_prefix ) : '';
+
+            foreach ( $r2_keys as $r2_key ) {
+                $relative   = $prefix_strip ? ltrim( substr( $r2_key, strlen( $prefix_strip ) ), '/' ) : ltrim( $r2_key, '/' );
+                $local_path = $base_dir . $relative;
+                if ( ! file_exists( $local_path ) ) {
+                    $this->logger->error( 'Restore & desync aborted: local file missing after restore.', [
+                        'attachment_id' => $attachment_id,
+                        'expected'      => $local_path,
+                    ] );
+                    $result['failed']++;
+                    return $result;
+                }
+            }
+        }
+
+        $this->desync_attachment( $attachment_id );
+        $result['desynced'] = true;
+
+        $this->logger->info( 'Attachment restored and desynced from R2.', [
+            'attachment_id' => $attachment_id,
+            'restored'      => $restore['restored'],
+            'skipped'       => $restore['skipped'],
+        ] );
+
+        return $result;
+    }
+
+    /**
      * Delete all local files for a synced attachment.
      * Sets _r2_offload_local_deleted = 1 so the status is visible in the UI.
      * Only operates on attachments that are confirmed synced to R2.

@@ -445,6 +445,83 @@
     });
 
     // =========================================================================
+    // Bulk restore & desync (restore from R2, verify, delete from R2)
+    // =========================================================================
+
+    var desyncPollInterval = null;
+
+    function updateDesyncProgress(done, total) {
+        var pct = total > 0 ? Math.round(done / total * 100) : 0;
+        $('#r2-desync-fill').css('width', pct + '%');
+        $('#r2-desync-text').text(done + ' / ' + total);
+        $('#r2-desync-pct').text(pct + '%');
+        $('#r2-desync-progress-wrap').show();
+    }
+
+    function showDesyncMessage(msg, type) {
+        $('#r2-desync-message').removeClass('notice-success notice-error notice-warning notice-info')
+            .addClass('notice notice-' + (type || 'info')).text(msg).show();
+    }
+
+    function startDesyncPolling(total) {
+        if (desyncPollInterval) return;
+        desyncPollInterval = setInterval(function () {
+            $.post(R2Offload.ajaxUrl, {
+                action: 'r2_offload_desync_status',
+                nonce:  R2Offload.nonce
+            }, function (res) {
+                if (!res.success) return;
+                var d = res.data;
+                var t = d.total || total;
+                if (d.total === 0 && d.done === 0 && total > 0) {
+                    clearInterval(desyncPollInterval);
+                    desyncPollInterval = null;
+                    updateDesyncProgress(total, total);
+                    showDesyncMessage(R2Offload.i18n.desyncComplete, 'success');
+                    $('#r2-btn-desync').prop('disabled', false);
+                    return;
+                }
+                updateDesyncProgress(d.done + d.failed, t);
+                if ((d.done + d.failed) >= t && t > 0) {
+                    clearInterval(desyncPollInterval);
+                    desyncPollInterval = null;
+                    if (d.failed > 0) {
+                        showDesyncMessage(R2Offload.i18n.desyncCompleteFailed.replace('%d', d.failed), 'warning');
+                    } else {
+                        showDesyncMessage(R2Offload.i18n.desyncComplete, 'success');
+                    }
+                    $('#r2-btn-desync').prop('disabled', false);
+                }
+            });
+        }, 3000);
+    }
+
+    $('#r2-btn-desync').on('click', function () {
+        if (!confirm(R2Offload.i18n.confirmDesync)) return;
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+        showDesyncMessage(R2Offload.i18n.desyncStarting, 'info');
+
+        $.post(R2Offload.ajaxUrl, {
+            action: 'r2_offload_start_desync',
+            nonce:  R2Offload.nonce
+        }, function (res) {
+            if (res.success) {
+                showDesyncMessage(res.data.message, 'success');
+                if (!res.data.total || res.data.total === 0) {
+                    $btn.prop('disabled', false);
+                    return;
+                }
+                updateDesyncProgress(0, res.data.total);
+                startDesyncPolling(res.data.total);
+            } else {
+                $btn.prop('disabled', false);
+                showDesyncMessage((res.data && res.data.message) || 'Error.', 'error');
+            }
+        });
+    });
+
+    // =========================================================================
     // Save credentials (AJAX — submits only the R2 Connection fields)
     // =========================================================================
 

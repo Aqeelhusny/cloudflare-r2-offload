@@ -41,6 +41,9 @@ class Migration {
             // Feature: Bulk delete local files for all already-synced attachments.
             'r2_offload_start_local_delete',
             'r2_offload_local_delete_status',
+            // Feature: Restore & desync — restore from R2, verify, delete from R2.
+            'r2_offload_start_desync',
+            'r2_offload_desync_status',
         ];
         foreach ( $actions as $action ) {
             add_action( "wp_ajax_{$action}", [ $this, 'handle_ajax' ] );
@@ -492,6 +495,51 @@ class Migration {
                 $result['deleted']
             ),
             'result'  => $result,
+        ] );
+    }
+
+    // =========================================================================
+    // Feature: Bulk restore & desync — restore from R2, verify, delete from R2.
+    // =========================================================================
+
+    private function ajax_start_desync(): void {
+        global $wpdb;
+
+        $ids = $wpdb->get_col(
+            "SELECT post_id FROM {$wpdb->postmeta}
+             WHERE meta_key = '_r2_offload_synced' AND meta_value = '1'"
+        );
+
+        if ( empty( $ids ) ) {
+            wp_send_json_success( [ 'message' => __( 'No synced attachments to desync.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
+        }
+
+        update_option( 'r2_offload_desync_queue', array_map( 'intval', $ids ), false );
+        update_option( 'r2_offload_desync_total', count( $ids ), false );
+        update_option( 'r2_offload_desync_done',  0, false );
+        update_option( 'r2_offload_desync_failed', 0, false );
+        delete_option( 'r2_offload_desync_paused' );
+
+        wp_schedule_single_event( time() + 2, 'r2_offload_process_desync_batch' );
+
+        $this->logger->info( 'Bulk restore & desync started.', [ 'total' => count( $ids ) ] );
+
+        wp_send_json_success( [
+            'message' => sprintf(
+                /* translators: %d: number */
+                __( 'Restore & desync started. %d attachments queued.', 'cloudflare-r2-offload' ),
+                count( $ids )
+            ),
+            'total'   => count( $ids ),
+        ] );
+    }
+
+    private function ajax_desync_status(): void {
+        wp_send_json_success( [
+            'total'  => (int) get_option( 'r2_offload_desync_total',  0 ),
+            'done'   => (int) get_option( 'r2_offload_desync_done',   0 ),
+            'failed' => (int) get_option( 'r2_offload_desync_failed', 0 ),
+            'paused' => (bool) get_option( 'r2_offload_desync_paused', false ),
         ] );
     }
 }

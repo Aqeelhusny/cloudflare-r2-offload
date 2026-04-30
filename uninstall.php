@@ -47,6 +47,12 @@ $option_keys = [
     'r2_offload_local_del_done',
     'r2_offload_local_del_failed',
     'r2_offload_local_del_paused',
+    // Bulk desync queue.
+    'r2_offload_desync_queue',
+    'r2_offload_desync_total',
+    'r2_offload_desync_done',
+    'r2_offload_desync_failed',
+    'r2_offload_desync_paused',
 ];
 
 foreach ( $option_keys as $key ) {
@@ -71,9 +77,11 @@ $wpdb->query(
 wp_clear_scheduled_hook( 'r2_offload_process_batch' );
 wp_clear_scheduled_hook( 'r2_offload_process_restore_batch' );
 wp_clear_scheduled_hook( 'r2_offload_process_local_delete_batch' );
+wp_clear_scheduled_hook( 'r2_offload_process_desync_batch' );
 delete_transient( 'r2_offload_batch_lock' );
 delete_transient( 'r2_offload_restore_lock' );
 delete_transient( 'r2_offload_local_del_lock' );
+delete_transient( 'r2_offload_desync_lock' );
 
 // -------------------------------------------------------------------------
 // 5. Delete local log files written to {uploads}/r2-offload-logs/.

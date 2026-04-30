@@ -77,6 +77,11 @@ class Migration {
         // Force-delete the lock so a stuck previous run doesn't block us.
         delete_transient( 'r2_offload_batch_lock' );
 
+        // Rebuild the R2 client with current credentials — the singleton's client
+        // was built at boot and may hold stale/empty credentials.
+        $plugin->settings->flush_cache();
+        $plugin->rebuild_r2_client();
+
         $plugin->batch_processor->process_batch();
 
         // Return current status after processing.

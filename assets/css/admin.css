@@ -316,3 +316,53 @@
 .r2-log-warning .r2-log-level { background: #dba617; color: #fff; }
 .r2-log-info    .r2-log-level { background: #0073aa; color: #fff; }
 .r2-log-debug   .r2-log-level { background: #787c82; color: #fff; }
+
+/* ---- Toggle switch ---- */
+.r2-toggle-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.r2-toggle-wrap input[type="checkbox"] {
+    display: none;
+}
+
+.r2-toggle-slider {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: #ccc;
+    border-radius: 24px;
+    transition: background 0.25s;
+    flex-shrink: 0;
+}
+
+.r2-toggle-slider::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+
+.r2-toggle-wrap input:checked + .r2-toggle-slider {
+    background: #00a32a;
+}
+
+.r2-toggle-wrap input:checked + .r2-toggle-slider::after {
+    transform: translateX(20px);
+}
+
+.r2-toggle-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d2327;
+}

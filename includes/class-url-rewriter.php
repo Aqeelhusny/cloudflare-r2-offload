@@ -49,6 +49,9 @@ class UrlRewriter {
      * Rewrite a single attachment URL (used everywhere in WP + WooCommerce).
      */
     public function rewrite_url( string $url, int $attachment_id ): string {
+        if ( ! $this->settings->get_serve_from_r2() ) {
+            return $url;
+        }
         if ( ! $this->is_synced( $attachment_id ) ) {
             return $url;
         }
@@ -62,6 +65,9 @@ class UrlRewriter {
      * @param array|false $image  [ url, width, height, is_intermediate ] or false.
      */
     public function rewrite_image_src( $image, int $attachment_id, $size, bool $icon ) {
+        if ( ! $this->settings->get_serve_from_r2() ) {
+            return $image;
+        }
         if ( ! $image || ! $this->is_synced( $attachment_id ) ) {
             return $image;
         }
@@ -73,6 +79,9 @@ class UrlRewriter {
      * Rewrite all URLs in a srcset array.
      */
     public function rewrite_srcset( array $sources, array $size_array, string $image_src, array $image_meta, int $attachment_id ): array {
+        if ( ! $this->settings->get_serve_from_r2() ) {
+            return $sources;
+        }
         if ( ! $this->is_synced( $attachment_id ) ) {
             return $sources;
         }
@@ -89,6 +98,10 @@ class UrlRewriter {
      * Runs at priority 20 — after WooCommerce's own content filters (priority 10).
      */
     public function rewrite_content( string $content ): string {
+        if ( ! $this->settings->get_serve_from_r2() ) {
+            return $content;
+        }
+
         $local = $this->get_local_base();
         $cdn   = $this->get_cdn_base();
 
@@ -120,6 +133,9 @@ class UrlRewriter {
      * @return \WP_REST_Response
      */
     public function rewrite_rest_response( $response ) {
+        if ( ! $this->settings->get_serve_from_r2() ) {
+            return $response;
+        }
         if ( ! $response instanceof \WP_REST_Response ) {
             return $response;
         }

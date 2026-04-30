@@ -25,6 +25,7 @@ $option_keys = [
     'r2_offload_custom_domain',
     'r2_offload_url_scheme',
     'r2_offload_path_prefix',
+    'r2_offload_serve_from_r2',
     'r2_offload_delete_local',
     'r2_offload_upload_on_save',
     'r2_offload_file_manager_enabled',

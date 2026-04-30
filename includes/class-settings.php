@@ -24,6 +24,7 @@ class Settings {
         register_setting( self::OPTION_GROUP, 'r2_offload_custom_domain',        [ $this, 'sanitize_domain' ] );
         register_setting( self::OPTION_GROUP, 'r2_offload_url_scheme',           [ $this, 'sanitize_scheme' ] );
         register_setting( self::OPTION_GROUP, 'r2_offload_path_prefix',          [ $this, 'sanitize_path_prefix' ] );
+        register_setting( self::OPTION_GROUP, 'r2_offload_serve_from_r2',         'absint' );
         register_setting( self::OPTION_GROUP, 'r2_offload_delete_local',         'absint' );
         register_setting( self::OPTION_GROUP, 'r2_offload_upload_on_save',       'absint' );
         register_setting( self::OPTION_GROUP, 'r2_offload_file_manager_enabled', 'absint' );
@@ -40,6 +41,7 @@ class Settings {
         $defaults = [
             'r2_offload_url_scheme'            => 'https',
             'r2_offload_path_prefix'           => 'wp-content/uploads',
+            'r2_offload_serve_from_r2'         => 0,
             'r2_offload_delete_local'          => 0,
             'r2_offload_upload_on_save'        => 1,
             'r2_offload_file_manager_enabled'  => 0,
@@ -85,6 +87,10 @@ class Settings {
 
     public function get_path_prefix(): string {
         return trim( $this->cached( 'r2_offload_path_prefix', 'wp-content/uploads' ), '/' );
+    }
+
+    public function get_serve_from_r2(): bool {
+        return (bool) $this->cached( 'r2_offload_serve_from_r2', 0 );
     }
 
     public function get_delete_local(): bool {

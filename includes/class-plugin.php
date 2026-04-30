@@ -75,6 +75,19 @@ class Plugin {
         }
     }
 
+    /**
+     * Rebuild the R2 client and all dependants with fresh credentials.
+     * Must be called after settings are saved so the client picks up new keys.
+     */
+    public function rebuild_r2_client(): void {
+        $this->r2   = new R2Client( $this->settings, $this->logger );
+        $this->sync = new AttachmentSync( $this->r2, $this->settings, $this->logger );
+
+        // Rebuild dependent services that hold references to the old r2/sync.
+        $this->batch_processor = new BatchProcessor( $this->sync, $this->settings, $this->logger );
+        $this->batch_processor->register_hooks();
+    }
+
     // -------------------------------------------------------------------------
     // Activation / Deactivation
     // -------------------------------------------------------------------------

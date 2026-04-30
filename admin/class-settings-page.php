@@ -82,6 +82,19 @@ class SettingsPage {
                 <h2 class="r2-section-title"><?php esc_html_e( 'Delivery', 'cloudflare-r2-offload' ); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
+                        <th scope="row"><?php esc_html_e( 'Serve from Cloudflare R2', 'cloudflare-r2-offload' ); ?></th>
+                        <td>
+                            <label class="r2-toggle-wrap">
+                                <input type="checkbox" name="r2_offload_serve_from_r2" value="1"
+                                       id="r2_serve_from_r2"
+                                       <?php checked( get_option( 'r2_offload_serve_from_r2', 0 ), 1 ); ?> />
+                                <span class="r2-toggle-slider"></span>
+                                <span class="r2-toggle-label"><?php esc_html_e( 'Rewrite all media URLs to serve from Cloudflare R2 / CDN', 'cloudflare-r2-offload' ); ?></span>
+                            </label>
+                            <p class="description"><?php esc_html_e( 'When enabled, all synced media URLs are rewritten to use your Custom Domain below. Disable to instantly switch back to serving from your local server.', 'cloudflare-r2-offload' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><label for="r2_custom_domain"><?php esc_html_e( 'Custom Domain', 'cloudflare-r2-offload' ); ?></label></th>
                         <td>
                             <input type="text" id="r2_custom_domain" name="r2_offload_custom_domain"

@@ -278,7 +278,7 @@ class BatchProcessor {
             }
 
             $result = $this->sync->delete_local_for_attachment( (int) $attachment_id );
-            $done  += $result['deleted'];
+            $done++;
         }
 
         update_option( 'r2_offload_local_del_done',   $done,   false );

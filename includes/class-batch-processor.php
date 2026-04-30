@@ -87,6 +87,7 @@ class BatchProcessor {
 
             if ( empty( $items ) ) {
                 // Queue fully drained.
+                $this->cleanup_migration_table( $table );
                 do_action( 'r2_offload_migration_complete' );
                 $this->logger->info( 'Migration complete.', [ 'processed_this_run' => $processed ] );
                 return;
@@ -173,9 +174,16 @@ class BatchProcessor {
             wp_schedule_single_event( time() + 5, self::CRON_HOOK );
             spawn_cron();
         } else {
+            $this->cleanup_migration_table( $table );
             do_action( 'r2_offload_migration_complete' );
             $this->logger->info( 'Migration complete.', [ 'processed_this_run' => $processed ] );
         }
+    }
+
+    private function cleanup_migration_table( string $table ): void {
+        global $wpdb;
+        $wpdb->query( "TRUNCATE TABLE `{$table}`" );
+        delete_option( 'r2_offload_migration_paused' );
     }
 
     // =========================================================================

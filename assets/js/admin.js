@@ -72,21 +72,21 @@
 
     function ajaxAction(action, btnId, loadingText, onSuccess) {
         var $btn = $(btnId);
+        var originalText = $btn.text();
         $btn.prop('disabled', true).text(loadingText);
 
         $.post(R2Offload.ajaxUrl, {
             action: action,
             nonce:  R2Offload.nonce
         }, function (res) {
-            $btn.prop('disabled', false);
+            $btn.prop('disabled', false).text(originalText);
             if (res.success) {
                 if (onSuccess) onSuccess(res.data);
             } else {
                 showMessage((res.data && res.data.message) || 'Error', 'error');
-                $btn.text($btn.data('original-text'));
             }
         }).fail(function () {
-            $btn.prop('disabled', false);
+            $btn.prop('disabled', false).text(originalText);
             showMessage('Request failed.', 'error');
         });
     }
@@ -95,6 +95,9 @@
         showMessage(R2Offload.i18n.starting, 'info');
         ajaxAction('r2_offload_start_migration', '#r2-btn-start', R2Offload.i18n.starting, function (data) {
             showMessage(data.message, 'success');
+            $('#r2-progress-fill').css('width', '0%');
+            $('#r2-progress-text').text('0 / ' + (data.total || 0));
+            $('#r2-progress-pct').text('0%');
             $('#r2-btn-pause').show();
             $('#r2-btn-run-now').show();
             $('#r2-btn-cancel').show();
@@ -152,6 +155,11 @@
             showMessage(data.message, 'warning');
             $('#r2-btn-pause').hide();
             $('#r2-btn-resume').hide();
+            $('#r2-btn-run-now').hide();
+            $('#r2-btn-cancel').hide();
+            $('#r2-progress-fill').css('width', '0%');
+            $('#r2-progress-text').text('0 / 0');
+            $('#r2-progress-pct').text('0%');
             $('#r2-progress-wrap').hide();
         });
     });

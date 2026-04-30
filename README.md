@@ -1,6 +1,6 @@
 # Cloudflare R2 Offload
 
-A production-grade WordPress plugin that offloads your entire media library to **Cloudflare R2** object storage. Supports custom CDN domains, bulk migration of existing media, restore files from R2 back to the server, auto-delete local files after upload, full restore & desync from R2, WooCommerce compatibility, an advanced file manager, upload stats, and optimized multipart uploads.
+WordPress plugin that offloads your entire media library to **Cloudflare R2** object storage. Supports custom CDN domains, bulk migration of existing media, restore files from R2 back to the server, auto-delete local files after upload, full restore & desync from R2, WooCommerce compatibility, an advanced file manager, upload stats, and optimized multipart uploads.
 
 ---
 

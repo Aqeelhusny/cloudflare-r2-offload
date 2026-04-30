@@ -16,11 +16,20 @@
         var pending  = parseInt(data.pending, 10) + parseInt(data.processing || 0, 10);
         var pct      = total > 0 ? Math.round(complete / total * 100) : 0;
 
+        // Queue progress bar.
         $('#r2-progress-fill').css('width', pct + '%');
         $('#r2-progress-text').text(complete + ' / ' + total);
         $('#r2-progress-pct').text(pct + '%');
+
+        // Stats bar — all four cards updated live.
         $('#r2-stat-pending').text(pending);
         $('#r2-stat-failed').text(failed);
+        if (data.synced !== undefined) {
+            $('#r2-stat-synced').text(data.synced);
+        }
+        if (data.all_attachments !== undefined) {
+            $('#r2-stat-total-attachments').text(data.all_attachments);
+        }
 
         if (total > 0) {
             $('#r2-progress-wrap').show();
@@ -30,6 +39,7 @@
             stopPolling();
             showMessage(R2Offload.i18n.complete, 'success');
             $('#r2-btn-pause').hide();
+            $('#r2-btn-run-now').hide();
         }
     }
 

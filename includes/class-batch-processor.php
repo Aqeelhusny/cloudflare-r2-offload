@@ -19,6 +19,7 @@ class BatchProcessor {
     const RESTORE_LOCK_KEY  = 'r2_offload_restore_lock';
     const LOCAL_DEL_LOCK    = 'r2_offload_local_del_lock';
     const LOCK_TTL          = 300; // 5 minutes
+    const MAX_EXECUTION_SEC = 50;  // keep under PHP max_execution_time (usually 60s)
 
     public function __construct( AttachmentSync $sync, Settings $settings, ErrorLogger $logger ) {
         $this->sync     = $sync;
@@ -55,95 +56,125 @@ class BatchProcessor {
         }
     }
 
+    /**
+     * Process as many items as possible within MAX_EXECUTION_SEC.
+     * Each iteration picks batch_size items, processes them, then loops
+     * — so a single cron event can handle hundreds of items instead of
+     * just 10. This makes 10K+ image migrations practical without
+     * relying on rapid cron rescheduling.
+     */
     private function run_batch(): void {
         global $wpdb;
 
         $table      = $wpdb->prefix . 'r2_offload_migration_queue';
         $batch_size = $this->settings->get_batch_size();
-        $now        = current_time( 'mysql', true );
+        $start_time = time();
+        $processed  = 0;
 
-        // Pick pending items.
-        $items = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT id, attachment_id, retry_count FROM `{$table}` WHERE status = 'pending' LIMIT %d",
-                $batch_size
-            )
-        );
-
-        if ( empty( $items ) ) {
-            // Queue is empty — migration complete.
-            do_action( 'r2_offload_migration_complete' );
-            $this->logger->info( 'Migration complete: queue drained.' );
-            return;
-        }
-
-        // Mark as processing.
-        $ids_sql = implode( ',', array_map( fn( $item ) => (int) $item->id, $items ) );
-        $wpdb->query(
-            "UPDATE `{$table}` SET status = 'processing', updated_at = '{$now}' WHERE id IN ({$ids_sql})"
-        );
-
-        foreach ( $items as $item ) {
-            $attachment_id = (int) $item->attachment_id;
-
-            // Manage memory on large migrations.
-            if ( function_exists( 'wp_cache_flush_runtime' ) ) {
-                wp_cache_flush_runtime();
-            } else {
-                wp_cache_flush();
+        while ( ( time() - $start_time ) < self::MAX_EXECUTION_SEC ) {
+            // Check pause flag each iteration so pause takes effect mid-run.
+            if ( get_option( 'r2_offload_migration_paused' ) ) {
+                break;
             }
 
-            $result   = $this->sync->sync_attachment( $attachment_id );
-            $item_now = current_time( 'mysql', true );
+            $now   = current_time( 'mysql', true );
+            $items = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT id, attachment_id, retry_count FROM `{$table}` WHERE status = 'pending' ORDER BY id ASC LIMIT %d",
+                    $batch_size
+                )
+            );
 
-            // Treat a skipped-only result (not configured, excluded MIME, etc.) as a
-            // failure so it doesn't silently pass as complete with 0 uploads.
-            $is_success = $result['failed'] === 0 && ( $result['uploaded'] > 0 || $result['skipped'] > 0 );
-            // But pure-skip due to already-synced (skipped > 0, uploaded = 0) is fine —
-            // only flag as failure if nothing happened at all (all zeros = config problem).
-            $is_nothing = $result['uploaded'] === 0 && $result['failed'] === 0 && $result['skipped'] === 0;
+            if ( empty( $items ) ) {
+                // Queue fully drained.
+                do_action( 'r2_offload_migration_complete' );
+                $this->logger->info( 'Migration complete.', [ 'processed_this_run' => $processed ] );
+                return;
+            }
 
-            if ( $is_success && ! $is_nothing ) {
-                $wpdb->update(
-                    $table,
-                    [ 'status' => 'complete', 'updated_at' => $item_now ],
-                    [ 'id' => (int) $item->id ],
-                    [ '%s', '%s' ],
-                    [ '%d' ]
-                );
-            } else {
-                $retry_count = (int) $item->retry_count + 1;
-                $new_status  = $retry_count >= 3 ? 'failed' : 'pending';
-                $error_msg   = $is_nothing
-                    ? 'Skipped: plugin not configured or credentials invalid.'
-                    : "Uploaded: {$result['uploaded']}, Failed: {$result['failed']}";
+            // Mark as processing.
+            $ids_sql = implode( ',', array_map( fn( $item ) => (int) $item->id, $items ) );
+            $wpdb->query(
+                "UPDATE `{$table}` SET status = 'processing', updated_at = '{$now}' WHERE id IN ({$ids_sql})"
+            );
 
-                $wpdb->update(
-                    $table,
-                    [
-                        'status'        => $new_status,
-                        'retry_count'   => $retry_count,
-                        'error_message' => $error_msg,
-                        'updated_at'    => $item_now,
-                    ],
-                    [ 'id' => (int) $item->id ],
-                    [ '%s', '%d', '%s', '%s' ],
-                    [ '%d' ]
-                );
+            foreach ( $items as $item ) {
+                // Time guard inside the inner loop too.
+                if ( ( time() - $start_time ) >= self::MAX_EXECUTION_SEC ) {
+                    // Revert unprocessed items back to pending.
+                    $wpdb->update(
+                        $table,
+                        [ 'status' => 'pending', 'updated_at' => current_time( 'mysql', true ) ],
+                        [ 'id' => (int) $item->id ],
+                        [ '%s', '%s' ],
+                        [ '%d' ]
+                    );
+                    continue;
+                }
+
+                $attachment_id = (int) $item->attachment_id;
+
+                // Flush object cache to manage memory on large migrations.
+                if ( function_exists( 'wp_cache_flush_runtime' ) ) {
+                    wp_cache_flush_runtime();
+                } else {
+                    wp_cache_flush();
+                }
+
+                $result   = $this->sync->sync_attachment( $attachment_id );
+                $item_now = current_time( 'mysql', true );
+
+                $is_success = $result['failed'] === 0 && ( $result['uploaded'] > 0 || $result['skipped'] > 0 );
+                $is_nothing = $result['uploaded'] === 0 && $result['failed'] === 0 && $result['skipped'] === 0;
+
+                if ( $is_success && ! $is_nothing ) {
+                    $wpdb->update(
+                        $table,
+                        [ 'status' => 'complete', 'updated_at' => $item_now ],
+                        [ 'id' => (int) $item->id ],
+                        [ '%s', '%s' ],
+                        [ '%d' ]
+                    );
+                } else {
+                    $retry_count = (int) $item->retry_count + 1;
+                    $new_status  = $retry_count >= 3 ? 'failed' : 'pending';
+                    $error_msg   = $is_nothing
+                        ? 'Skipped: plugin not configured or credentials invalid.'
+                        : "Uploaded: {$result['uploaded']}, Failed: {$result['failed']}";
+
+                    $wpdb->update(
+                        $table,
+                        [
+                            'status'        => $new_status,
+                            'retry_count'   => $retry_count,
+                            'error_message' => $error_msg,
+                            'updated_at'    => $item_now,
+                        ],
+                        [ 'id' => (int) $item->id ],
+                        [ '%s', '%d', '%s', '%s' ],
+                        [ '%d' ]
+                    );
+                }
+
+                $processed++;
             }
         }
 
-        // Check if more pending items exist.
+        // Time limit reached but items remain — reschedule.
         $pending_count = (int) $wpdb->get_var(
             "SELECT COUNT(*) FROM `{$table}` WHERE status = 'pending'"
         );
 
         if ( $pending_count > 0 ) {
+            $this->logger->info( 'Batch time limit reached, rescheduling.', [
+                'processed_this_run' => $processed,
+                'remaining'          => $pending_count,
+            ] );
             wp_schedule_single_event( time() + 5, self::CRON_HOOK );
             spawn_cron();
         } else {
             do_action( 'r2_offload_migration_complete' );
-            $this->logger->info( 'Migration complete.' );
+            $this->logger->info( 'Migration complete.', [ 'processed_this_run' => $processed ] );
         }
     }
 

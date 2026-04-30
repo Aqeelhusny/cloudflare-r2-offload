@@ -97,13 +97,22 @@ class Migration {
         $pending    = isset( $counts['pending'] )    ? (int) $counts['pending']->cnt    : 0;
         $processing = isset( $counts['processing'] ) ? (int) $counts['processing']->cnt : 0;
 
+        $all_attachments = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment'"
+        );
+        $synced = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_r2_offload_synced' AND meta_value = '1'"
+        );
+
         wp_send_json_success( [
-            'message'    => sprintf( __( 'Batch processed. Complete: %d, Pending: %d, Failed: %d', 'cloudflare-r2-offload' ), $complete, $pending + $processing, $failed ),
-            'total'      => $total,
-            'complete'   => $complete,
-            'failed'     => $failed,
-            'pending'    => $pending,
-            'processing' => $processing,
+            'message'         => sprintf( __( 'Batch processed. Complete: %d, Pending: %d, Failed: %d', 'cloudflare-r2-offload' ), $complete, $pending + $processing, $failed ),
+            'total'           => $total,
+            'complete'        => $complete,
+            'failed'          => $failed,
+            'pending'         => $pending,
+            'processing'      => $processing,
+            'all_attachments' => $all_attachments,
+            'synced'          => $synced,
         ] );
     }
 
@@ -202,7 +211,15 @@ class Migration {
         $processing = isset( $counts['processing'] ) ? (int) $counts['processing']->cnt : 0;
         $paused     = (bool) get_option( 'r2_offload_migration_paused', false );
 
-        wp_send_json_success( compact( 'total', 'complete', 'failed', 'pending', 'processing', 'paused' ) );
+        // Live stats for the header cards.
+        $all_attachments = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment'"
+        );
+        $synced = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_r2_offload_synced' AND meta_value = '1'"
+        );
+
+        wp_send_json_success( compact( 'total', 'complete', 'failed', 'pending', 'processing', 'paused', 'all_attachments', 'synced' ) );
     }
 
     private function ajax_retry_failed(): void {

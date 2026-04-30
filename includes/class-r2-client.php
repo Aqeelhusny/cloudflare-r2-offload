@@ -236,6 +236,20 @@ class R2Client {
                 'next_token' => $result->get( 'NextContinuationToken' ),
             ];
         } catch ( AwsException $e ) {
+            // R2 continuation tokens expire quickly. If the token is invalid,
+            // retry once from the beginning rather than showing an empty page.
+            if ( $continuation_token !== '' && $e->getAwsErrorCode() === 'InvalidContinuation' ) {
+                unset( $params['ContinuationToken'] );
+                try {
+                    $result = $client->listObjectsV2( $params );
+                    return [
+                        'objects'    => $result->get( 'Contents' ) ?? [],
+                        'next_token' => $result->get( 'NextContinuationToken' ),
+                    ];
+                } catch ( AwsException $retry_e ) {
+                    // Fall through to the error below.
+                }
+            }
             $this->logger->error( 'R2 listObjectsV2 failed.', [ 'message' => $e->getMessage() ] );
             return [ 'objects' => [], 'next_token' => null ];
         }

@@ -40,28 +40,49 @@ class Plugin {
         // Load text domain.
         load_plugin_textdomain( 'cloudflare-r2-offload', false, dirname( R2_OFFLOAD_BASENAME ) . '/languages' );
 
-        // Always-on services.
+        // Settings is lightweight (reads autoloaded options only) — always needed.
         $this->settings = new Settings();
-        $this->logger   = new ErrorLogger();
-        $this->r2       = new R2Client( $this->settings, $this->logger );
-        $this->sync     = new AttachmentSync( $this->r2, $this->settings, $this->logger );
 
-        // Register settings fields.
+        // URL rewriting — the only thing needed on every frontend request.
+        // register_hooks() internally checks the toggle and returns immediately
+        // if serving is disabled, so zero overhead when OFF.
+        $this->url_rewriter = new UrlRewriter( $this->settings );
+        $this->url_rewriter->register_hooks();
+
+        // Everything below is only needed for admin, AJAX, cron, or upload hooks.
+        // On a pure frontend page view with no uploads, none of this runs.
+        if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || $this->is_upload_request() ) {
+            $this->boot_full();
+        } else {
+            // Deferred boot: if a new upload happens on the frontend (e.g. front-end
+            // form plugins), the wp_generate_attachment_metadata filter still needs to
+            // work. Register a lazy hook that boots the full stack on demand.
+            add_filter( 'wp_generate_attachment_metadata', function ( $metadata, $id ) {
+                if ( ! $this->logger ) {
+                    $this->boot_full();
+                }
+                return $this->upload_handler->on_generate_metadata( $metadata, $id );
+            }, 20, 2 );
+        }
+    }
+
+    private function boot_full(): void {
+        $this->logger = new ErrorLogger();
+        $this->r2     = new R2Client( $this->settings, $this->logger );
+        $this->sync   = new AttachmentSync( $this->r2, $this->settings, $this->logger );
+
+        // Register settings fields (admin only, but admin_init may not have fired yet).
         add_action( 'admin_init', [ $this->settings, 'register' ] );
 
         // Hooks for new uploads and attachment deletion.
         $this->upload_handler = new UploadHandler( $this->sync, $this->settings, $this->logger );
         $this->upload_handler->register_hooks();
 
-        // URL rewriting filters.
-        $this->url_rewriter = new UrlRewriter( $this->settings );
-        $this->url_rewriter->register_hooks();
-
         // Migration AJAX + bulk processing.
         $this->migration = new Migration( $this->sync, $this->settings, $this->logger );
         $this->migration->register_hooks();
 
-        // Cron batch processor (needed even outside admin for scheduled events).
+        // Cron batch processor.
         $this->batch_processor = new BatchProcessor( $this->sync, $this->settings, $this->logger );
         $this->batch_processor->register_hooks();
 
@@ -73,6 +94,10 @@ class Plugin {
             $admin = new Admin\Admin( $this->settings, $this->logger, $this->r2 );
             $admin->register();
         }
+    }
+
+    private function is_upload_request(): bool {
+        return ! empty( $_FILES ) || ( isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'POST' && isset( $_POST['action'] ) );
     }
 
     /**

@@ -44,11 +44,11 @@ class MigrationPage {
             <!-- Stats Bar -->
             <div class="r2-stats-bar">
                 <div class="r2-stat">
-                    <span class="r2-stat-number"><?php echo esc_html( $all_attachments ); ?></span>
+                    <span class="r2-stat-number" id="r2-stat-total-attachments"><?php echo esc_html( $all_attachments ); ?></span>
                     <span class="r2-stat-label"><?php esc_html_e( 'Total Attachments', 'cloudflare-r2-offload' ); ?></span>
                 </div>
                 <div class="r2-stat r2-stat--success">
-                    <span class="r2-stat-number"><?php echo esc_html( $synced_all ); ?></span>
+                    <span class="r2-stat-number" id="r2-stat-synced"><?php echo esc_html( $synced_all ); ?></span>
                     <span class="r2-stat-label"><?php esc_html_e( 'Synced to R2', 'cloudflare-r2-offload' ); ?></span>
                 </div>
                 <div class="r2-stat r2-stat--pending">

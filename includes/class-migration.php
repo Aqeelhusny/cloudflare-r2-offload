@@ -37,6 +37,7 @@ class Migration {
             'r2_offload_delete_local_single',
             // Feature: Bulk restore all R2-only files back to server.
             'r2_offload_start_restore_all',
+            'r2_offload_restore_status',
             // Feature: Bulk delete local files for all already-synced attachments.
             'r2_offload_start_local_delete',
             'r2_offload_local_delete_status',
@@ -401,6 +402,15 @@ class Migration {
                 count( $ids )
             ),
             'total'   => count( $ids ),
+        ] );
+    }
+
+    private function ajax_restore_status(): void {
+        wp_send_json_success( [
+            'total'  => (int) get_option( 'r2_offload_restore_total',  0 ),
+            'done'   => (int) get_option( 'r2_offload_restore_done',   0 ),
+            'failed' => (int) get_option( 'r2_offload_restore_failed', 0 ),
+            'paused' => (bool) get_option( 'r2_offload_restore_paused', false ),
         ] );
     }
 

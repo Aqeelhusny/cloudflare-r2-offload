@@ -204,6 +204,7 @@ class BatchProcessor {
         $batch      = array_splice( $queue, 0, $batch_size );
 
         if ( empty( $batch ) ) {
+            $this->cleanup_restore_options();
             do_action( 'r2_offload_restore_complete' );
             $this->logger->info( 'Bulk restore complete.' );
             return;
@@ -221,8 +222,11 @@ class BatchProcessor {
             }
 
             $result = $this->sync->restore_from_r2( (int) $attachment_id );
-            $done  += $result['restored'];
-            $failed += $result['failed'];
+            if ( $result['failed'] > 0 ) {
+                $failed++;
+            } else {
+                $done++;
+            }
         }
 
         update_option( 'r2_offload_restore_done',   $done,   false );
@@ -231,9 +235,18 @@ class BatchProcessor {
         if ( ! empty( $queue ) ) {
             wp_schedule_single_event( time() + 5, self::RESTORE_HOOK );
         } else {
+            $this->cleanup_restore_options();
             do_action( 'r2_offload_restore_complete' );
             $this->logger->info( 'Bulk restore complete.', [ 'done' => $done, 'failed' => $failed ] );
         }
+    }
+
+    private function cleanup_restore_options(): void {
+        delete_option( 'r2_offload_restore_queue' );
+        delete_option( 'r2_offload_restore_total' );
+        delete_option( 'r2_offload_restore_done' );
+        delete_option( 'r2_offload_restore_failed' );
+        delete_option( 'r2_offload_restore_paused' );
     }
 
     // =========================================================================
@@ -262,6 +275,7 @@ class BatchProcessor {
         $batch      = array_splice( $queue, 0, $batch_size );
 
         if ( empty( $batch ) ) {
+            $this->cleanup_local_del_options();
             do_action( 'r2_offload_local_delete_complete' );
             $this->logger->info( 'Bulk local-delete complete.' );
             return;
@@ -287,8 +301,17 @@ class BatchProcessor {
         if ( ! empty( $queue ) ) {
             wp_schedule_single_event( time() + 5, self::LOCAL_DEL_HOOK );
         } else {
+            $this->cleanup_local_del_options();
             do_action( 'r2_offload_local_delete_complete' );
             $this->logger->info( 'Bulk local-delete complete.', [ 'done' => $done ] );
         }
+    }
+
+    private function cleanup_local_del_options(): void {
+        delete_option( 'r2_offload_local_del_queue' );
+        delete_option( 'r2_offload_local_del_total' );
+        delete_option( 'r2_offload_local_del_done' );
+        delete_option( 'r2_offload_local_del_failed' );
+        delete_option( 'r2_offload_local_del_paused' );
     }
 }

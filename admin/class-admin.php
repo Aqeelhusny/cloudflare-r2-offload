@@ -160,6 +160,7 @@ class Admin {
                 'confirmRestoreSingle'  => __( 'Restore this file from R2 to the server?', 'cloudflare-r2-offload' ),
                 'restoreStarting'       => __( 'Restore queued — processing in background…', 'cloudflare-r2-offload' ),
                 'restoring'             => __( 'Restoring…', 'cloudflare-r2-offload' ),
+                'restoreComplete'       => __( 'Restore complete!', 'cloudflare-r2-offload' ),
                 'restoreFailed'         => __( 'Restore failed', 'cloudflare-r2-offload' ),
                 'restoreFromR2'         => __( 'Restore from R2', 'cloudflare-r2-offload' ),
                 // Local delete.

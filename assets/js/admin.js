@@ -167,6 +167,8 @@
     // Restore from R2 → server
     // =========================================================================
 
+    var restorePollInterval = null;
+
     function updateRestoreProgress(done, total) {
         var pct = total > 0 ? Math.round(done / total * 100) : 0;
         $('#r2-restore-fill').css('width', pct + '%');
@@ -180,6 +182,35 @@
             .addClass('notice notice-' + (type || 'info')).text(msg).show();
     }
 
+    function startRestorePolling(total) {
+        if (restorePollInterval) return;
+        restorePollInterval = setInterval(function () {
+            $.post(R2Offload.ajaxUrl, {
+                action: 'r2_offload_restore_status',
+                nonce:  R2Offload.nonce
+            }, function (res) {
+                if (!res.success) return;
+                var d = res.data;
+                var t = d.total || total;
+                if (d.total === 0 && d.done === 0 && total > 0) {
+                    clearInterval(restorePollInterval);
+                    restorePollInterval = null;
+                    updateRestoreProgress(total, total);
+                    showRestoreMessage(R2Offload.i18n.restoreComplete, 'success');
+                    $('#r2-btn-restore-missing, #r2-btn-restore-all').prop('disabled', false);
+                    return;
+                }
+                updateRestoreProgress(d.done, t);
+                if (d.done >= t && t > 0) {
+                    clearInterval(restorePollInterval);
+                    restorePollInterval = null;
+                    showRestoreMessage(R2Offload.i18n.restoreComplete, 'success');
+                    $('#r2-btn-restore-missing, #r2-btn-restore-all').prop('disabled', false);
+                }
+            });
+        }, 3000);
+    }
+
     $('#r2-btn-restore-missing').on('click', function () {
         if (!confirm(R2Offload.i18n.confirmRestoreMissing)) return;
         var $btn = $(this);
@@ -191,11 +222,12 @@
             nonce:        R2Offload.nonce,
             only_missing: 1
         }, function (res) {
-            $btn.prop('disabled', false);
             if (res.success) {
                 showRestoreMessage(res.data.message, 'success');
                 updateRestoreProgress(0, res.data.total);
+                startRestorePolling(res.data.total);
             } else {
+                $btn.prop('disabled', false);
                 showRestoreMessage((res.data && res.data.message) || 'Error.', 'error');
             }
         });
@@ -212,11 +244,12 @@
             nonce:        R2Offload.nonce,
             only_missing: 0
         }, function (res) {
-            $btn.prop('disabled', false);
             if (res.success) {
                 showRestoreMessage(res.data.message, 'success');
                 updateRestoreProgress(0, res.data.total);
+                startRestorePolling(res.data.total);
             } else {
+                $btn.prop('disabled', false);
                 showRestoreMessage((res.data && res.data.message) || 'Error.', 'error');
             }
         });
@@ -308,11 +341,21 @@
             }, function (res) {
                 if (!res.success) return;
                 var d = res.data;
-                updateLocalDelProgress(d.done, d.total || total);
-                if (d.done >= (d.total || total) && d.total > 0) {
+                var t = d.total || total;
+                if (d.total === 0 && d.done === 0 && total > 0) {
+                    clearInterval(localDelPollInterval);
+                    localDelPollInterval = null;
+                    updateLocalDelProgress(total, total);
+                    showLocalDelMessage(R2Offload.i18n.localDeleteComplete, 'success');
+                    $('#r2-btn-local-delete').prop('disabled', false);
+                    return;
+                }
+                updateLocalDelProgress(d.done, t);
+                if (d.done >= t && t > 0) {
                     clearInterval(localDelPollInterval);
                     localDelPollInterval = null;
                     showLocalDelMessage(R2Offload.i18n.localDeleteComplete, 'success');
+                    $('#r2-btn-local-delete').prop('disabled', false);
                 }
             });
         }, 3000);

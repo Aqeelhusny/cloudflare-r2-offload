@@ -6,6 +6,44 @@
     var POLL_MS = 3000;
 
     // =========================================================================
+    // Background page refresh — keeps stats and buttons in sync
+    // =========================================================================
+
+    var bgRefreshInterval = null;
+    var BG_REFRESH_MS = 10000;
+
+    function startBackgroundRefresh() {
+        if (bgRefreshInterval) return;
+        bgRefreshInterval = setInterval(function () {
+            if (document.hidden) return;
+            $.post(R2Offload.ajaxUrl, {
+                action: 'r2_offload_migration_status',
+                nonce:  R2Offload.nonce
+            }, function (res) {
+                if (!res.success) return;
+                var d = res.data;
+                var total   = parseInt(d.total, 10) || 0;
+                var pending = parseInt(d.pending, 10) + parseInt(d.processing || 0, 10);
+                var failed  = parseInt(d.failed, 10) || 0;
+
+                // Stats cards.
+                if (d.all_attachments !== undefined) $('#r2-stat-total-attachments').text(d.all_attachments);
+                if (d.synced !== undefined) $('#r2-stat-synced').text(d.synced);
+                $('#r2-stat-pending').text(pending);
+                $('#r2-stat-failed').text(failed);
+
+                // Button visibility when no active migration.
+                if (total === 0) {
+                    $('#r2-btn-pause, #r2-btn-resume, #r2-btn-run-now, #r2-btn-cancel').hide();
+                    $('#r2-progress-wrap').hide();
+                }
+            });
+        }, BG_REFRESH_MS);
+    }
+
+    startBackgroundRefresh();
+
+    // =========================================================================
     // Migration controls
     // =========================================================================
 
@@ -94,9 +132,13 @@
     $('#r2-btn-start').on('click', function () {
         showMessage(R2Offload.i18n.starting, 'info');
         ajaxAction('r2_offload_start_migration', '#r2-btn-start', R2Offload.i18n.starting, function (data) {
+            if (!data.total || data.total === 0) {
+                showMessage(data.message, 'success');
+                return;
+            }
             showMessage(data.message, 'success');
             $('#r2-progress-fill').css('width', '0%');
-            $('#r2-progress-text').text('0 / ' + (data.total || 0));
+            $('#r2-progress-text').text('0 / ' + data.total);
             $('#r2-progress-pct').text('0%');
             $('#r2-btn-pause').show();
             $('#r2-btn-run-now').show();
@@ -232,6 +274,10 @@
         }, function (res) {
             if (res.success) {
                 showRestoreMessage(res.data.message, 'success');
+                if (!res.data.total || res.data.total === 0) {
+                    $btn.prop('disabled', false);
+                    return;
+                }
                 updateRestoreProgress(0, res.data.total);
                 startRestorePolling(res.data.total);
             } else {
@@ -254,6 +300,10 @@
         }, function (res) {
             if (res.success) {
                 showRestoreMessage(res.data.message, 'success');
+                if (!res.data.total || res.data.total === 0) {
+                    $btn.prop('disabled', false);
+                    return;
+                }
                 updateRestoreProgress(0, res.data.total);
                 startRestorePolling(res.data.total);
             } else {
@@ -381,6 +431,10 @@
         }, function (res) {
             if (res.success) {
                 showLocalDelMessage(res.data.message, 'success');
+                if (!res.data.total || res.data.total === 0) {
+                    $btn.prop('disabled', false);
+                    return;
+                }
                 updateLocalDelProgress(0, res.data.total);
                 startLocalDelPolling(res.data.total);
             } else {

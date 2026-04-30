@@ -1,5 +1,5 @@
 {
-    "name": "yourvendor/cloudflare-r2-offload",
+    "name": "aqeelhusny/cloudflare-r2-offload",
     "description": "WordPress plugin to offload media library to Cloudflare R2",
     "type": "wordpress-plugin",
     "license": "GPL-2.0+",
@@ -7,16 +7,53 @@
         "php": ">=7.4",
         "aws/aws-sdk-php": "^3.0"
     },
+    "require-dev": {
+        "brianhenryie/strauss": "^0.19"
+    },
     "autoload": {
         "classmap": [
             "includes/",
             "admin/"
         ]
     },
+    "extra": {
+        "strauss": {
+            "target_directory": "lib/vendor",
+            "namespace_prefix": "R2Offload\\Vendor\\",
+            "classmap_prefix": "R2Offload_Vendor_",
+            "constant_prefix": "R2OFFLOAD_VENDOR_",
+            "packages": [
+                "aws/aws-sdk-php",
+                "aws/aws-crt-php",
+                "guzzlehttp/guzzle",
+                "guzzlehttp/psr7",
+                "guzzlehttp/promises",
+                "psr/http-message",
+                "psr/http-client",
+                "psr/http-factory",
+                "mtdowling/jmespath.php"
+            ],
+            "delete_vendor_packages": true
+        }
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "@strauss"
+        ],
+        "post-update-cmd": [
+            "@strauss"
+        ],
+        "strauss": [
+            "vendor/bin/strauss"
+        ]
+    },
     "config": {
         "optimize-autoloader": true,
         "sort-packages": true,
-        "vendor-dir": "vendor"
+        "vendor-dir": "vendor",
+        "allow-plugins": {
+            "brianhenryie/strauss": true
+        }
     },
     "prefer-stable": true
 }

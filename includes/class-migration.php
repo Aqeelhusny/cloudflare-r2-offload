@@ -524,8 +524,11 @@ class Migration {
         global $wpdb;
 
         $ids = $wpdb->get_col(
-            "SELECT post_id FROM {$wpdb->postmeta}
-             WHERE meta_key = '_r2_offload_synced' AND meta_value = '1'"
+            $wpdb->prepare(
+                "SELECT post_id FROM {$wpdb->postmeta}
+                 WHERE meta_key = %s AND meta_value = %s",
+                '_r2_offload_synced', '1'
+            )
         );
 
         if ( empty( $ids ) ) {

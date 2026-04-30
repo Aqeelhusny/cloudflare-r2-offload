@@ -1,0 +1,801 @@
+# Copyright (C) 2024 Aqeel Husny
+# This file is distributed under the GPL-2.0+.
+msgid ""
+msgstr ""
+"Project-Id-Version: Cloudflare R2 Offload 1.3.1\n"
+"Report-Msgid-Bugs-To: https://github.com/aqeelhusny/cloudflare-r2-offload/issues\n"
+"POT-Creation-Date: 2026-04-30T00:00:00+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Plugin Name of the plugin
+msgid "Cloudflare R2 Offload"
+msgstr ""
+
+#. Description of the plugin
+msgid "Offload your entire WordPress media library to Cloudflare R2 with custom CDN domain support, bulk migration, file manager, upload stats, and optimized multipart uploads."
+msgstr ""
+
+#. Author of the plugin
+msgid "Aqeel Husny"
+msgstr ""
+
+#: cloudflare-r2-offload.php:25
+msgid "Cloudflare R2 Offload requires PHP 7.4 or higher."
+msgstr ""
+
+#: cloudflare-r2-offload.php:43
+msgid "Cloudflare R2 Offload: Composer dependencies are missing. Please run <code>composer install</code> in the plugin directory."
+msgstr ""
+
+#: admin/class-admin.php:32
+#: admin/class-admin.php:33
+msgid "R2 Offload"
+msgstr ""
+
+#: admin/class-admin.php:43
+#: admin/class-admin.php:44
+msgid "Settings"
+msgstr ""
+
+#: admin/class-admin.php:52
+#: admin/class-admin.php:53
+msgid "Migration"
+msgstr ""
+
+#: admin/class-admin.php:61
+#: admin/class-admin.php:62
+msgid "Stats"
+msgstr ""
+
+#: admin/class-admin.php:71
+#: admin/class-admin.php:72
+msgid "File Manager"
+msgstr ""
+
+#: admin/class-admin.php:82
+#: admin/class-admin.php:90
+#: admin/class-admin.php:98
+#: admin/class-admin.php:106
+msgid "Insufficient permissions."
+msgstr ""
+
+#: admin/class-admin.php:144
+msgid "Saving…"
+msgstr ""
+
+#: admin/class-admin.php:146
+msgid "Starting migration…"
+msgstr ""
+
+#: admin/class-admin.php:147
+msgid "Pausing…"
+msgstr ""
+
+#: admin/class-admin.php:148
+msgid "Resuming…"
+msgstr ""
+
+#: admin/class-admin.php:149
+msgid "Cancelling…"
+msgstr ""
+
+#: admin/class-admin.php:150
+msgid "Migration complete!"
+msgstr ""
+
+#: admin/class-admin.php:151
+msgid "Cancel the migration? Progress will be lost."
+msgstr ""
+
+#: admin/class-admin.php:153
+msgid "Delete all logs? This cannot be undone."
+msgstr ""
+
+#: admin/class-admin.php:155
+msgid "Delete this file from R2? This cannot be undone."
+msgstr ""
+
+#: admin/class-admin.php:156
+msgid "URL copied!"
+msgstr ""
+
+#: admin/class-admin.php:158
+msgid "Download all R2-only files back to the server?"
+msgstr ""
+
+#: admin/class-admin.php:159
+msgid "Re-download ALL synced files from R2 to the server? This may take a long time."
+msgstr ""
+
+#: admin/class-admin.php:160
+msgid "Restore this file from R2 to the server?"
+msgstr ""
+
+#: admin/class-admin.php:161
+msgid "Restore queued — processing in background…"
+msgstr ""
+
+#: admin/class-admin.php:162
+msgid "Restoring…"
+msgstr ""
+
+#: admin/class-admin.php:163
+msgid "Restore complete!"
+msgstr ""
+
+#: admin/class-admin.php:164
+msgid "Restore failed"
+msgstr ""
+
+#: admin/class-admin.php:165
+msgid "Restore from R2"
+msgstr ""
+
+#: admin/class-admin.php:167
+msgid "Delete local copies of ALL synced files? Files will still be served from R2. This cannot be undone without using the Restore feature."
+msgstr ""
+
+#: admin/class-admin.php:168
+msgid "Delete the local copy of this file? It will only be served from R2."
+msgstr ""
+
+#: admin/class-admin.php:169
+msgid "Local delete queued — processing in background…"
+msgstr ""
+
+#: admin/class-admin.php:170
+msgid "All local files deleted."
+msgstr ""
+
+#: admin/class-admin.php:171
+msgid "Delete failed"
+msgstr ""
+
+#: admin/class-admin.php:173
+msgid "This will restore ALL files from R2 to the server, verify them, then DELETE them from R2. Your R2 bucket will be emptied. Continue?"
+msgstr ""
+
+#: admin/class-admin.php:174
+msgid "Restore & desync queued — processing in background…"
+msgstr ""
+
+#: admin/class-admin.php:175
+msgid "All files restored and removed from R2."
+msgstr ""
+
+#: admin/class-admin.php:176
+#, php-format
+msgid "%d attachment(s) failed to desync. Check the error log."
+msgstr ""
+
+#: admin/class-admin.php:178
+msgid "Clear all activity logs? This cannot be undone."
+msgstr ""
+
+#: admin/class-admin.php:180
+msgid "Synced"
+msgstr ""
+
+#: admin/class-admin.php:181
+msgid "R2 only"
+msgstr ""
+
+#: admin/class-settings-page.php:19
+msgid "R2 Offload — Settings"
+msgstr ""
+
+#: admin/class-settings-page.php:27
+msgid "R2 Connection"
+msgstr ""
+
+#: admin/class-settings-page.php:30
+msgid "Account ID"
+msgstr ""
+
+#: admin/class-settings-page.php:35
+msgid "Your 32-character Cloudflare Account ID."
+msgstr ""
+
+#: admin/class-settings-page.php:39
+msgid "Access Key ID"
+msgstr ""
+
+#: admin/class-settings-page.php:47
+msgid "Secret Access Key"
+msgstr ""
+
+#: admin/class-settings-page.php:54
+msgid "A secret key is saved. Clear this field and enter a new one to replace it, or leave it as-is to keep the existing key."
+msgstr ""
+
+#: admin/class-settings-page.php:59
+msgid "Bucket Name"
+msgstr ""
+
+#: admin/class-settings-page.php:67
+msgid "Actions"
+msgstr ""
+
+#: admin/class-settings-page.php:70
+msgid "Save Credentials"
+msgstr ""
+
+#: admin/class-settings-page.php:74
+msgid "Test Connection"
+msgstr ""
+
+#: admin/class-settings-page.php:82
+msgid "Delivery"
+msgstr ""
+
+#: admin/class-settings-page.php:85
+msgid "Serve from Cloudflare R2"
+msgstr ""
+
+#: admin/class-settings-page.php:92
+msgid "Rewrite all media URLs to serve from Cloudflare R2 / CDN"
+msgstr ""
+
+#: admin/class-settings-page.php:94
+msgid "When enabled, all synced media URLs are rewritten to use your Custom Domain below. Disable to instantly switch back to serving from your local server."
+msgstr ""
+
+#: admin/class-settings-page.php:98
+msgid "Custom Domain"
+msgstr ""
+
+#: admin/class-settings-page.php:103
+msgid "Hostname only — no scheme (e.g. cdn.example.com). Leave empty to use the R2 public URL."
+msgstr ""
+
+#: admin/class-settings-page.php:107
+msgid "URL Scheme"
+msgstr ""
+
+#: admin/class-settings-page.php:116
+msgid "Path Prefix"
+msgstr ""
+
+#: admin/class-settings-page.php:121
+msgid "Object key prefix in R2 (no leading/trailing slash). Should match your WordPress upload path."
+msgstr ""
+
+#: admin/class-settings-page.php:127
+msgid "Behavior"
+msgstr ""
+
+#: admin/class-settings-page.php:130
+msgid "Auto-upload New Media"
+msgstr ""
+
+#: admin/class-settings-page.php:135
+msgid "Automatically upload new media to R2 when uploaded to WordPress."
+msgstr ""
+
+#: admin/class-settings-page.php:140
+msgid "Background Offload"
+msgstr ""
+
+#: admin/class-settings-page.php:145
+msgid "Queue new uploads for background processing instead of uploading to R2 synchronously."
+msgstr ""
+
+#: admin/class-settings-page.php:148
+msgid "Recommended for bulk uploads (e.g. 100+ images via REST API). Uploads are queued and processed via WP-Cron in batches, keeping your site responsive. Requires \"Auto-upload New Media\" to be enabled."
+msgstr ""
+
+#: admin/class-settings-page.php:153
+msgid "Delete Local Files"
+msgstr ""
+
+#: admin/class-settings-page.php:158
+msgid "Delete local files after a confirmed upload to R2."
+msgstr ""
+
+#: admin/class-settings-page.php:161
+msgid "Warning: This is irreversible. Only enable if R2 is your sole storage."
+msgstr ""
+
+#: admin/class-settings-page.php:166
+msgid "Enable File Manager"
+msgstr ""
+
+#: admin/class-settings-page.php:171
+msgid "Show the R2 File Manager and Logs in the admin menu."
+msgstr ""
+
+#: admin/class-settings-page.php:176
+msgid "Migration Batch Size"
+msgstr ""
+
+#: admin/class-settings-page.php:181
+msgid "Attachments processed per WP-Cron batch (1–50). Lower values are safer on shared hosting."
+msgstr ""
+
+#: admin/class-settings-page.php:185
+msgid "Multipart Upload Threshold"
+msgstr ""
+
+#: admin/class-settings-page.php:190
+msgid "Files larger than this will use multipart upload (minimum 5 MB)."
+msgstr ""
+
+#: admin/class-settings-page.php:194
+msgid "Multipart Concurrency"
+msgstr ""
+
+#: admin/class-settings-page.php:199
+msgid "Number of parallel part uploads (1–10)."
+msgstr ""
+
+#: admin/class-settings-page.php:203
+msgid "Excluded MIME Types"
+msgstr ""
+
+#: admin/class-settings-page.php:211
+msgid "One MIME type per line (e.g. video/mp4). These file types will not be uploaded to R2."
+msgstr ""
+
+#: admin/class-migration-page.php:42
+msgid "R2 Offload — Migration"
+msgstr ""
+
+#: admin/class-migration-page.php:48
+msgid "Total Attachments"
+msgstr ""
+
+#: admin/class-migration-page.php:52
+msgid "Synced to R2"
+msgstr ""
+
+#: admin/class-migration-page.php:56
+msgid "In Queue"
+msgstr ""
+
+#: admin/class-migration-page.php:60
+msgid "Failed"
+msgstr ""
+
+#: admin/class-migration-page.php:82
+msgid "Start Migration"
+msgstr ""
+
+#: admin/class-migration-page.php:86
+msgid "Manually process one batch now — use this if cron is not running."
+msgstr ""
+
+#: admin/class-migration-page.php:87
+msgid "Process Batch Now"
+msgstr ""
+
+#: admin/class-migration-page.php:91
+msgid "Pause"
+msgstr ""
+
+#: admin/class-migration-page.php:95
+msgid "Resume"
+msgstr ""
+
+#: admin/class-migration-page.php:99
+msgid "Cancel"
+msgstr ""
+
+#: admin/class-migration-page.php:103
+msgid "Retry Failed"
+msgstr ""
+
+#: admin/class-migration-page.php:114
+msgid "Background Offload Queue"
+msgstr ""
+
+#: admin/class-migration-page.php:116
+msgid "New media uploads are queued and offloaded to R2 in the background via WP-Cron. This prevents upload requests from blocking while waiting for R2 transfers."
+msgstr ""
+
+#: admin/class-migration-page.php:122
+msgid "Queued"
+msgstr ""
+
+#: admin/class-migration-page.php:139
+msgid "Next Batch"
+msgstr ""
+
+#: admin/class-migration-page.php:148
+msgid "Recent Activity"
+msgstr ""
+
+#: admin/class-migration-page.php:150
+msgid "Refresh"
+msgstr ""
+
+#: admin/class-migration-page.php:153
+msgid "Clear Logs"
+msgstr ""
+
+#: admin/class-migration-page.php:159
+msgid "Time"
+msgstr ""
+
+#: admin/class-migration-page.php:160
+msgid "Level"
+msgstr ""
+
+#: admin/class-migration-page.php:161
+msgid "Message"
+msgstr ""
+
+#: admin/class-migration-page.php:162
+msgid "Context"
+msgstr ""
+
+#: admin/class-migration-page.php:170
+msgid "No log entries yet."
+msgstr ""
+
+#: admin/class-migration-page.php:194
+msgid "Restore Files from R2 to Server"
+msgstr ""
+
+#: admin/class-migration-page.php:196
+msgid "Download files from R2 back to the local server. Use this if you previously deleted local files and need to restore them, or if you want to migrate away from R2."
+msgstr ""
+
+#: admin/class-migration-page.php:217
+msgid "R2-only (local deleted)"
+msgstr ""
+
+#: admin/class-migration-page.php:232
+msgid "Restore Missing Files from R2"
+msgstr ""
+
+#: admin/class-migration-page.php:235
+msgid "Restore ALL Synced Files from R2"
+msgstr ""
+
+#: admin/class-migration-page.php:247
+msgid "Delete Local Files (Free Up Server Space)"
+msgstr ""
+
+#: admin/class-migration-page.php:249
+msgid "Delete local copies of all files that are already synced to R2. Use this after a bulk migration to reclaim server disk space. Files remain fully accessible via R2/CDN."
+msgstr ""
+
+#: admin/class-migration-page.php:252
+msgid "Warning: This is irreversible without using the Restore feature above. Ensure your R2 connection is stable before proceeding."
+msgstr ""
+
+#: admin/class-migration-page.php:285
+msgid "Delete Local Files for All Synced Attachments"
+msgstr ""
+
+#: admin/class-migration-page.php:294
+msgid "Restore & Remove from R2"
+msgstr ""
+
+#: admin/class-migration-page.php:296
+msgid "Download all synced files from R2 back to the server, verify each file exists locally, then delete the copies from R2 and remove all sync metadata. Use this to fully disconnect from R2."
+msgstr ""
+
+#: admin/class-migration-page.php:299
+msgid "Warning: This will remove all files from your R2 bucket and clear sync status. Your files will only exist on the local server afterwards."
+msgstr ""
+
+#: admin/class-migration-page.php:313
+msgid "Restore & Remove All from R2"
+msgstr ""
+
+#: admin/class-migration-page.php:321
+msgid "Recent Errors"
+msgstr ""
+
+#: admin/class-file-manager-page.php:46
+msgid "R2 Offload — File Manager"
+msgstr ""
+
+#: admin/class-file-manager-page.php:53
+msgid "Filter by prefix…"
+msgstr ""
+
+#: admin/class-file-manager-page.php:55
+msgid "Filter"
+msgstr ""
+
+#: admin/class-file-manager-page.php:58
+msgid "Clear"
+msgstr ""
+
+#: admin/class-file-manager-page.php:65
+msgid "No objects found."
+msgstr ""
+
+#: admin/class-file-manager-page.php:121
+msgid "Expand All"
+msgstr ""
+
+#: admin/class-file-manager-page.php:124
+msgid "Collapse All"
+msgstr ""
+
+#: admin/class-file-manager-page.php:129
+#, php-format
+msgid "%1$d images, %2$d files, %3$s total"
+msgstr ""
+
+#: admin/class-file-manager-page.php:180
+#, php-format
+msgid "%d sizes"
+msgstr ""
+
+#: admin/class-file-manager-page.php:182
+msgid "total"
+msgstr ""
+
+#: admin/class-file-manager-page.php:188
+msgid "Copy URL"
+msgstr ""
+
+#: admin/class-file-manager-page.php:199
+msgid "ORIGINAL"
+msgstr ""
+
+#: admin/class-file-manager-page.php:205
+#: admin/class-file-manager-page.php:252
+msgid "Delete"
+msgstr ""
+
+#: admin/class-file-manager-page.php:215
+msgid "Thumbnail"
+msgstr ""
+
+#: admin/class-file-manager-page.php:216
+msgid "Dimensions"
+msgstr ""
+
+#: admin/class-file-manager-page.php:217
+msgid "Size"
+msgstr ""
+
+#: admin/class-file-manager-page.php:218
+msgid "Last Modified"
+msgstr ""
+
+#: admin/class-file-manager-page.php:247
+msgid "Copy"
+msgstr ""
+
+#: admin/class-file-manager-page.php:270
+msgid "Next Page →"
+msgstr ""
+
+#: admin/class-file-manager-page.php:279
+msgid "Activity Logs"
+msgstr ""
+
+#: admin/class-file-manager-page.php:281
+msgid "Delete Logs"
+msgstr ""
+
+#: admin/class-file-manager-page.php:287
+msgid "No log entries found."
+msgstr ""
+
+#: admin/class-file-manager-page.php:322
+#: includes/class-migration.php:68
+msgid "Unauthorized."
+msgstr ""
+
+#: admin/class-file-manager-page.php:326
+msgid "No key provided."
+msgstr ""
+
+#: admin/class-file-manager-page.php:330
+msgid "File deleted."
+msgstr ""
+
+#: admin/class-file-manager-page.php:332
+msgid "Failed to delete file."
+msgstr ""
+
+#: admin/class-stats-page.php:47
+msgid "R2 Offload — Stats"
+msgstr ""
+
+#: admin/class-stats-page.php:53
+msgid "Total Files on R2"
+msgstr ""
+
+#: admin/class-stats-page.php:57
+msgid "Uploads (30 days)"
+msgstr ""
+
+#: admin/class-stats-page.php:61
+msgid "Bytes Offloaded (30 days)"
+msgstr ""
+
+#: admin/class-stats-page.php:65
+msgid "Failures (30 days)"
+msgstr ""
+
+#: admin/class-stats-page.php:88
+msgid "Uploads"
+msgstr ""
+
+#: admin/class-stats-page.php:89
+msgid "Failures"
+msgstr ""
+
+#: includes/class-media-library.php:46
+msgid "R2 Status"
+msgstr ""
+
+#: includes/class-media-library.php:63
+msgid "Error"
+msgstr ""
+
+#: includes/class-media-library.php:65
+msgid "Not synced"
+msgstr ""
+
+#: includes/class-media-library.php:105
+msgid "Delete local file"
+msgstr ""
+
+#: includes/class-media-library.php:125
+msgid "R2: Restore to server"
+msgstr ""
+
+#: includes/class-media-library.php:126
+msgid "R2: Delete local files"
+msgstr ""
+
+#: includes/class-media-library.php:187
+#, php-format
+msgid "%d file restored from R2."
+msgid_plural "%d files restored from R2."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-media-library.php:193
+#, php-format
+msgid "%d local file deleted."
+msgid_plural "%d local files deleted."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-media-library.php:202
+#, php-format
+msgid "%d failure — check the R2 Offload logs."
+msgid_plural "%d failures — check the R2 Offload logs."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-r2-client.php:162
+#, php-format
+msgid "Missing required fields: %s. Save your settings first, then test."
+msgstr ""
+
+#: includes/class-r2-client.php:175
+msgid "Could not build R2 client — check credentials."
+msgstr ""
+
+#: includes/class-r2-client.php:185
+msgid "Connection successful."
+msgstr ""
+
+#: includes/class-r2-client.php:191
+#, php-format
+msgid "R2 error: %s"
+msgstr ""
+
+#: includes/class-migration.php:116
+#, php-format
+msgid "Batch processed. Complete: %d, Pending: %d, Failed: %d"
+msgstr ""
+
+#: includes/class-migration.php:151
+msgid "All attachments are already synced."
+msgstr ""
+
+#: includes/class-migration.php:178
+#, php-format
+msgid "Migration started. %d attachments queued."
+msgstr ""
+
+#: includes/class-migration.php:188
+msgid "Migration paused."
+msgstr ""
+
+#: includes/class-migration.php:196
+msgid "Migration resumed."
+msgstr ""
+
+#: includes/class-migration.php:206
+msgid "Migration cancelled."
+msgstr ""
+
+#: includes/class-migration.php:255
+#, php-format
+msgid "%d failed items reset and re-queued."
+msgstr ""
+
+#: includes/class-migration.php:270
+#: includes/class-settings.php:170
+msgid "Account ID must contain only hex characters (0-9, a-f)."
+msgstr ""
+
+#: includes/class-migration.php:285
+msgid "Credentials saved."
+msgstr ""
+
+#: includes/class-migration.php:320
+msgid "Logs deleted."
+msgstr ""
+
+#: includes/class-migration.php:332
+#: includes/class-migration.php:500
+msgid "Invalid attachment ID."
+msgstr ""
+
+#: includes/class-migration.php:336
+msgid "This attachment is not synced to R2."
+msgstr ""
+
+#: includes/class-migration.php:345
+#, php-format
+msgid "Restore completed with %d failure(s). Check the logs."
+msgstr ""
+
+#: includes/class-migration.php:355
+#, php-format
+msgid "%d file(s) restored to the server."
+msgstr ""
+
+#: includes/class-migration.php:401
+msgid "No attachments need restoring."
+msgstr ""
+
+#: includes/class-migration.php:418
+#, php-format
+msgid "Restore started. %d attachments queued."
+msgstr ""
+
+#: includes/class-migration.php:461
+msgid "No local files to delete — all synced attachments are already R2-only."
+msgstr ""
+
+#: includes/class-migration.php:477
+#, php-format
+msgid "Local delete started. %d attachments queued."
+msgstr ""
+
+#: includes/class-migration.php:504
+msgid "Attachment is not synced to R2."
+msgstr ""
+
+#: includes/class-migration.php:512
+#, php-format
+msgid "%d local file(s) deleted."
+msgstr ""
+
+#: includes/class-migration.php:535
+msgid "No synced attachments to desync."
+msgstr ""
+
+#: includes/class-migration.php:551
+#, php-format
+msgid "Restore & desync started. %d attachments queued."
+msgstr ""
+
+#: includes/class-migration.php:631
+msgid "Activity logs cleared."
+msgstr ""
+
+#: includes/class-settings.php:199
+msgid "Bucket name is invalid."
+msgstr ""

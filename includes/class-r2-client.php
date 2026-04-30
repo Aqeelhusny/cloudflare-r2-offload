@@ -1,9 +1,9 @@
 <?php
 namespace R2Offload;
 
-use Aws\Exception\AwsException;
-use Aws\S3\MultipartUploader;
-use Aws\S3\S3Client;
+use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\S3\MultipartUploader;
+use R2Offload\Vendor\Aws\S3\S3Client;
 
 defined( 'ABSPATH' ) || exit;
 

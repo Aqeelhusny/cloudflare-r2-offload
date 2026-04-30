@@ -132,9 +132,6 @@ class Plugin {
         // Boot settings to set defaults (needs a temporary instance).
         $settings = new Settings();
         $settings->set_defaults();
-
-        // Ensure WordPress picks up the new cron event registration.
-        flush_rewrite_rules();
     }
 
     /**

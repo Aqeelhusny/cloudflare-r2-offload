@@ -12,8 +12,6 @@
  * Domain Path: /languages
  * Requires PHP: 7.4
  * Requires at least: 5.8
- * WC requires at least: 6.0
- * WC tested up to: 9.9
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -35,7 +33,7 @@ define( 'R2_OFFLOAD_URL',        plugin_dir_url( __FILE__ ) );
 define( 'R2_OFFLOAD_BASENAME',   plugin_basename( __FILE__ ) );
 define( 'R2_OFFLOAD_DB_VERSION', '1.0.0' );
 
-// Autoloader — vendor (AWS SDK) + PSR-4 classes.
+// Autoloader — scoped vendor (AWS SDK via Strauss) + plugin classes.
 $autoload = R2_OFFLOAD_PATH . 'vendor/autoload.php';
 if ( ! file_exists( $autoload ) ) {
     add_action( 'admin_notices', function () {
@@ -46,6 +44,12 @@ if ( ! file_exists( $autoload ) ) {
     return;
 }
 require_once $autoload;
+
+// Strauss-scoped autoloader for prefixed vendor packages.
+$strauss_autoload = R2_OFFLOAD_PATH . 'lib/vendor/autoload.php';
+if ( file_exists( $strauss_autoload ) ) {
+    require_once $strauss_autoload;
+}
 
 // Activation / deactivation hooks.
 register_activation_hook( __FILE__, [ 'R2Offload\Plugin', 'activate' ] );

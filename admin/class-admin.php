@@ -174,6 +174,8 @@ class Admin {
                 'desyncStarting'        => __( 'Restore & desync queued — processing in background…', 'cloudflare-r2-offload' ),
                 'desyncComplete'        => __( 'All files restored and removed from R2.', 'cloudflare-r2-offload' ),
                 'desyncCompleteFailed'  => __( '%d attachment(s) failed to desync. Check the error log.', 'cloudflare-r2-offload' ),
+                // Clear activity logs.
+                'confirmClearLogs'      => __( 'Clear all activity logs? This cannot be undone.', 'cloudflare-r2-offload' ),
                 // Status badges.
                 'statusSynced'          => __( 'Synced', 'cloudflare-r2-offload' ),
                 'statusR2Only'          => __( 'R2 only', 'cloudflare-r2-offload' ),

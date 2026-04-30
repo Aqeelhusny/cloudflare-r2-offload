@@ -47,6 +47,7 @@ class Migration {
             // Feature: Background offload queue stats and logs.
             'r2_offload_background_queue_status',
             'r2_offload_background_queue_logs',
+            'r2_offload_clear_activity_logs',
         ];
         foreach ( $actions as $action ) {
             add_action( "wp_ajax_{$action}", [ $this, 'handle_ajax' ] );
@@ -614,5 +615,16 @@ class Migration {
         }
 
         wp_send_json_success( [ 'logs' => $logs ] );
+    }
+
+    private function ajax_clear_activity_logs(): void {
+        $this->logger->delete_local_logs();
+
+        if ( $this->settings->get_file_manager_enabled() ) {
+            $r2 = Plugin::get_instance()->r2;
+            $r2->delete_by_prefix( 'r2-offload-logs/' );
+        }
+
+        wp_send_json_success( [ 'message' => __( 'Activity logs cleared.', 'cloudflare-r2-offload' ) ] );
     }
 }

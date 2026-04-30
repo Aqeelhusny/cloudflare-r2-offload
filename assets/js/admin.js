@@ -605,6 +605,26 @@
         }, 1000);
     });
 
+    $('#r2-bg-clear-logs').on('click', function () {
+        if (!confirm(R2Offload.i18n.confirmClearLogs || 'Clear all activity logs? This cannot be undone.')) return;
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Clearing…');
+        $.post(R2Offload.ajaxUrl, {
+            action: 'r2_offload_clear_activity_logs',
+            nonce:  R2Offload.nonce
+        }, function (res) {
+            $btn.prop('disabled', false).text('Clear Logs');
+            if (res.success) {
+                $('#r2-bg-logs-body').empty().append('<tr><td colspan="4">No log entries yet.</td></tr>');
+            } else {
+                alert((res.data && res.data.message) || 'Failed to clear logs.');
+            }
+        }).fail(function () {
+            $btn.prop('disabled', false).text('Clear Logs');
+            alert('Request failed.');
+        });
+    });
+
     // =========================================================================
     // Save credentials (AJAX — submits only the R2 Connection fields)
     // =========================================================================

@@ -4,11 +4,11 @@ Tags: cloudflare, r2, media, offload, cdn
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Offload your WordPress media library to Cloudflare R2 with custom CDN domain support, bulk migration, file manager, and upload stats.
+Offload your WordPress media library to Cloudflare R2 with custom CDN domain support, bulk migration, restore, desync, file manager, and upload stats.
 
 == Description ==
 
@@ -23,9 +23,11 @@ Cloudflare R2 Offload automatically uploads your WordPress media library to Clou
 * **WooCommerce compatible** — product images, gallery thumbnails, and REST API image URLs are all rewritten automatically.
 * **Multipart upload** — large files are uploaded using multipart upload for reliability.
 * **Delete local files** — optionally delete local copies after upload to free server disk space.
-* **Restore from R2** — download files back from R2 to your server at any time.
+* **Restore from R2** — download files back from R2 to your server at any time, with live progress tracking.
+* **Restore & Remove from R2** — fully disconnect from R2 by restoring all files, verifying downloads, then deleting from R2.
 * **File manager** — browse, search, and manage files stored in your R2 bucket directly from WordPress.
 * **Upload stats** — daily upload counts, bytes transferred, and failure tracking with a 30-day chart.
+* **Live dashboard** — migration page auto-refreshes stats every 10 seconds with real-time progress for all operations.
 * **Multisite support** — works correctly across multisite blog switches.
 * **Secure credentials** — API keys are encrypted with AES-256-CBC before storage.
 
@@ -68,7 +70,11 @@ Media URLs revert to your local server. Your files remain in R2 — nothing is d
 
 = Can I restore files from R2 back to my server? =
 
-Yes. Use the Restore feature on the Migration page, or the "Restore from R2" row action in the Media Library.
+Yes. Use the Restore feature on the Migration page, or the "Restore from R2" row action in the Media Library. A live progress bar tracks the download status.
+
+= Can I fully disconnect from R2? =
+
+Yes. Use the "Restore & Remove from R2" feature on the Migration page. It restores all files to the server, verifies each download, then deletes from R2 and clears all sync metadata.
 
 = Is WooCommerce supported? =
 
@@ -82,10 +88,24 @@ Yes. URL caches are flushed on blog switches, and wp_upload_dir() is used per-bl
 
 1. Settings page — R2 connection, delivery, and behavior configuration.
 2. Migration page — bulk migration with real-time progress tracking.
-3. Stats page — daily upload chart and totals.
-4. File manager — browse R2 objects grouped by image.
+3. Restore & desync — restore files from R2 and fully disconnect.
+4. Stats page — daily upload chart and totals.
+5. File manager — browse R2 objects grouped by image.
 
 == Changelog ==
+
+= 1.3.1 =
+* New: Restore & Remove from R2 — fully disconnect from R2 by restoring all files to the server, verifying downloads, then deleting from R2 and clearing all sync metadata.
+* New: Restore progress polling — bulk restore now shows live progress with 3-second polling.
+* New: Background page refresh — stats cards and button visibility auto-update every 10 seconds on the migration page.
+* Fixed: Progress bar percentage overcounting — local-delete and restore now count per attachment instead of per individual file.
+* Fixed: Stale progress status after completion — all operations now clean up their tracking data on completion.
+* Fixed: Cancel migration now properly hides all action buttons and resets the progress bar.
+* Fixed: Start migration with nothing to sync no longer shows Pause/Cancel/Run Now buttons.
+* Fixed: Button text stuck on loading state after AJAX actions.
+* Fixed: Restore and local-delete buttons no longer start polling when there is nothing to process.
+* Improved: Log timestamps now use WordPress timezone instead of UTC.
+* Improved: Log filenames now rotate based on WordPress local date.
 
 = 1.0.1 =
 * Fixed: Migration INSERT query column mismatch causing silent failures on MySQL strict mode.
@@ -102,5 +122,5 @@ Yes. URL caches are flushed on blog switches, and wp_upload_dir() is used per-bl
 
 == Upgrade Notice ==
 
-= 1.0.1 =
-Fixes a critical migration bug and adds a CDN on/off toggle. Recommended for all users.
+= 1.3.1 =
+Adds Restore & Remove from R2 feature, fixes progress bar bugs, and adds live dashboard auto-refresh. Recommended for all users.

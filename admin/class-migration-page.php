@@ -149,6 +149,9 @@ class MigrationPage {
                     <button type="button" id="r2-bg-refresh-logs" class="button button-small" style="margin-left:8px;">
                         <?php esc_html_e( 'Refresh', 'cloudflare-r2-offload' ); ?>
                     </button>
+                    <button type="button" id="r2-bg-clear-logs" class="button button-small" style="margin-left:4px;color:#d63638;">
+                        <?php esc_html_e( 'Clear Logs', 'cloudflare-r2-offload' ); ?>
+                    </button>
                 </h3>
                 <table class="wp-list-table widefat fixed striped" id="r2-bg-logs-table">
                     <thead>

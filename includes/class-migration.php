@@ -134,7 +134,7 @@ class Migration {
         $now   = current_time( 'mysql', true );
         $rows  = [];
         foreach ( $ids as $id ) {
-            $rows[] = $wpdb->prepare( '(%d, %s, %s)', (int) $id, 'pending', $now );
+            $rows[] = $wpdb->prepare( '(%d, %s, %s, %s)', (int) $id, 'pending', $now, $now );
         }
 
         // Batch insert (500 per query to avoid hitting max_allowed_packet).

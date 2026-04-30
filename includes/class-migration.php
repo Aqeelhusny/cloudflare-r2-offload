@@ -92,20 +92,20 @@ class Migration {
         global $wpdb;
         $table = $wpdb->prefix . 'r2_offload_migration_queue';
         $counts = $wpdb->get_results(
-            "SELECT status, COUNT(*) as cnt FROM `{$table}` GROUP BY status",
+            $wpdb->prepare( "SELECT status, COUNT(*) as cnt FROM `{$table}` WHERE %d GROUP BY status", 1 ),
             OBJECT_K
         );
-        $total      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
+        $total      = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE %d", 1 ) );
         $complete   = isset( $counts['complete'] )   ? (int) $counts['complete']->cnt   : 0;
         $failed     = isset( $counts['failed'] )     ? (int) $counts['failed']->cnt     : 0;
         $pending    = isset( $counts['pending'] )    ? (int) $counts['pending']->cnt    : 0;
         $processing = isset( $counts['processing'] ) ? (int) $counts['processing']->cnt : 0;
 
         $all_attachments = (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment'"
+            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s", 'attachment' )
         );
         $synced = (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_r2_offload_synced' AND meta_value = '1'"
+            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s", '_r2_offload_synced', '1' )
         );
 
         wp_send_json_success( [
@@ -131,13 +131,16 @@ class Migration {
 
         // Find all attachments NOT yet synced.
         $ids = $wpdb->get_col(
-            "SELECT ID FROM {$wpdb->posts}
-             WHERE post_type = 'attachment'
-               AND ID NOT IN (
-                   SELECT post_id FROM {$wpdb->postmeta}
-                   WHERE meta_key = '_r2_offload_synced' AND meta_value = '1'
-               )
-             ORDER BY ID ASC"
+            $wpdb->prepare(
+                "SELECT ID FROM {$wpdb->posts}
+                 WHERE post_type = %s
+                   AND ID NOT IN (
+                       SELECT post_id FROM {$wpdb->postmeta}
+                       WHERE meta_key = %s AND meta_value = %s
+                   )
+                 ORDER BY ID ASC",
+                'attachment', '_r2_offload_synced', '1'
+            )
         );
 
         if ( empty( $ids ) ) {
@@ -204,11 +207,11 @@ class Migration {
         $table = $wpdb->prefix . 'r2_offload_migration_queue';
 
         $counts = $wpdb->get_results(
-            "SELECT status, COUNT(*) as cnt FROM `{$table}` GROUP BY status",
+            $wpdb->prepare( "SELECT status, COUNT(*) as cnt FROM `{$table}` WHERE %d GROUP BY status", 1 ),
             OBJECT_K
         );
 
-        $total      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
+        $total      = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE %d", 1 ) );
         $complete   = isset( $counts['complete'] )   ? (int) $counts['complete']->cnt   : 0;
         $failed     = isset( $counts['failed'] )     ? (int) $counts['failed']->cnt     : 0;
         $pending    = isset( $counts['pending'] )    ? (int) $counts['pending']->cnt    : 0;
@@ -217,10 +220,10 @@ class Migration {
 
         // Live stats for the header cards.
         $all_attachments = (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment'"
+            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s", 'attachment' )
         );
         $synced = (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_r2_offload_synced' AND meta_value = '1'"
+            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s", '_r2_offload_synced', '1' )
         );
 
         wp_send_json_success( compact( 'total', 'complete', 'failed', 'pending', 'processing', 'paused', 'all_attachments', 'synced' ) );
@@ -367,19 +370,26 @@ class Migration {
 
         if ( $only_missing ) {
             $ids = $wpdb->get_col(
-                "SELECT pm.post_id
-                 FROM {$wpdb->postmeta} pm
-                 WHERE pm.meta_key = '_r2_offload_synced' AND pm.meta_value = '1'
-                   AND EXISTS (
-                       SELECT 1 FROM {$wpdb->postmeta} pm2
-                       WHERE pm2.post_id = pm.post_id
-                         AND pm2.meta_key = '_r2_offload_local_deleted' AND pm2.meta_value = '1'
-                   )"
+                $wpdb->prepare(
+                    "SELECT pm.post_id
+                     FROM {$wpdb->postmeta} pm
+                     WHERE pm.meta_key = %s AND pm.meta_value = %s
+                       AND EXISTS (
+                           SELECT 1 FROM {$wpdb->postmeta} pm2
+                           WHERE pm2.post_id = pm.post_id
+                             AND pm2.meta_key = %s AND pm2.meta_value = %s
+                       )",
+                    '_r2_offload_synced', '1',
+                    '_r2_offload_local_deleted', '1'
+                )
             );
         } else {
             $ids = $wpdb->get_col(
-                "SELECT post_id FROM {$wpdb->postmeta}
-                 WHERE meta_key = '_r2_offload_synced' AND meta_value = '1'"
+                $wpdb->prepare(
+                    "SELECT post_id FROM {$wpdb->postmeta}
+                     WHERE meta_key = %s AND meta_value = %s",
+                    '_r2_offload_synced', '1'
+                )
             );
         }
 
@@ -429,14 +439,18 @@ class Migration {
         // Only target attachments that are synced AND still have local files
         // (i.e., _r2_offload_local_deleted is not set).
         $ids = $wpdb->get_col(
-            "SELECT pm.post_id
-             FROM {$wpdb->postmeta} pm
-             WHERE pm.meta_key = '_r2_offload_synced' AND pm.meta_value = '1'
-               AND NOT EXISTS (
-                   SELECT 1 FROM {$wpdb->postmeta} pm2
-                   WHERE pm2.post_id = pm.post_id
-                     AND pm2.meta_key = '_r2_offload_local_deleted' AND pm2.meta_value = '1'
-               )"
+            $wpdb->prepare(
+                "SELECT pm.post_id
+                 FROM {$wpdb->postmeta} pm
+                 WHERE pm.meta_key = %s AND pm.meta_value = %s
+                   AND NOT EXISTS (
+                       SELECT 1 FROM {$wpdb->postmeta} pm2
+                       WHERE pm2.post_id = pm.post_id
+                         AND pm2.meta_key = %s AND pm2.meta_value = %s
+                   )",
+                '_r2_offload_synced', '1',
+                '_r2_offload_local_deleted', '1'
+            )
         );
 
         if ( empty( $ids ) ) {

@@ -21,18 +21,18 @@ class MigrationPage {
 
         $table = $wpdb->prefix . 'r2_offload_migration_queue';
 
-        $total      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
-        $complete   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}` WHERE status = 'complete'" );
-        $failed     = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}` WHERE status = 'failed'" );
-        $pending    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}` WHERE status IN ('pending','processing')" );
+        $total      = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE %d", 1 ) );
+        $complete   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status = %s", 'complete' ) );
+        $failed     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status = %s", 'failed' ) );
+        $pending    = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status IN (%s,%s)", 'pending', 'processing' ) );
         $paused     = (bool) get_option( 'r2_offload_migration_paused', false );
 
         // Total WP attachments.
         $all_attachments = (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment'"
+            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s", 'attachment' )
         );
         $synced_all = (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_r2_offload_synced' AND meta_value = '1'"
+            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s", '_r2_offload_synced', '1' )
         );
 
         $recent_errors = $this->logger->get_recent_entries( 20 );
@@ -116,14 +116,18 @@ class MigrationPage {
             </p>
             <?php
             $r2only_count = (int) $wpdb->get_var(
-                "SELECT COUNT(DISTINCT pm.post_id)
-                 FROM {$wpdb->postmeta} pm
-                 WHERE pm.meta_key = '_r2_offload_synced' AND pm.meta_value = '1'
-                   AND EXISTS (
-                       SELECT 1 FROM {$wpdb->postmeta} pm2
-                       WHERE pm2.post_id = pm.post_id
-                         AND pm2.meta_key = '_r2_offload_local_deleted' AND pm2.meta_value = '1'
-                   )"
+                $wpdb->prepare(
+                    "SELECT COUNT(DISTINCT pm.post_id)
+                     FROM {$wpdb->postmeta} pm
+                     WHERE pm.meta_key = %s AND pm.meta_value = %s
+                       AND EXISTS (
+                           SELECT 1 FROM {$wpdb->postmeta} pm2
+                           WHERE pm2.post_id = pm.post_id
+                             AND pm2.meta_key = %s AND pm2.meta_value = %s
+                       )",
+                    '_r2_offload_synced', '1',
+                    '_r2_offload_local_deleted', '1'
+                )
             );
             ?>
             <div class="r2-stats-bar" style="margin:12px 0 16px;">

@@ -61,14 +61,14 @@ foreach ( $option_keys as $key ) {
 
 // Catch any dynamic options not in the list above (e.g. daily stats).
 $wpdb->query(
-    "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'r2_offload_%'"
+    $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", 'r2\_offload\_%' )
 );
 
 // -------------------------------------------------------------------------
 // 3. Delete all attachment postmeta written by the plugin.
 // -------------------------------------------------------------------------
 $wpdb->query(
-    "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_r2_offload_%'"
+    $wpdb->prepare( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s", '\_r2\_offload\_%' )
 );
 
 // -------------------------------------------------------------------------
@@ -90,17 +90,11 @@ $upload_dir = wp_upload_dir();
 $log_dir    = trailingslashit( $upload_dir['basedir'] ) . 'r2-offload-logs';
 
 if ( is_dir( $log_dir ) ) {
-    // Delete every file inside the directory first, then remove the directory itself.
-    $files = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator( $log_dir, RecursiveDirectoryIterator::SKIP_DOTS ),
-        RecursiveIteratorIterator::CHILD_FIRST
-    );
-    foreach ( $files as $file ) {
-        if ( $file->isDir() ) {
-            rmdir( $file->getRealPath() );
-        } else {
-            wp_delete_file( $file->getRealPath() );
-        }
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    WP_Filesystem();
+    global $wp_filesystem;
+
+    if ( $wp_filesystem ) {
+        $wp_filesystem->delete( $log_dir, true );
     }
-    rmdir( $log_dir );
 }

@@ -97,9 +97,14 @@ class BatchProcessor {
             }
 
             // Mark as processing.
-            $ids_sql = implode( ',', array_map( fn( $item ) => (int) $item->id, $items ) );
+            $ids_int      = array_map( fn( $item ) => (int) $item->id, $items );
+            $placeholders = implode( ',', array_fill( 0, count( $ids_int ), '%d' ) );
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
             $wpdb->query(
-                "UPDATE `{$table}` SET status = 'processing', updated_at = '{$now}' WHERE id IN ({$ids_sql})"
+                $wpdb->prepare(
+                    "UPDATE `{$table}` SET status = 'processing', updated_at = %s WHERE id IN ({$placeholders})",
+                    array_merge( [ $now ], $ids_int )
+                )
             );
 
             foreach ( $items as $item ) {
@@ -166,7 +171,7 @@ class BatchProcessor {
 
         // Time limit reached but items remain — reschedule.
         $pending_count = (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM `{$table}` WHERE status = 'pending'"
+            $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status = %s", 'pending' )
         );
 
         if ( $pending_count > 0 ) {

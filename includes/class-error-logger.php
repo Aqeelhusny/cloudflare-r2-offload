@@ -4,7 +4,7 @@ namespace R2Offload;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Structured error logger — writes to a local log file and optionally to R2.
+ * Structured error logger — writes to a local log file using WP_Filesystem.
  */
 class ErrorLogger {
 
@@ -14,7 +14,7 @@ class ErrorLogger {
     private string $log_dir;
 
     public function __construct() {
-        $upload     = wp_upload_dir();
+        $upload        = wp_upload_dir();
         $this->log_dir = trailingslashit( $upload['basedir'] ) . 'r2-offload-logs';
     }
 
@@ -31,7 +31,7 @@ class ErrorLogger {
         }
 
         $entry = wp_json_encode( [
-            'timestamp' => gmdate( 'c' ),
+            'timestamp' => current_time( 'c' ),
             'level'     => $level,
             'message'   => $message,
             'context'   => $context,
@@ -64,11 +64,18 @@ class ErrorLogger {
      */
     public function get_recent_entries( int $limit = 50 ): array {
         $file = $this->get_log_file_path();
-        if ( ! file_exists( $file ) ) {
+        $fs   = $this->get_filesystem();
+
+        if ( ! $fs || ! $fs->exists( $file ) ) {
             return [];
         }
 
-        $lines   = file( $file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
+        $contents = $fs->get_contents( $file );
+        if ( ! $contents ) {
+            return [];
+        }
+
+        $lines   = array_filter( explode( "\n", $contents ) );
         $lines   = array_reverse( $lines );
         $lines   = array_slice( $lines, 0, $limit );
         $entries = [];
@@ -85,41 +92,70 @@ class ErrorLogger {
      * Delete all local log files.
      */
     public function delete_local_logs(): bool {
-        if ( ! is_dir( $this->log_dir ) ) {
+        $fs = $this->get_filesystem();
+        if ( ! $fs || ! $fs->is_dir( $this->log_dir ) ) {
             return true;
         }
-        $files = glob( $this->log_dir . '/*.log' );
+
+        $files = $fs->dirlist( $this->log_dir );
         if ( ! $files ) {
             return true;
         }
+
         $success = true;
-        foreach ( $files as $file ) {
-            if ( ! @unlink( $file ) ) {
-                $success = false;
+        foreach ( $files as $name => $info ) {
+            if ( substr( $name, -4 ) === '.log' ) {
+                if ( ! $fs->delete( $this->log_dir . '/' . $name ) ) {
+                    $success = false;
+                }
             }
         }
         return $success;
     }
 
     /**
-     * Get the path to today's local log file, creating the directory if needed.
+     * Get the path to today's local log file.
      */
     public function get_log_file_path(): string {
-        return $this->log_dir . '/' . gmdate( 'Y-m-d' ) . '.log';
+        return $this->log_dir . '/' . current_time( 'Y-m-d' ) . '.log';
     }
 
     /**
      * Append a JSON-lines entry to the local log file.
      */
     private function write_local( string $entry ): void {
-        if ( ! is_dir( $this->log_dir ) ) {
-            wp_mkdir_p( $this->log_dir );
-            // Protect directory from direct web access.
-            file_put_contents( $this->log_dir . '/.htaccess', "deny from all\n" );
-            file_put_contents( $this->log_dir . '/index.php', "<?php // Silence is golden.\n" );
+        $fs = $this->get_filesystem();
+        if ( ! $fs ) {
+            return;
         }
 
-        $file = $this->get_log_file_path();
-        file_put_contents( $file, $entry . "\n", FILE_APPEND | LOCK_EX );
+        if ( ! $fs->is_dir( $this->log_dir ) ) {
+            wp_mkdir_p( $this->log_dir );
+            $fs->put_contents( $this->log_dir . '/.htaccess', "deny from all\n", FS_CHMOD_FILE );
+            $fs->put_contents( $this->log_dir . '/index.php', "<?php // Silence is golden.\n", FS_CHMOD_FILE );
+        }
+
+        $file    = $this->get_log_file_path();
+        $current = $fs->exists( $file ) ? $fs->get_contents( $file ) : '';
+        $fs->put_contents( $file, $current . $entry . "\n", FS_CHMOD_FILE );
+    }
+
+    /**
+     * Initialise and return the WP_Filesystem instance.
+     */
+    private function get_filesystem(): ?\WP_Filesystem_Base {
+        global $wp_filesystem;
+
+        if ( $wp_filesystem ) {
+            return $wp_filesystem;
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+
+        if ( WP_Filesystem() ) {
+            return $wp_filesystem;
+        }
+
+        return null;
     }
 }

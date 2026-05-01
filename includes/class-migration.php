@@ -99,11 +99,11 @@ class Migration {
             "SELECT status, COUNT(*) as cnt FROM `{$table}` GROUP BY status",
             OBJECT_K
         );
-        $total      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
         $complete   = isset( $counts['complete'] )   ? (int) $counts['complete']->cnt   : 0;
         $failed     = isset( $counts['failed'] )     ? (int) $counts['failed']->cnt     : 0;
         $pending    = isset( $counts['pending'] )    ? (int) $counts['pending']->cnt    : 0;
         $processing = isset( $counts['processing'] ) ? (int) $counts['processing']->cnt : 0;
+        $total      = $complete + $failed + $pending + $processing;
 
         $all_attachments = (int) $wpdb->get_var(
             $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s", 'attachment' )
@@ -129,8 +129,7 @@ class Migration {
 
         $table = $wpdb->prefix . 'r2_offload_migration_queue';
 
-        // Verify the queue table exists — it may be missing if the activation
-        // hook never ran (manual file copy, failed DB permissions, etc.).
+        // Verify the queue table exists.
         $table_exists = $wpdb->get_var(
             $wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
         );
@@ -146,16 +145,19 @@ class Migration {
             }
         }
 
-        // Clear any existing queue first.
+        // Clear any existing queue.
         $wpdb->query( "TRUNCATE TABLE `{$table}`" );
         delete_option( 'r2_offload_migration_paused' );
 
-        // Find all attachments NOT yet synced.
-        // Uses LEFT JOIN instead of NOT IN subquery — MySQL optimises this as a
-        // hash anti-join which scales to millions of rows without timing out.
-        $ids = $wpdb->get_col(
+        $now = current_time( 'mysql', true );
+
+        // INSERT ... SELECT directly in the database — never loads IDs into PHP.
+        // Handles 600K+ attachments in a single query with zero PHP memory overhead.
+        // Uses LEFT JOIN anti-pattern for fast exclusion of already-synced attachments.
+        $inserted = $wpdb->query(
             $wpdb->prepare(
-                "SELECT p.ID
+                "INSERT INTO `{$table}` (attachment_id, status, created_at, updated_at)
+                 SELECT p.ID, 'pending', %s, %s
                  FROM {$wpdb->posts} p
                  LEFT JOIN {$wpdb->postmeta} pm
                        ON pm.post_id = p.ID
@@ -164,42 +166,28 @@ class Migration {
                  WHERE p.post_type = %s
                    AND pm.meta_id IS NULL
                  ORDER BY p.ID ASC",
-                '_r2_offload_synced', '1', 'attachment'
+                $now, $now, '_r2_offload_synced', '1', 'attachment'
             )
         );
 
-        if ( empty( $ids ) ) {
+        $total = (int) $inserted;
+
+        if ( $total === 0 ) {
             wp_send_json_success( [ 'message' => __( 'All attachments are already synced.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
         }
 
-        $now  = current_time( 'mysql', true );
-        $rows = [];
-        foreach ( $ids as $id ) {
-            $rows[] = $wpdb->prepare( '(%d, %s, %s, %s)', (int) $id, 'pending', $now, $now );
-        }
-
-        // Batch insert 500 rows per query to stay under max_allowed_packet.
-        foreach ( array_chunk( $rows, 500 ) as $chunk ) {
-            $wpdb->query(
-                "INSERT INTO `{$table}` (attachment_id, status, created_at, updated_at)
-                 VALUES " . implode( ',', $chunk )
-            );
-        }
-
-        // Schedule first batch and immediately trigger cron via loopback so it
-        // fires even on hosts where WP-Cron is not triggered by real traffic.
         wp_schedule_single_event( time(), 'r2_offload_process_batch' );
         spawn_cron();
 
-        $this->logger->info( 'Migration started.', [ 'total' => count( $ids ) ] );
+        $this->logger->info( 'Migration started.', [ 'total' => $total ] );
 
         wp_send_json_success( [
             'message' => sprintf(
                 /* translators: %d: number of attachments */
                 __( 'Migration started. %d attachments queued.', 'cloudflare-r2-offload' ),
-                count( $ids )
+                $total
             ),
-            'total'   => count( $ids ),
+            'total'   => $total,
         ] );
     }
 
@@ -231,25 +219,37 @@ class Migration {
         global $wpdb;
         $table = $wpdb->prefix . 'r2_offload_migration_queue';
 
+        // Single query for all queue stats — the status index makes GROUP BY fast
+        // even with 600K+ rows.
         $counts = $wpdb->get_results(
             "SELECT status, COUNT(*) as cnt FROM `{$table}` GROUP BY status",
             OBJECT_K
         );
 
-        $total      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
         $complete   = isset( $counts['complete'] )   ? (int) $counts['complete']->cnt   : 0;
         $failed     = isset( $counts['failed'] )     ? (int) $counts['failed']->cnt     : 0;
         $pending    = isset( $counts['pending'] )    ? (int) $counts['pending']->cnt    : 0;
         $processing = isset( $counts['processing'] ) ? (int) $counts['processing']->cnt : 0;
+        $total      = $complete + $failed + $pending + $processing;
         $paused     = (bool) get_option( 'r2_offload_migration_paused', false );
 
-        // Live stats for the header cards.
-        $all_attachments = (int) $wpdb->get_var(
-            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s", 'attachment' )
-        );
-        $synced = (int) $wpdb->get_var(
-            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s", '_r2_offload_synced', '1' )
-        );
+        // Cache expensive full-table counts (wp_posts, wp_postmeta) for 30 seconds.
+        // These barely change during a migration and are polled every 3s by the UI.
+        $all_attachments = wp_cache_get( 'r2_offload_total_attachments' );
+        if ( false === $all_attachments ) {
+            $all_attachments = (int) $wpdb->get_var(
+                $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s", 'attachment' )
+            );
+            wp_cache_set( 'r2_offload_total_attachments', $all_attachments, '', 30 );
+        }
+
+        $synced = wp_cache_get( 'r2_offload_synced_count' );
+        if ( false === $synced ) {
+            $synced = (int) $wpdb->get_var(
+                $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s", '_r2_offload_synced', '1' )
+            );
+            wp_cache_set( 'r2_offload_synced_count', $synced, '', 30 );
+        }
 
         wp_send_json_success( compact( 'total', 'complete', 'failed', 'pending', 'processing', 'paused', 'all_attachments', 'synced' ) );
     }

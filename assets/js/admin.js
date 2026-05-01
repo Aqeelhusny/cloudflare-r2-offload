@@ -3,7 +3,7 @@
     'use strict';
 
     var pollInterval = null;
-    var POLL_MS = 3000;
+    var POLL_MS = 5000;
 
     // =========================================================================
     // Background page refresh — keeps stats and buttons in sync

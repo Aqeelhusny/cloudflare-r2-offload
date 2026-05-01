@@ -179,7 +179,10 @@ class BatchProcessor {
                 'processed_this_run' => $processed,
                 'remaining'          => $pending_count,
             ] );
-            wp_schedule_single_event( time() + 5, self::CRON_HOOK );
+            // Schedule next batch with minimal gap. For large queues (1000+),
+            // schedule immediately to maximize throughput.
+            $delay = $pending_count > 1000 ? 1 : 3;
+            wp_schedule_single_event( time() + $delay, self::CRON_HOOK );
             spawn_cron();
         } else {
             $this->cleanup_migration_table( $table );

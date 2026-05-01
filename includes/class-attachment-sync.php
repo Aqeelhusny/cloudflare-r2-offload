@@ -129,6 +129,7 @@ class AttachmentSync {
             // Delete local files if configured — only for files uploaded in this call.
             if ( $this->settings->get_delete_local() && $result['uploaded'] > 0 ) {
                 $this->delete_local_files( array_keys( $all_files ) );
+                update_post_meta( $attachment_id, '_r2_offload_local_deleted', '1' );
             }
         } else {
             $current_retry = (int) get_post_meta( $attachment_id, '_r2_offload_retry_count', true );
@@ -300,20 +301,24 @@ class AttachmentSync {
         // Collect local paths the same way collect_files() does.
         $all_files = $this->collect_files( $attached, $metadata, $base_dir, $this->settings->get_path_prefix() );
 
+        $any_local_exists = false;
+
         foreach ( array_keys( $all_files ) as $local_path ) {
             if ( ! file_exists( $local_path ) ) {
                 $result['skipped']++;
                 continue;
             }
+            $any_local_exists = true;
             wp_delete_file( $local_path );
             $result['deleted']++;
         }
 
-        if ( $result['deleted'] > 0 ) {
+        if ( $result['deleted'] > 0 || ! $any_local_exists ) {
             update_post_meta( $attachment_id, '_r2_offload_local_deleted', '1' );
             $this->logger->info( 'Local files deleted after R2 sync.', [
                 'attachment_id' => $attachment_id,
                 'deleted'       => $result['deleted'],
+                'already_gone'  => ! $any_local_exists,
             ] );
         }
 

@@ -9,10 +9,10 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 global $wpdb;
 
 // -------------------------------------------------------------------------
-// 1. Drop the migration queue table.
+// 1. Drop plugin tables.
 // -------------------------------------------------------------------------
-$table = $wpdb->prefix . 'r2_offload_migration_queue';
-$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
+$wpdb->query( "DROP TABLE IF EXISTS `{$wpdb->prefix}r2_offload_migration_queue`" );
+$wpdb->query( "DROP TABLE IF EXISTS `{$wpdb->prefix}r2_offload_bulk_queue`" );
 
 // -------------------------------------------------------------------------
 // 2. Delete all plugin wp_options rows.

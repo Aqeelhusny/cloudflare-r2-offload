@@ -252,9 +252,10 @@ class MigrationPage {
                 <?php esc_html_e( 'Warning: This is irreversible without using the Restore feature above. Ensure your R2 connection is stable before proceeding.', 'cloudflare-r2-offload' ); ?>
             </p>
             <?php
-            $local_del_total  = (int) get_option( 'r2_offload_local_del_total',  0 );
-            $local_del_done   = (int) get_option( 'r2_offload_local_del_done',   0 );
-            $local_del_failed = (int) get_option( 'r2_offload_local_del_failed', 0 );
+            $del_counts       = $this->bulk_queue_counts( 'local_delete' );
+            $local_del_done   = $del_counts['complete'];
+            $local_del_failed = $del_counts['failed'];
+            $local_del_total  = $del_counts['pending'] + $del_counts['processing'] + $local_del_done + $local_del_failed;
             ?>
             <?php if ( $local_del_total > 0 ) : ?>
             <div class="r2-progress-wrap" id="r2-local-del-progress-wrap">
@@ -340,5 +341,32 @@ class MigrationPage {
             <?php endif; ?>
         </div>
         <?php
+    }
+
+    private function bulk_queue_counts( string $job_type ): array {
+        global $wpdb;
+        $table    = $wpdb->prefix . 'r2_offload_bulk_queue';
+        $defaults = [ 'pending' => 0, 'processing' => 0, 'complete' => 0, 'failed' => 0 ];
+
+        $exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+        if ( ! $exists ) {
+            return $defaults;
+        }
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT status, COUNT(*) as cnt FROM `{$table}` WHERE job_type = %s GROUP BY status",
+                $job_type
+            ),
+            OBJECT_K
+        );
+
+        foreach ( $defaults as $status => $_ ) {
+            if ( isset( $rows[ $status ] ) ) {
+                $defaults[ $status ] = (int) $rows[ $status ]->cnt;
+            }
+        }
+
+        return $defaults;
     }
 }

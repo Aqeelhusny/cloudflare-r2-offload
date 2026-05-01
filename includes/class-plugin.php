@@ -43,6 +43,9 @@ class Plugin {
         // Settings is lightweight (reads autoloaded options only) — always needed.
         $this->settings = new Settings();
 
+        // Run DB migrations when the plugin is updated (activation hook doesn't fire on updates).
+        $this->maybe_upgrade_db();
+
         // URL rewriting — the only thing needed on every frontend request.
         // register_hooks() internally checks the toggle and returns immediately
         // if serving is disabled, so zero overhead when OFF.
@@ -117,6 +120,73 @@ class Plugin {
         // Rebuild dependent services that hold references to the old r2/sync.
         $this->batch_processor = new BatchProcessor( $this->sync, $this->settings, $this->logger );
         $this->batch_processor->register_hooks();
+    }
+
+    // -------------------------------------------------------------------------
+    // DB Upgrade
+    // -------------------------------------------------------------------------
+
+    private function maybe_upgrade_db(): void {
+        $installed_version = get_option( 'r2_offload_db_version', '1.0.0' );
+        if ( version_compare( $installed_version, R2_OFFLOAD_DB_VERSION, '>=' ) ) {
+            return;
+        }
+
+        self::create_table();
+        $this->migrate_option_queues_to_table();
+        update_option( 'r2_offload_db_version', R2_OFFLOAD_DB_VERSION );
+    }
+
+    private function migrate_option_queues_to_table(): void {
+        global $wpdb;
+        $table = $wpdb->prefix . 'r2_offload_bulk_queue';
+        $now   = current_time( 'mysql', true );
+
+        $queue_map = [
+            'r2_offload_restore_queue'   => 'restore',
+            'r2_offload_local_del_queue' => 'local_delete',
+            'r2_offload_desync_queue'    => 'desync',
+        ];
+
+        foreach ( $queue_map as $option_key => $job_type ) {
+            $ids = get_option( $option_key, [] );
+            if ( ! is_array( $ids ) || empty( $ids ) ) {
+                continue;
+            }
+
+            foreach ( array_chunk( $ids, 500 ) as $chunk ) {
+                $values      = [];
+                $args        = [];
+                foreach ( $chunk as $attachment_id ) {
+                    $values[] = '(%d, %s, %s, %s, %s)';
+                    $args[]   = (int) $attachment_id;
+                    $args[]   = $job_type;
+                    $args[]   = 'pending';
+                    $args[]   = $now;
+                    $args[]   = $now;
+                }
+                $values_sql = implode( ', ', $values );
+                // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+                $wpdb->query(
+                    $wpdb->prepare(
+                        "INSERT IGNORE INTO `{$table}` (attachment_id, job_type, status, created_at, updated_at) VALUES {$values_sql}",
+                        $args
+                    )
+                );
+            }
+
+            delete_option( $option_key );
+        }
+
+        // Clean up counter options that are now derived from the table.
+        $cleanup_keys = [
+            'r2_offload_restore_total', 'r2_offload_restore_done', 'r2_offload_restore_failed',
+            'r2_offload_local_del_total', 'r2_offload_local_del_done', 'r2_offload_local_del_failed',
+            'r2_offload_desync_total', 'r2_offload_desync_done', 'r2_offload_desync_failed',
+        ];
+        foreach ( $cleanup_keys as $key ) {
+            delete_option( $key );
+        }
     }
 
     // -------------------------------------------------------------------------

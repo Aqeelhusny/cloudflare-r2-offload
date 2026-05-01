@@ -193,8 +193,21 @@ class BatchProcessor {
 
     private function cleanup_migration_table( string $table ): void {
         global $wpdb;
-        $wpdb->query( "TRUNCATE TABLE `{$table}`" );
-        delete_option( 'r2_offload_migration_paused' );
+
+        // Only delete completed/failed rows — new pending items may have been
+        // inserted by background offload while this batch was running.
+        $remaining = (int) $wpdb->get_var(
+            $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status IN (%s, %s)", 'pending', 'processing' )
+        );
+
+        if ( $remaining === 0 ) {
+            $wpdb->query( "TRUNCATE TABLE `{$table}`" );
+            delete_option( 'r2_offload_migration_paused' );
+        } else {
+            $wpdb->query(
+                $wpdb->prepare( "DELETE FROM `{$table}` WHERE status IN (%s, %s)", 'complete', 'failed' )
+            );
+        }
     }
 
     // =========================================================================
@@ -211,61 +224,10 @@ class BatchProcessor {
         set_transient( self::RESTORE_LOCK_KEY, 1, self::LOCK_TTL );
 
         try {
-            $this->run_restore_batch();
+            $this->run_bulk_batch( 'restore', self::RESTORE_HOOK, 'r2_offload_restore_paused', 'r2_offload_restore_complete' );
         } finally {
             delete_transient( self::RESTORE_LOCK_KEY );
         }
-    }
-
-    private function run_restore_batch(): void {
-        $queue      = (array) get_option( 'r2_offload_restore_queue', [] );
-        $batch_size = $this->settings->get_batch_size();
-        $batch      = array_splice( $queue, 0, $batch_size );
-
-        if ( empty( $batch ) ) {
-            $this->cleanup_restore_options();
-            do_action( 'r2_offload_restore_complete' );
-            $this->logger->info( 'Bulk restore complete.' );
-            return;
-        }
-
-        // Persist the remaining queue immediately.
-        update_option( 'r2_offload_restore_queue', $queue, false );
-
-        $done   = (int) get_option( 'r2_offload_restore_done',   0 );
-        $failed = (int) get_option( 'r2_offload_restore_failed', 0 );
-
-        foreach ( $batch as $attachment_id ) {
-            if ( function_exists( 'wp_cache_flush_runtime' ) ) {
-                wp_cache_flush_runtime();
-            }
-
-            $result = $this->sync->restore_from_r2( (int) $attachment_id );
-            if ( $result['failed'] > 0 ) {
-                $failed++;
-            } else {
-                $done++;
-            }
-        }
-
-        update_option( 'r2_offload_restore_done',   $done,   false );
-        update_option( 'r2_offload_restore_failed', $failed, false );
-
-        if ( ! empty( $queue ) ) {
-            wp_schedule_single_event( time() + 5, self::RESTORE_HOOK );
-        } else {
-            $this->cleanup_restore_options();
-            do_action( 'r2_offload_restore_complete' );
-            $this->logger->info( 'Bulk restore complete.', [ 'done' => $done, 'failed' => $failed ] );
-        }
-    }
-
-    private function cleanup_restore_options(): void {
-        delete_option( 'r2_offload_restore_queue' );
-        delete_option( 'r2_offload_restore_total' );
-        delete_option( 'r2_offload_restore_done' );
-        delete_option( 'r2_offload_restore_failed' );
-        delete_option( 'r2_offload_restore_paused' );
     }
 
     // =========================================================================
@@ -282,56 +244,10 @@ class BatchProcessor {
         set_transient( self::LOCAL_DEL_LOCK, 1, self::LOCK_TTL );
 
         try {
-            $this->run_local_delete_batch();
+            $this->run_bulk_batch( 'local_delete', self::LOCAL_DEL_HOOK, 'r2_offload_local_del_paused', 'r2_offload_local_delete_complete' );
         } finally {
             delete_transient( self::LOCAL_DEL_LOCK );
         }
-    }
-
-    private function run_local_delete_batch(): void {
-        $queue      = (array) get_option( 'r2_offload_local_del_queue', [] );
-        $batch_size = $this->settings->get_batch_size();
-        $batch      = array_splice( $queue, 0, $batch_size );
-
-        if ( empty( $batch ) ) {
-            $this->cleanup_local_del_options();
-            do_action( 'r2_offload_local_delete_complete' );
-            $this->logger->info( 'Bulk local-delete complete.' );
-            return;
-        }
-
-        update_option( 'r2_offload_local_del_queue', $queue, false );
-
-        $done   = (int) get_option( 'r2_offload_local_del_done',   0 );
-        $failed = (int) get_option( 'r2_offload_local_del_failed', 0 );
-
-        foreach ( $batch as $attachment_id ) {
-            if ( function_exists( 'wp_cache_flush_runtime' ) ) {
-                wp_cache_flush_runtime();
-            }
-
-            $result = $this->sync->delete_local_for_attachment( (int) $attachment_id );
-            $done++;
-        }
-
-        update_option( 'r2_offload_local_del_done',   $done,   false );
-        update_option( 'r2_offload_local_del_failed', $failed, false );
-
-        if ( ! empty( $queue ) ) {
-            wp_schedule_single_event( time() + 5, self::LOCAL_DEL_HOOK );
-        } else {
-            $this->cleanup_local_del_options();
-            do_action( 'r2_offload_local_delete_complete' );
-            $this->logger->info( 'Bulk local-delete complete.', [ 'done' => $done ] );
-        }
-    }
-
-    private function cleanup_local_del_options(): void {
-        delete_option( 'r2_offload_local_del_queue' );
-        delete_option( 'r2_offload_local_del_total' );
-        delete_option( 'r2_offload_local_del_done' );
-        delete_option( 'r2_offload_local_del_failed' );
-        delete_option( 'r2_offload_local_del_paused' );
     }
 
     // =========================================================================
@@ -348,59 +264,146 @@ class BatchProcessor {
         set_transient( self::DESYNC_LOCK, 1, self::LOCK_TTL );
 
         try {
-            $this->run_desync_batch();
+            $this->run_bulk_batch( 'desync', self::DESYNC_HOOK, 'r2_offload_desync_paused', 'r2_offload_desync_complete' );
         } finally {
             delete_transient( self::DESYNC_LOCK );
         }
     }
 
-    private function run_desync_batch(): void {
-        $queue      = (array) get_option( 'r2_offload_desync_queue', [] );
+    // =========================================================================
+    // Unified bulk batch processor — reads from r2_offload_bulk_queue table.
+    // Replaces option-based array queues that OOM at 641K+ scale.
+    // =========================================================================
+
+    private function run_bulk_batch( string $job_type, string $cron_hook, string $pause_option, string $complete_action ): void {
+        global $wpdb;
+
+        $table      = $wpdb->prefix . 'r2_offload_bulk_queue';
         $batch_size = $this->settings->get_batch_size();
-        $batch      = array_splice( $queue, 0, $batch_size );
+        $start_time = time();
+        $processed  = 0;
 
-        if ( empty( $batch ) ) {
-            $this->cleanup_desync_options();
-            do_action( 'r2_offload_desync_complete' );
-            $this->logger->info( 'Bulk restore & desync complete.' );
-            return;
-        }
-
-        update_option( 'r2_offload_desync_queue', $queue, false );
-
-        $done   = (int) get_option( 'r2_offload_desync_done',   0 );
-        $failed = (int) get_option( 'r2_offload_desync_failed', 0 );
-
-        foreach ( $batch as $attachment_id ) {
-            if ( function_exists( 'wp_cache_flush_runtime' ) ) {
-                wp_cache_flush_runtime();
+        while ( ( time() - $start_time ) < self::MAX_EXECUTION_SEC ) {
+            if ( get_option( $pause_option ) ) {
+                break;
             }
 
-            $result = $this->sync->restore_and_desync_attachment( (int) $attachment_id );
-            if ( $result['desynced'] ) {
-                $done++;
-            } else {
-                $failed++;
+            $now   = current_time( 'mysql', true );
+            $items = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT id, attachment_id FROM `{$table}` WHERE job_type = %s AND status = 'pending' ORDER BY id ASC LIMIT %d",
+                    $job_type, $batch_size
+                )
+            );
+
+            if ( empty( $items ) ) {
+                $this->cleanup_bulk_queue( $table, $job_type, $pause_option );
+                do_action( $complete_action );
+                $this->logger->info( "Bulk {$job_type} complete.", [ 'processed_this_run' => $processed ] );
+                return;
+            }
+
+            // Mark as processing.
+            $ids_int      = array_map( fn( $item ) => (int) $item->id, $items );
+            $placeholders = implode( ',', array_fill( 0, count( $ids_int ), '%d' ) );
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+            $wpdb->query(
+                $wpdb->prepare(
+                    "UPDATE `{$table}` SET status = 'processing', updated_at = %s WHERE id IN ({$placeholders})",
+                    array_merge( [ $now ], $ids_int )
+                )
+            );
+
+            foreach ( $items as $item ) {
+                if ( ( time() - $start_time ) >= self::MAX_EXECUTION_SEC ) {
+                    $wpdb->update(
+                        $table,
+                        [ 'status' => 'pending', 'updated_at' => current_time( 'mysql', true ) ],
+                        [ 'id' => (int) $item->id ],
+                        [ '%s', '%s' ],
+                        [ '%d' ]
+                    );
+                    continue;
+                }
+
+                if ( function_exists( 'wp_cache_flush_runtime' ) ) {
+                    wp_cache_flush_runtime();
+                } else {
+                    wp_cache_flush();
+                }
+
+                $attachment_id = (int) $item->attachment_id;
+                $success       = false;
+
+                switch ( $job_type ) {
+                    case 'restore':
+                        $result  = $this->sync->restore_from_r2( $attachment_id );
+                        $success = $result['failed'] === 0;
+                        break;
+
+                    case 'local_delete':
+                        $result  = $this->sync->delete_local_for_attachment( $attachment_id );
+                        $success = $result['deleted'] > 0;
+                        break;
+
+                    case 'desync':
+                        $result  = $this->sync->restore_and_desync_attachment( $attachment_id );
+                        $success = $result['desynced'];
+                        break;
+                }
+
+                $wpdb->update(
+                    $table,
+                    [ 'status' => $success ? 'complete' : 'failed', 'updated_at' => current_time( 'mysql', true ) ],
+                    [ 'id' => (int) $item->id ],
+                    [ '%s', '%s' ],
+                    [ '%d' ]
+                );
+
+                $processed++;
             }
         }
 
-        update_option( 'r2_offload_desync_done',   $done,   false );
-        update_option( 'r2_offload_desync_failed', $failed, false );
+        // Time limit reached — reschedule if items remain.
+        $pending_count = (int) $wpdb->get_var(
+            $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE job_type = %s AND status = 'pending'", $job_type )
+        );
 
-        if ( ! empty( $queue ) ) {
-            wp_schedule_single_event( time() + 5, self::DESYNC_HOOK );
+        if ( $pending_count > 0 ) {
+            $this->logger->info( "Bulk {$job_type} batch time limit reached, rescheduling.", [
+                'processed_this_run' => $processed,
+                'remaining'          => $pending_count,
+            ] );
+            $delay = $pending_count > 1000 ? 1 : 3;
+            wp_schedule_single_event( time() + $delay, $cron_hook );
+            spawn_cron();
         } else {
-            $this->cleanup_desync_options();
-            do_action( 'r2_offload_desync_complete' );
-            $this->logger->info( 'Bulk restore & desync complete.', [ 'done' => $done, 'failed' => $failed ] );
+            $this->cleanup_bulk_queue( $table, $job_type, $pause_option );
+            do_action( $complete_action );
+            $this->logger->info( "Bulk {$job_type} complete.", [ 'processed_this_run' => $processed ] );
         }
     }
 
-    private function cleanup_desync_options(): void {
-        delete_option( 'r2_offload_desync_queue' );
-        delete_option( 'r2_offload_desync_total' );
-        delete_option( 'r2_offload_desync_done' );
-        delete_option( 'r2_offload_desync_failed' );
-        delete_option( 'r2_offload_desync_paused' );
+    private function cleanup_bulk_queue( string $table, string $job_type, string $pause_option ): void {
+        global $wpdb;
+
+        $remaining = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM `{$table}` WHERE job_type = %s AND status IN ('pending', 'processing')",
+                $job_type
+            )
+        );
+
+        if ( $remaining === 0 ) {
+            $wpdb->delete( $table, [ 'job_type' => $job_type ], [ '%s' ] );
+            delete_option( $pause_option );
+        } else {
+            $wpdb->query(
+                $wpdb->prepare(
+                    "DELETE FROM `{$table}` WHERE job_type = %s AND status IN ('complete', 'failed')",
+                    $job_type
+                )
+            );
+        }
     }
 }

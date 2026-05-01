@@ -96,29 +96,14 @@ class UploadHandler {
         $table = $wpdb->prefix . 'r2_offload_migration_queue';
         $now   = current_time( 'mysql', true );
 
-        $exists = $wpdb->get_var(
+        // INSERT IGNORE skips silently if attachment_id already exists (UNIQUE KEY).
+        // No SELECT needed — the DB handles dedup atomically.
+        $wpdb->query(
             $wpdb->prepare(
-                "SELECT id FROM `{$table}` WHERE attachment_id = %d AND status IN ('pending', 'processing')",
-                $attachment_id
+                "INSERT IGNORE INTO `{$table}` (attachment_id, status, retry_count, created_at, updated_at)
+                 VALUES (%d, 'pending', 0, %s, %s)",
+                $attachment_id, $now, $now
             )
-        );
-
-        if ( $exists ) {
-            $this->logger->debug( 'Attachment already queued for background offload.', [ 'attachment_id' => $attachment_id ] );
-            return;
-        }
-
-        $wpdb->replace(
-            $table,
-            [
-                'attachment_id' => $attachment_id,
-                'status'        => 'pending',
-                'retry_count'   => 0,
-                'error_message' => null,
-                'created_at'    => $now,
-                'updated_at'    => $now,
-            ],
-            [ '%d', '%s', '%d', '%s', '%s', '%s' ]
         );
 
         if ( ! wp_next_scheduled( 'r2_offload_process_batch' ) ) {
@@ -152,6 +137,11 @@ class UploadHandler {
         // Only re-sync if the attachment was previously marked synced — meaning new WC sizes
         // may have been generated after the original sync.
         if ( get_post_meta( $image_id, '_r2_offload_synced', true ) !== '1' ) {
+            return;
+        }
+
+        if ( $this->settings->get_background_offload() ) {
+            $this->enqueue_for_background( $image_id );
             return;
         }
 

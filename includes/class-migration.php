@@ -389,65 +389,74 @@ class Migration {
     private function ajax_start_restore_all(): void {
         global $wpdb;
 
-        // Find all synced attachments whose local files are missing (local_deleted = 1)
-        // OR all synced attachments regardless — user can choose via a POST param.
+        $table = $wpdb->prefix . 'r2_offload_bulk_queue';
+        $this->ensure_bulk_queue_table( $table );
+
         $only_missing = isset( $_POST['only_missing'] ) ? (bool) absint( $_POST['only_missing'] ) : true;
 
+        // Clear previous restore queue rows.
+        $wpdb->delete( $table, [ 'job_type' => 'restore' ], [ '%s' ] );
+        delete_option( 'r2_offload_restore_paused' );
+
+        $now = current_time( 'mysql', true );
+
         if ( $only_missing ) {
-            $ids = $wpdb->get_col(
+            $inserted = $wpdb->query(
                 $wpdb->prepare(
-                    "SELECT pm.post_id
+                    "INSERT INTO `{$table}` (attachment_id, job_type, status, created_at, updated_at)
+                     SELECT pm.post_id, 'restore', 'pending', %s, %s
                      FROM {$wpdb->postmeta} pm
-                     WHERE pm.meta_key = %s AND pm.meta_value = %s
-                       AND EXISTS (
-                           SELECT 1 FROM {$wpdb->postmeta} pm2
-                           WHERE pm2.post_id = pm.post_id
-                             AND pm2.meta_key = %s AND pm2.meta_value = %s
-                       )",
-                    '_r2_offload_synced', '1',
-                    '_r2_offload_local_deleted', '1'
+                     INNER JOIN {$wpdb->postmeta} pm2
+                           ON pm2.post_id = pm.post_id
+                          AND pm2.meta_key = %s AND pm2.meta_value = %s
+                     WHERE pm.meta_key = %s AND pm.meta_value = %s",
+                    $now, $now,
+                    '_r2_offload_local_deleted', '1',
+                    '_r2_offload_synced', '1'
                 )
             );
         } else {
-            $ids = $wpdb->get_col(
+            $inserted = $wpdb->query(
                 $wpdb->prepare(
-                    "SELECT post_id FROM {$wpdb->postmeta}
-                     WHERE meta_key = %s AND meta_value = %s",
+                    "INSERT INTO `{$table}` (attachment_id, job_type, status, created_at, updated_at)
+                     SELECT pm.post_id, 'restore', 'pending', %s, %s
+                     FROM {$wpdb->postmeta} pm
+                     WHERE pm.meta_key = %s AND pm.meta_value = %s",
+                    $now, $now,
                     '_r2_offload_synced', '1'
                 )
             );
         }
 
-        if ( empty( $ids ) ) {
+        $total = (int) $inserted;
+
+        if ( $total === 0 ) {
             wp_send_json_success( [ 'message' => __( 'No attachments need restoring.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
         }
 
-        // Store the list in an option; the batch cron will drain it.
-        update_option( 'r2_offload_restore_queue', array_map( 'intval', $ids ), false );
-        update_option( 'r2_offload_restore_total',  count( $ids ), false );
-        update_option( 'r2_offload_restore_done',   0, false );
-        update_option( 'r2_offload_restore_failed', 0, false );
-        delete_option( 'r2_offload_restore_paused' );
-
         wp_schedule_single_event( time() + 2, 'r2_offload_process_restore_batch' );
 
-        $this->logger->info( 'Bulk restore started.', [ 'total' => count( $ids ) ] );
+        $this->logger->info( 'Bulk restore started.', [ 'total' => $total ] );
 
         wp_send_json_success( [
             'message' => sprintf(
                 /* translators: %d: number of attachments */
                 __( 'Restore started. %d attachments queued.', 'cloudflare-r2-offload' ),
-                count( $ids )
+                $total
             ),
-            'total'   => count( $ids ),
+            'total'   => $total,
         ] );
     }
 
     private function ajax_restore_status(): void {
+        global $wpdb;
+        $table  = $wpdb->prefix . 'r2_offload_bulk_queue';
+        $counts = $this->bulk_queue_counts( $table, 'restore' );
+
         wp_send_json_success( [
-            'total'  => (int) get_option( 'r2_offload_restore_total',  0 ),
-            'done'   => (int) get_option( 'r2_offload_restore_done',   0 ),
-            'failed' => (int) get_option( 'r2_offload_restore_failed', 0 ),
+            'total'  => $counts['pending'] + $counts['processing'] + $counts['complete'] + $counts['failed'],
+            'done'   => $counts['complete'],
+            'failed' => $counts['failed'],
             'paused' => (bool) get_option( 'r2_offload_restore_paused', false ),
         ] );
     }
@@ -461,52 +470,60 @@ class Migration {
     private function ajax_start_local_delete(): void {
         global $wpdb;
 
-        // Only target attachments that are synced AND still have local files
-        // (i.e., _r2_offload_local_deleted is not set).
-        $ids = $wpdb->get_col(
+        $table = $wpdb->prefix . 'r2_offload_bulk_queue';
+        $this->ensure_bulk_queue_table( $table );
+
+        $wpdb->delete( $table, [ 'job_type' => 'local_delete' ], [ '%s' ] );
+        delete_option( 'r2_offload_local_del_paused' );
+
+        $now = current_time( 'mysql', true );
+
+        // Synced attachments whose local files have NOT been deleted yet.
+        $inserted = $wpdb->query(
             $wpdb->prepare(
-                "SELECT pm.post_id
+                "INSERT INTO `{$table}` (attachment_id, job_type, status, created_at, updated_at)
+                 SELECT pm.post_id, 'local_delete', 'pending', %s, %s
                  FROM {$wpdb->postmeta} pm
+                 LEFT JOIN {$wpdb->postmeta} pm2
+                       ON pm2.post_id = pm.post_id
+                      AND pm2.meta_key = %s AND pm2.meta_value = %s
                  WHERE pm.meta_key = %s AND pm.meta_value = %s
-                   AND NOT EXISTS (
-                       SELECT 1 FROM {$wpdb->postmeta} pm2
-                       WHERE pm2.post_id = pm.post_id
-                         AND pm2.meta_key = %s AND pm2.meta_value = %s
-                   )",
-                '_r2_offload_synced', '1',
-                '_r2_offload_local_deleted', '1'
+                   AND pm2.meta_id IS NULL",
+                $now, $now,
+                '_r2_offload_local_deleted', '1',
+                '_r2_offload_synced', '1'
             )
         );
 
-        if ( empty( $ids ) ) {
+        $total = (int) $inserted;
+
+        if ( $total === 0 ) {
             wp_send_json_success( [ 'message' => __( 'No local files to delete — all synced attachments are already R2-only.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
         }
 
-        update_option( 'r2_offload_local_del_queue',  array_map( 'intval', $ids ), false );
-        update_option( 'r2_offload_local_del_total',  count( $ids ), false );
-        update_option( 'r2_offload_local_del_done',   0, false );
-        update_option( 'r2_offload_local_del_failed', 0, false );
-        delete_option( 'r2_offload_local_del_paused' );
-
         wp_schedule_single_event( time() + 2, 'r2_offload_process_local_delete_batch' );
 
-        $this->logger->info( 'Bulk local-delete started.', [ 'total' => count( $ids ) ] );
+        $this->logger->info( 'Bulk local-delete started.', [ 'total' => $total ] );
 
         wp_send_json_success( [
             'message' => sprintf(
                 /* translators: %d: number */
                 __( 'Local delete started. %d attachments queued.', 'cloudflare-r2-offload' ),
-                count( $ids )
+                $total
             ),
-            'total'   => count( $ids ),
+            'total'   => $total,
         ] );
     }
 
     private function ajax_local_delete_status(): void {
+        global $wpdb;
+        $table  = $wpdb->prefix . 'r2_offload_bulk_queue';
+        $counts = $this->bulk_queue_counts( $table, 'local_delete' );
+
         wp_send_json_success( [
-            'total'  => (int) get_option( 'r2_offload_local_del_total',  0 ),
-            'done'   => (int) get_option( 'r2_offload_local_del_done',   0 ),
-            'failed' => (int) get_option( 'r2_offload_local_del_failed', 0 ),
+            'total'  => $counts['pending'] + $counts['processing'] + $counts['complete'] + $counts['failed'],
+            'done'   => $counts['complete'],
+            'failed' => $counts['failed'],
             'paused' => (bool) get_option( 'r2_offload_local_del_paused', false ),
         ] );
     }
@@ -544,43 +561,54 @@ class Migration {
     private function ajax_start_desync(): void {
         global $wpdb;
 
-        $ids = $wpdb->get_col(
+        $table = $wpdb->prefix . 'r2_offload_bulk_queue';
+        $this->ensure_bulk_queue_table( $table );
+
+        $wpdb->delete( $table, [ 'job_type' => 'desync' ], [ '%s' ] );
+        delete_option( 'r2_offload_desync_paused' );
+
+        $now = current_time( 'mysql', true );
+
+        $inserted = $wpdb->query(
             $wpdb->prepare(
-                "SELECT post_id FROM {$wpdb->postmeta}
-                 WHERE meta_key = %s AND meta_value = %s",
+                "INSERT INTO `{$table}` (attachment_id, job_type, status, created_at, updated_at)
+                 SELECT pm.post_id, 'desync', 'pending', %s, %s
+                 FROM {$wpdb->postmeta} pm
+                 WHERE pm.meta_key = %s AND pm.meta_value = %s",
+                $now, $now,
                 '_r2_offload_synced', '1'
             )
         );
 
-        if ( empty( $ids ) ) {
+        $total = (int) $inserted;
+
+        if ( $total === 0 ) {
             wp_send_json_success( [ 'message' => __( 'No synced attachments to desync.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
         }
 
-        update_option( 'r2_offload_desync_queue', array_map( 'intval', $ids ), false );
-        update_option( 'r2_offload_desync_total', count( $ids ), false );
-        update_option( 'r2_offload_desync_done',  0, false );
-        update_option( 'r2_offload_desync_failed', 0, false );
-        delete_option( 'r2_offload_desync_paused' );
-
         wp_schedule_single_event( time() + 2, 'r2_offload_process_desync_batch' );
 
-        $this->logger->info( 'Bulk restore & desync started.', [ 'total' => count( $ids ) ] );
+        $this->logger->info( 'Bulk restore & desync started.', [ 'total' => $total ] );
 
         wp_send_json_success( [
             'message' => sprintf(
                 /* translators: %d: number */
                 __( 'Restore & desync started. %d attachments queued.', 'cloudflare-r2-offload' ),
-                count( $ids )
+                $total
             ),
-            'total'   => count( $ids ),
+            'total'   => $total,
         ] );
     }
 
     private function ajax_desync_status(): void {
+        global $wpdb;
+        $table  = $wpdb->prefix . 'r2_offload_bulk_queue';
+        $counts = $this->bulk_queue_counts( $table, 'desync' );
+
         wp_send_json_success( [
-            'total'  => (int) get_option( 'r2_offload_desync_total',  0 ),
-            'done'   => (int) get_option( 'r2_offload_desync_done',   0 ),
-            'failed' => (int) get_option( 'r2_offload_desync_failed', 0 ),
+            'total'  => $counts['pending'] + $counts['processing'] + $counts['complete'] + $counts['failed'],
+            'done'   => $counts['complete'],
+            'failed' => $counts['failed'],
             'paused' => (bool) get_option( 'r2_offload_desync_paused', false ),
         ] );
     }
@@ -603,12 +631,22 @@ class Migration {
         $complete   = isset( $counts['complete'] )   ? (int) $counts['complete']->cnt   : 0;
         $failed     = isset( $counts['failed'] )     ? (int) $counts['failed']->cnt     : 0;
 
-        $all_attachments = (int) $wpdb->get_var(
-            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s", 'attachment' )
-        );
-        $synced = (int) $wpdb->get_var(
-            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s", '_r2_offload_synced', '1' )
-        );
+        // Cache expensive full-table counts for 30 seconds — polled every 5s.
+        $all_attachments = wp_cache_get( 'r2_offload_total_attachments' );
+        if ( false === $all_attachments ) {
+            $all_attachments = (int) $wpdb->get_var(
+                $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s", 'attachment' )
+            );
+            wp_cache_set( 'r2_offload_total_attachments', $all_attachments, '', 30 );
+        }
+
+        $synced = wp_cache_get( 'r2_offload_synced_count' );
+        if ( false === $synced ) {
+            $synced = (int) $wpdb->get_var(
+                $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s", '_r2_offload_synced', '1' )
+            );
+            wp_cache_set( 'r2_offload_synced_count', $synced, '', 30 );
+        }
 
         $next_cron = wp_next_scheduled( 'r2_offload_process_batch' );
 
@@ -616,8 +654,8 @@ class Migration {
             'queue_pending'    => $pending + $processing,
             'queue_complete'   => $complete,
             'queue_failed'     => $failed,
-            'all_attachments'  => $all_attachments,
-            'synced'           => $synced,
+            'all_attachments'  => (int) $all_attachments,
+            'synced'           => (int) $synced,
             'next_cron'        => $next_cron ? human_time_diff( time(), $next_cron ) : null,
             'is_active'        => ( $pending + $processing ) > 0,
             'background_enabled' => $this->settings->get_background_offload(),
@@ -650,5 +688,44 @@ class Migration {
         }
 
         wp_send_json_success( [ 'message' => __( 'Activity logs cleared.', 'cloudflare-r2-offload' ) ] );
+    }
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+
+    private function ensure_bulk_queue_table( string $table ): void {
+        global $wpdb;
+        $exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+        if ( ! $exists ) {
+            Plugin::activate();
+        }
+    }
+
+    private function bulk_queue_counts( string $table, string $job_type ): array {
+        global $wpdb;
+
+        $defaults = [ 'pending' => 0, 'processing' => 0, 'complete' => 0, 'failed' => 0 ];
+
+        $exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+        if ( ! $exists ) {
+            return $defaults;
+        }
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT status, COUNT(*) as cnt FROM `{$table}` WHERE job_type = %s GROUP BY status",
+                $job_type
+            ),
+            OBJECT_K
+        );
+
+        foreach ( $defaults as $status => $_ ) {
+            if ( isset( $rows[ $status ] ) ) {
+                $defaults[ $status ] = (int) $rows[ $status ]->cnt;
+            }
+        }
+
+        return $defaults;
     }
 }

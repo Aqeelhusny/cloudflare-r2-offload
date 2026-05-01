@@ -141,9 +141,11 @@ class Plugin {
         wp_clear_scheduled_hook( BatchProcessor::CRON_HOOK );
         wp_clear_scheduled_hook( BatchProcessor::RESTORE_HOOK );
         wp_clear_scheduled_hook( BatchProcessor::LOCAL_DEL_HOOK );
+        wp_clear_scheduled_hook( BatchProcessor::DESYNC_HOOK );
         delete_transient( BatchProcessor::LOCK_KEY );
         delete_transient( BatchProcessor::RESTORE_LOCK_KEY );
         delete_transient( BatchProcessor::LOCAL_DEL_LOCK );
+        delete_transient( BatchProcessor::DESYNC_LOCK );
     }
 
     // -------------------------------------------------------------------------
@@ -153,10 +155,10 @@ class Plugin {
     private static function create_table(): void {
         global $wpdb;
 
-        $table          = $wpdb->prefix . 'r2_offload_migration_queue';
         $charset_collate = $wpdb->get_charset_collate();
 
-        $sql = "CREATE TABLE {$table} (
+        $migration_table = $wpdb->prefix . 'r2_offload_migration_queue';
+        $sql_migration = "CREATE TABLE {$migration_table} (
             id            BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             attachment_id BIGINT(20) UNSIGNED NOT NULL,
             status        ENUM('pending','processing','complete','failed') NOT NULL DEFAULT 'pending',
@@ -170,7 +172,21 @@ class Plugin {
             KEY status_retry (status, retry_count)
         ) {$charset_collate};";
 
+        $bulk_table = $wpdb->prefix . 'r2_offload_bulk_queue';
+        $sql_bulk = "CREATE TABLE {$bulk_table} (
+            id            BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            attachment_id BIGINT(20) UNSIGNED NOT NULL,
+            job_type      ENUM('restore','local_delete','desync') NOT NULL,
+            status        ENUM('pending','processing','complete','failed') NOT NULL DEFAULT 'pending',
+            created_at    DATETIME NOT NULL,
+            updated_at    DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY job_attachment (job_type, attachment_id),
+            KEY job_status (job_type, status)
+        ) {$charset_collate};";
+
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-        dbDelta( $sql );
+        dbDelta( $sql_migration );
+        dbDelta( $sql_bulk );
     }
 }

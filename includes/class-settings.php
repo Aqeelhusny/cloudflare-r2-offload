@@ -243,23 +243,25 @@ class Settings {
     }
 
     // -------------------------------------------------------------------------
-    // Encryption helpers (AES-256-CBC, key = wp_salt)
+    // Encryption helpers (AES-256-CBC)
     // -------------------------------------------------------------------------
 
+    private function get_encryption_key(): string {
+        $source = defined( 'R2_OFFLOAD_ENCRYPTION_KEY' ) ? R2_OFFLOAD_ENCRYPTION_KEY : wp_salt( 'auth' );
+        return substr( hash( 'sha256', $source, true ), 0, 32 );
+    }
+
     private function encrypt( string $plaintext ): string {
-        $key    = substr( hash( 'sha256', wp_salt( 'auth' ), true ), 0, 32 );
+        $key    = $this->get_encryption_key();
         $iv     = openssl_random_pseudo_bytes( 16 );
         $cipher = openssl_encrypt( $plaintext, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv );
         if ( $cipher === false ) {
             return '';
         }
-        // Prefix 'r2enc:' acts as a canary so sanitize_secret_key() can detect
-        // an already-encrypted value and refuse to encrypt it a second time.
         return 'r2enc:' . base64_encode( $iv . $cipher );
     }
 
     private function decrypt( string $ciphertext ): string {
-        // Strip the canary prefix before decoding.
         if ( strpos( $ciphertext, 'r2enc:' ) === 0 ) {
             $ciphertext = substr( $ciphertext, 6 );
         }
@@ -267,7 +269,7 @@ class Settings {
         if ( $data === false || strlen( $data ) < 17 ) {
             return '';
         }
-        $key   = substr( hash( 'sha256', wp_salt( 'auth' ), true ), 0, 32 );
+        $key   = $this->get_encryption_key();
         $iv    = substr( $data, 0, 16 );
         $plain = openssl_decrypt( substr( $data, 16 ), 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv );
         return $plain !== false ? $plain : '';

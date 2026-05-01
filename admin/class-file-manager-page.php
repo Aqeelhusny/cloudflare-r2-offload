@@ -25,8 +25,8 @@ class FileManagerPage {
     }
 
     public function render(): void {
-        // Verify nonce on filter/pagination submissions (not present on first load).
-        if ( isset( $_GET['_wpnonce'] ) ) {
+        $has_filter = isset( $_GET['prefix'] ) || isset( $_GET['token'] );
+        if ( $has_filter ) {
             check_admin_referer( 'r2_offload_fm_filter' );
         }
 

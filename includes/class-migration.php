@@ -96,10 +96,10 @@ class Migration {
         global $wpdb;
         $table = $wpdb->prefix . 'r2_offload_migration_queue';
         $counts = $wpdb->get_results(
-            $wpdb->prepare( "SELECT status, COUNT(*) as cnt FROM `{$table}` WHERE %d GROUP BY status", 1 ),
+            "SELECT status, COUNT(*) as cnt FROM `{$table}` GROUP BY status",
             OBJECT_K
         );
-        $total      = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE %d", 1 ) );
+        $total      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
         $complete   = isset( $counts['complete'] )   ? (int) $counts['complete']->cnt   : 0;
         $failed     = isset( $counts['failed'] )     ? (int) $counts['failed']->cnt     : 0;
         $pending    = isset( $counts['pending'] )    ? (int) $counts['pending']->cnt    : 0;
@@ -151,18 +151,21 @@ class Migration {
             wp_send_json_success( [ 'message' => __( 'All attachments are already synced.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
         }
 
-        $now   = current_time( 'mysql', true );
-        $rows  = [];
-        foreach ( $ids as $id ) {
-            $rows[] = $wpdb->prepare( '(%d, %s, %s, %s)', (int) $id, 'pending', $now, $now );
-        }
+        $now = current_time( 'mysql', true );
 
-        // Batch insert (500 per query to avoid hitting max_allowed_packet).
-        foreach ( array_chunk( $rows, 500 ) as $chunk ) {
-            $wpdb->query(
-                "INSERT INTO `{$table}` (attachment_id, status, created_at, updated_at)
-                 VALUES " . implode( ',', $chunk )
-            );
+        foreach ( array_chunk( $ids, 500 ) as $chunk ) {
+            foreach ( $chunk as $id ) {
+                $wpdb->insert(
+                    $table,
+                    [
+                        'attachment_id' => (int) $id,
+                        'status'        => 'pending',
+                        'created_at'    => $now,
+                        'updated_at'    => $now,
+                    ],
+                    [ '%d', '%s', '%s', '%s' ]
+                );
+            }
         }
 
         // Schedule first batch and immediately trigger cron via loopback so it
@@ -211,11 +214,11 @@ class Migration {
         $table = $wpdb->prefix . 'r2_offload_migration_queue';
 
         $counts = $wpdb->get_results(
-            $wpdb->prepare( "SELECT status, COUNT(*) as cnt FROM `{$table}` WHERE %d GROUP BY status", 1 ),
+            "SELECT status, COUNT(*) as cnt FROM `{$table}` GROUP BY status",
             OBJECT_K
         );
 
-        $total      = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE %d", 1 ) );
+        $total      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
         $complete   = isset( $counts['complete'] )   ? (int) $counts['complete']->cnt   : 0;
         $failed     = isset( $counts['failed'] )     ? (int) $counts['failed']->cnt     : 0;
         $pending    = isset( $counts['pending'] )    ? (int) $counts['pending']->cnt    : 0;
@@ -573,7 +576,7 @@ class Migration {
         $table = $wpdb->prefix . 'r2_offload_migration_queue';
 
         $counts = $wpdb->get_results(
-            $wpdb->prepare( "SELECT status, COUNT(*) as cnt FROM `{$table}` WHERE %d GROUP BY status", 1 ),
+            "SELECT status, COUNT(*) as cnt FROM `{$table}` GROUP BY status",
             OBJECT_K
         );
 

@@ -21,7 +21,7 @@ class MigrationPage {
 
         $table = $wpdb->prefix . 'r2_offload_migration_queue';
 
-        $total      = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE %d", 1 ) );
+        $total      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
         $complete   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status = %s", 'complete' ) );
         $failed     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status = %s", 'failed' ) );
         $pending    = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status IN (%s,%s)", 'pending', 'processing' ) );

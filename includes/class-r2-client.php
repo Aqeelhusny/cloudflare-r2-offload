@@ -191,13 +191,10 @@ class R2Client {
                     __( 'R2 error: %s', 'cloudflare-r2-offload' ),
                     $e->getAwsErrorCode() ?: $e->getMessage()
                 ),
-                // Diagnostic info — helps identify credential mismatches.
-                // Shows only safe metadata, never the full secret.
                 'debug' => [
                     'account_id'    => $account_id,
                     'access_key_id' => $key_id,
-                    'secret_length' => strlen( $secret ),
-                    'secret_start'  => $secret ? substr( $secret, 0, 4 ) . '…' : '(empty)',
+                    'secret_set'    => $secret !== '',
                     'bucket'        => $bucket,
                 ],
             ];

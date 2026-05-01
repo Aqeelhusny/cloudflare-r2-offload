@@ -129,21 +129,42 @@ class Migration {
 
         $table = $wpdb->prefix . 'r2_offload_migration_queue';
 
+        // Verify the queue table exists — it may be missing if the activation
+        // hook never ran (manual file copy, failed DB permissions, etc.).
+        $table_exists = $wpdb->get_var(
+            $wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
+        );
+        if ( ! $table_exists ) {
+            Plugin::activate();
+            $table_exists = $wpdb->get_var(
+                $wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
+            );
+            if ( ! $table_exists ) {
+                wp_send_json_error( [
+                    'message' => __( 'Migration queue table could not be created. Check database permissions.', 'cloudflare-r2-offload' ),
+                ] );
+            }
+        }
+
         // Clear any existing queue first.
         $wpdb->query( "TRUNCATE TABLE `{$table}`" );
         delete_option( 'r2_offload_migration_paused' );
 
         // Find all attachments NOT yet synced.
+        // Uses LEFT JOIN instead of NOT IN subquery — MySQL optimises this as a
+        // hash anti-join which scales to millions of rows without timing out.
         $ids = $wpdb->get_col(
             $wpdb->prepare(
-                "SELECT ID FROM {$wpdb->posts}
-                 WHERE post_type = %s
-                   AND ID NOT IN (
-                       SELECT post_id FROM {$wpdb->postmeta}
-                       WHERE meta_key = %s AND meta_value = %s
-                   )
-                 ORDER BY ID ASC",
-                'attachment', '_r2_offload_synced', '1'
+                "SELECT p.ID
+                 FROM {$wpdb->posts} p
+                 LEFT JOIN {$wpdb->postmeta} pm
+                       ON pm.post_id = p.ID
+                      AND pm.meta_key = %s
+                      AND pm.meta_value = %s
+                 WHERE p.post_type = %s
+                   AND pm.meta_id IS NULL
+                 ORDER BY p.ID ASC",
+                '_r2_offload_synced', '1', 'attachment'
             )
         );
 
@@ -151,21 +172,18 @@ class Migration {
             wp_send_json_success( [ 'message' => __( 'All attachments are already synced.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
         }
 
-        $now = current_time( 'mysql', true );
+        $now  = current_time( 'mysql', true );
+        $rows = [];
+        foreach ( $ids as $id ) {
+            $rows[] = $wpdb->prepare( '(%d, %s, %s, %s)', (int) $id, 'pending', $now, $now );
+        }
 
-        foreach ( array_chunk( $ids, 500 ) as $chunk ) {
-            foreach ( $chunk as $id ) {
-                $wpdb->insert(
-                    $table,
-                    [
-                        'attachment_id' => (int) $id,
-                        'status'        => 'pending',
-                        'created_at'    => $now,
-                        'updated_at'    => $now,
-                    ],
-                    [ '%d', '%s', '%s', '%s' ]
-                );
-            }
+        // Batch insert 500 rows per query to stay under max_allowed_packet.
+        foreach ( array_chunk( $rows, 500 ) as $chunk ) {
+            $wpdb->query(
+                "INSERT INTO `{$table}` (attachment_id, status, created_at, updated_at)
+                 VALUES " . implode( ',', $chunk )
+            );
         }
 
         // Schedule first batch and immediately trigger cron via loopback so it

@@ -1,0 +1,76 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\MigrationHubOrchestrator;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **AWS Migration Hub Orchestrator** service.
+ * @method \R2Offload\Vendor\Aws\Result createTemplate(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createTemplateAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createWorkflow(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createWorkflowAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createWorkflowStep(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createWorkflowStepAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createWorkflowStepGroup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createWorkflowStepGroupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteTemplate(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteTemplateAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteWorkflow(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteWorkflowAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteWorkflowStep(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteWorkflowStepAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteWorkflowStepGroup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteWorkflowStepGroupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getTemplate(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getTemplateAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getTemplateStep(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getTemplateStepAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getTemplateStepGroup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getTemplateStepGroupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getWorkflow(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getWorkflowAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getWorkflowStep(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getWorkflowStepAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getWorkflowStepGroup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getWorkflowStepGroupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listPlugins(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listPluginsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTemplateStepGroups(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTemplateStepGroupsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTemplateSteps(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTemplateStepsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTemplates(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTemplatesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listWorkflowStepGroups(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listWorkflowStepGroupsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listWorkflowSteps(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listWorkflowStepsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listWorkflows(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listWorkflowsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result retryWorkflowStep(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise retryWorkflowStepAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result startWorkflow(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise startWorkflowAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result stopWorkflow(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise stopWorkflowAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateTemplate(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateTemplateAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateWorkflow(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateWorkflowAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateWorkflowStep(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateWorkflowStepAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateWorkflowStepGroup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateWorkflowStepGroupAsync(array $args = [])
+ */
+class MigrationHubOrchestratorClient extends AwsClient {}

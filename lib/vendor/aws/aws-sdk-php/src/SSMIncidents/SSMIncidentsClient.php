@@ -1,0 +1,76 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\SSMIncidents;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **AWS Systems Manager Incident Manager** service.
+ * @method \R2Offload\Vendor\Aws\Result batchGetIncidentFindings(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise batchGetIncidentFindingsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createReplicationSet(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createReplicationSetAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createResponsePlan(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createResponsePlanAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createTimelineEvent(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createTimelineEventAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteIncidentRecord(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteIncidentRecordAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteReplicationSet(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteReplicationSetAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteResourcePolicy(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteResourcePolicyAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteResponsePlan(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteResponsePlanAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteTimelineEvent(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteTimelineEventAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getIncidentRecord(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getIncidentRecordAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getReplicationSet(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getReplicationSetAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getResourcePolicies(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getResourcePoliciesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getResponsePlan(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getResponsePlanAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getTimelineEvent(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getTimelineEventAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listIncidentFindings(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listIncidentFindingsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listIncidentRecords(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listIncidentRecordsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listRelatedItems(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listRelatedItemsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listReplicationSets(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listReplicationSetsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listResponsePlans(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listResponsePlansAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTimelineEvents(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTimelineEventsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result putResourcePolicy(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise putResourcePolicyAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result startIncident(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise startIncidentAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateDeletionProtection(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateDeletionProtectionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateIncidentRecord(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateIncidentRecordAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateRelatedItems(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateRelatedItemsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateReplicationSet(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateReplicationSetAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateResponsePlan(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateResponsePlanAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateTimelineEvent(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateTimelineEventAsync(array $args = [])
+ */
+class SSMIncidentsClient extends AwsClient {}

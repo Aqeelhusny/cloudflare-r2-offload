@@ -1,0 +1,76 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\BedrockAgentRuntime;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **Agents for Amazon Bedrock Runtime** service.
+ * @method \R2Offload\Vendor\Aws\Result createInvocation(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createInvocationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createSession(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createSessionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteAgentMemory(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteAgentMemoryAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteSession(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteSessionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result endSession(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise endSessionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result generateQuery(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise generateQueryAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getAgentMemory(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getAgentMemoryAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getExecutionFlowSnapshot(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getExecutionFlowSnapshotAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getFlowExecution(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getFlowExecutionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getInvocationStep(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getInvocationStepAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getSession(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getSessionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result invokeAgent(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise invokeAgentAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result invokeFlow(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise invokeFlowAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result invokeInlineAgent(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise invokeInlineAgentAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listFlowExecutionEvents(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listFlowExecutionEventsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listFlowExecutions(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listFlowExecutionsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listInvocationSteps(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listInvocationStepsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listInvocations(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listInvocationsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listSessions(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listSessionsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result optimizePrompt(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise optimizePromptAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result putInvocationStep(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise putInvocationStepAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result rerank(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise rerankAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result retrieve(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise retrieveAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result retrieveAndGenerate(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise retrieveAndGenerateAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result retrieveAndGenerateStream(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise retrieveAndGenerateStreamAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result startFlowExecution(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise startFlowExecutionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result stopFlowExecution(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise stopFlowExecutionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateSession(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateSessionAsync(array $args = [])
+ */
+class BedrockAgentRuntimeClient extends AwsClient {}

@@ -1,0 +1,78 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\KinesisVideo;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **Amazon Kinesis Video Streams** service.
+ * @method \R2Offload\Vendor\Aws\Result createSignalingChannel(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createSignalingChannelAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createStream(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createStreamAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteEdgeConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteEdgeConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteSignalingChannel(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteSignalingChannelAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteStream(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteStreamAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeEdgeConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeEdgeConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeImageGenerationConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeImageGenerationConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeMappedResourceConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeMappedResourceConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeMediaStorageConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeMediaStorageConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeNotificationConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeNotificationConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeSignalingChannel(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeSignalingChannelAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeStream(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeStreamAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeStreamStorageConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeStreamStorageConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getDataEndpoint(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDataEndpointAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getSignalingChannelEndpoint(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getSignalingChannelEndpointAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listEdgeAgentConfigurations(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listEdgeAgentConfigurationsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listSignalingChannels(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listSignalingChannelsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listStreams(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listStreamsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForStream(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForStreamAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result startEdgeConfigurationUpdate(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise startEdgeConfigurationUpdateAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagStream(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagStreamAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagStream(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagStreamAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateDataRetention(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateDataRetentionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateImageGenerationConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateImageGenerationConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateMediaStorageConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateMediaStorageConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateNotificationConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateNotificationConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateSignalingChannel(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateSignalingChannelAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateStream(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateStreamAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateStreamStorageConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateStreamStorageConfigurationAsync(array $args = [])
+ */
+class KinesisVideoClient extends AwsClient {}

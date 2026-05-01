@@ -1,0 +1,76 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\ChimeSDKMediaPipelines;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **Amazon Chime SDK Media Pipelines** service.
+ * @method \R2Offload\Vendor\Aws\Result createMediaCapturePipeline(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createMediaCapturePipelineAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createMediaConcatenationPipeline(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createMediaConcatenationPipelineAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createMediaInsightsPipeline(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createMediaInsightsPipelineAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createMediaInsightsPipelineConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createMediaInsightsPipelineConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createMediaLiveConnectorPipeline(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createMediaLiveConnectorPipelineAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createMediaPipelineKinesisVideoStreamPool(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createMediaPipelineKinesisVideoStreamPoolAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createMediaStreamPipeline(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createMediaStreamPipelineAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteMediaCapturePipeline(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteMediaCapturePipelineAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteMediaInsightsPipelineConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteMediaInsightsPipelineConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteMediaPipeline(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteMediaPipelineAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteMediaPipelineKinesisVideoStreamPool(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteMediaPipelineKinesisVideoStreamPoolAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getMediaCapturePipeline(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getMediaCapturePipelineAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getMediaInsightsPipelineConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getMediaInsightsPipelineConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getMediaPipeline(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getMediaPipelineAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getMediaPipelineKinesisVideoStreamPool(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getMediaPipelineKinesisVideoStreamPoolAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getSpeakerSearchTask(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getSpeakerSearchTaskAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getVoiceToneAnalysisTask(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getVoiceToneAnalysisTaskAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listMediaCapturePipelines(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listMediaCapturePipelinesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listMediaInsightsPipelineConfigurations(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listMediaInsightsPipelineConfigurationsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listMediaPipelineKinesisVideoStreamPools(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listMediaPipelineKinesisVideoStreamPoolsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listMediaPipelines(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listMediaPipelinesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result startSpeakerSearchTask(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise startSpeakerSearchTaskAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result startVoiceToneAnalysisTask(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise startVoiceToneAnalysisTaskAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result stopSpeakerSearchTask(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise stopSpeakerSearchTaskAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result stopVoiceToneAnalysisTask(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise stopVoiceToneAnalysisTaskAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateMediaInsightsPipelineConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateMediaInsightsPipelineConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateMediaInsightsPipelineStatus(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateMediaInsightsPipelineStatusAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateMediaPipelineKinesisVideoStreamPool(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateMediaPipelineKinesisVideoStreamPoolAsync(array $args = [])
+ */
+class ChimeSDKMediaPipelinesClient extends AwsClient {}

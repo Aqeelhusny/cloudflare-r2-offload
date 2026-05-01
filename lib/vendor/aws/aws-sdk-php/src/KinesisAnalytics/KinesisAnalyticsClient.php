@@ -1,0 +1,54 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\KinesisAnalytics;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **Amazon Kinesis Analytics** service.
+ * @method \R2Offload\Vendor\Aws\Result addApplicationCloudWatchLoggingOption(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise addApplicationCloudWatchLoggingOptionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result addApplicationInput(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise addApplicationInputAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result addApplicationInputProcessingConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise addApplicationInputProcessingConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result addApplicationOutput(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise addApplicationOutputAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result addApplicationReferenceDataSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise addApplicationReferenceDataSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createApplication(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createApplicationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteApplication(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteApplicationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteApplicationCloudWatchLoggingOption(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteApplicationCloudWatchLoggingOptionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteApplicationInputProcessingConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteApplicationInputProcessingConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteApplicationOutput(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteApplicationOutputAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteApplicationReferenceDataSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteApplicationReferenceDataSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeApplication(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeApplicationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result discoverInputSchema(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise discoverInputSchemaAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listApplications(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listApplicationsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result startApplication(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise startApplicationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result stopApplication(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise stopApplicationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateApplication(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateApplicationAsync(array $args = [])
+ */
+class KinesisAnalyticsClient extends AwsClient {}

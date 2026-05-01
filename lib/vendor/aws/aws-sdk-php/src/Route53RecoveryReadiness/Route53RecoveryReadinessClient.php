@@ -1,0 +1,78 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Route53RecoveryReadiness;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **AWS Route53 Recovery Readiness** service.
+ * @method \R2Offload\Vendor\Aws\Result createCell(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createCellAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createCrossAccountAuthorization(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createCrossAccountAuthorizationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createReadinessCheck(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createReadinessCheckAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createRecoveryGroup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createRecoveryGroupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createResourceSet(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createResourceSetAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteCell(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteCellAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteCrossAccountAuthorization(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteCrossAccountAuthorizationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteReadinessCheck(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteReadinessCheckAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteRecoveryGroup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteRecoveryGroupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteResourceSet(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteResourceSetAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getArchitectureRecommendations(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getArchitectureRecommendationsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getCell(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getCellAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getCellReadinessSummary(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getCellReadinessSummaryAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getReadinessCheck(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getReadinessCheckAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getReadinessCheckResourceStatus(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getReadinessCheckResourceStatusAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getReadinessCheckStatus(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getReadinessCheckStatusAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getRecoveryGroup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getRecoveryGroupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getRecoveryGroupReadinessSummary(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getRecoveryGroupReadinessSummaryAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getResourceSet(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getResourceSetAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listCells(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listCellsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listCrossAccountAuthorizations(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listCrossAccountAuthorizationsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listReadinessChecks(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listReadinessChecksAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listRecoveryGroups(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listRecoveryGroupsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listResourceSets(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listResourceSetsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listRules(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listRulesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForResources(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForResourcesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateCell(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateCellAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateReadinessCheck(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateReadinessCheckAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateRecoveryGroup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateRecoveryGroupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateResourceSet(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateResourceSetAsync(array $args = [])
+ */
+class Route53RecoveryReadinessClient extends AwsClient {}

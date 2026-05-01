@@ -1,0 +1,152 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\EventBridge;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **Amazon EventBridge** service.
+ * @method \R2Offload\Vendor\Aws\Result activateEventSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise activateEventSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result cancelReplay(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise cancelReplayAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createApiDestination(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createApiDestinationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createArchive(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createArchiveAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createConnection(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createConnectionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createEndpoint(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createEndpointAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createEventBus(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createEventBusAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createPartnerEventSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createPartnerEventSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deactivateEventSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deactivateEventSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deauthorizeConnection(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deauthorizeConnectionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteApiDestination(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteApiDestinationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteArchive(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteArchiveAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteConnection(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteConnectionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteEndpoint(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteEndpointAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteEventBus(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteEventBusAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deletePartnerEventSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deletePartnerEventSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteRule(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteRuleAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeApiDestination(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeApiDestinationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeArchive(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeArchiveAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeConnection(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeConnectionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeEndpoint(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeEndpointAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeEventBus(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeEventBusAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeEventSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeEventSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describePartnerEventSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describePartnerEventSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeReplay(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeReplayAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeRule(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeRuleAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result disableRule(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise disableRuleAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result enableRule(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise enableRuleAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listApiDestinations(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listApiDestinationsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listArchives(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listArchivesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listConnections(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listConnectionsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listEndpoints(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listEndpointsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listEventBuses(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listEventBusesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listEventSources(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listEventSourcesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listPartnerEventSourceAccounts(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listPartnerEventSourceAccountsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listPartnerEventSources(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listPartnerEventSourcesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listReplays(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listReplaysAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listRuleNamesByTarget(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listRuleNamesByTargetAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listRules(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listRulesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTargetsByRule(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTargetsByRuleAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result putEvents(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise putEventsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result putPartnerEvents(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise putPartnerEventsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result putPermission(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise putPermissionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result putRule(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise putRuleAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result putTargets(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise putTargetsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result removePermission(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise removePermissionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result removeTargets(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise removeTargetsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result startReplay(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise startReplayAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result testEventPattern(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise testEventPatternAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateApiDestination(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateApiDestinationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateArchive(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateArchiveAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateConnection(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateConnectionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateEndpoint(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateEndpointAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateEventBus(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateEventBusAsync(array $args = [])
+ */
+class EventBridgeClient extends AwsClient {
+    public function __construct(array $args)
+    {
+        parent::__construct($args);
+
+        if ($this->isUseEndpointV2()) {
+            $stack = $this->getHandlerList();
+            $isCustomEndpoint = isset($args['endpoint']);
+            $stack->appendBuild(
+                EventBridgeEndpointMiddleware::wrap(
+                    $this->getRegion(),
+                    [
+                        'use_fips_endpoint' =>
+                            $this->getConfig('use_fips_endpoint')->isUseFipsEndpoint(),
+                        'dual_stack' =>
+                            $this->getConfig('use_dual_stack_endpoint')->isUseDualStackEndpoint(),
+                    ],
+                    $this->getConfig('endpoint_provider'),
+                    $isCustomEndpoint
+                ),
+                'eventbridge.endpoint_middleware'
+            );
+        }
+    }
+}

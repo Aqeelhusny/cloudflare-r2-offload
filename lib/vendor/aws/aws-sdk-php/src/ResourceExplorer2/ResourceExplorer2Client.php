@@ -1,0 +1,78 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\ResourceExplorer2;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **AWS Resource Explorer** service.
+ * @method \R2Offload\Vendor\Aws\Result associateDefaultView(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise associateDefaultViewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result batchGetView(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise batchGetViewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createIndex(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createIndexAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createResourceExplorerSetup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createResourceExplorerSetupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createView(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createViewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteIndex(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteIndexAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteResourceExplorerSetup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteResourceExplorerSetupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteView(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteViewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result disassociateDefaultView(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise disassociateDefaultViewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getAccountLevelServiceConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getAccountLevelServiceConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getDefaultView(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDefaultViewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getIndex(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getIndexAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getManagedView(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getManagedViewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getResourceExplorerSetup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getResourceExplorerSetupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getServiceIndex(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getServiceIndexAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getServiceView(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getServiceViewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getView(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getViewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listIndexes(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listIndexesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listIndexesForMembers(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listIndexesForMembersAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listManagedViews(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listManagedViewsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listResources(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listResourcesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listServiceIndexes(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listServiceIndexesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listServiceViews(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listServiceViewsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listStreamingAccessForServices(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listStreamingAccessForServicesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listSupportedResourceTypes(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listSupportedResourceTypesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listViews(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listViewsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result search(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise searchAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateIndexType(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateIndexTypeAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateView(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateViewAsync(array $args = [])
+ */
+class ResourceExplorer2Client extends AwsClient {}

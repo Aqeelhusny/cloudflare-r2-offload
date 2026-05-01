@@ -1,0 +1,83 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Route53Domains;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **Amazon Route 53 Domains** service.
+ *
+ * @method \R2Offload\Vendor\Aws\Result acceptDomainTransferFromAnotherAwsAccount(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise acceptDomainTransferFromAnotherAwsAccountAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result associateDelegationSignerToDomain(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise associateDelegationSignerToDomainAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result cancelDomainTransferToAnotherAwsAccount(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise cancelDomainTransferToAnotherAwsAccountAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result checkDomainAvailability(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise checkDomainAvailabilityAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result checkDomainTransferability(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise checkDomainTransferabilityAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteDomain(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteDomainAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteTagsForDomain(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteTagsForDomainAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result disableDomainAutoRenew(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise disableDomainAutoRenewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result disableDomainTransferLock(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise disableDomainTransferLockAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result disassociateDelegationSignerFromDomain(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise disassociateDelegationSignerFromDomainAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result enableDomainAutoRenew(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise enableDomainAutoRenewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result enableDomainTransferLock(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise enableDomainTransferLockAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getContactReachabilityStatus(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getContactReachabilityStatusAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getDomainDetail(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDomainDetailAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getDomainSuggestions(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDomainSuggestionsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getOperationDetail(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getOperationDetailAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listDomains(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listDomainsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listOperations(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listOperationsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listPrices(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listPricesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForDomain(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForDomainAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result pushDomain(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise pushDomainAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result registerDomain(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise registerDomainAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result rejectDomainTransferFromAnotherAwsAccount(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise rejectDomainTransferFromAnotherAwsAccountAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result renewDomain(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise renewDomainAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result resendContactReachabilityEmail(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise resendContactReachabilityEmailAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result resendOperationAuthorization(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise resendOperationAuthorizationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result retrieveDomainAuthCode(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise retrieveDomainAuthCodeAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result transferDomain(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise transferDomainAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result transferDomainToAnotherAwsAccount(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise transferDomainToAnotherAwsAccountAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateDomainContact(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateDomainContactAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateDomainContactPrivacy(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateDomainContactPrivacyAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateDomainNameservers(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateDomainNameserversAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateTagsForDomain(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateTagsForDomainAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result viewBilling(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise viewBillingAsync(array $args = [])
+ */
+class Route53DomainsClient extends AwsClient {}

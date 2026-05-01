@@ -1,0 +1,76 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Schemas;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **Schemas** service.
+ * @method \R2Offload\Vendor\Aws\Result createDiscoverer(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createDiscovererAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createRegistry(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createRegistryAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createSchema(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createSchemaAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteDiscoverer(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteDiscovererAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteRegistry(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteRegistryAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteResourcePolicy(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteResourcePolicyAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteSchema(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteSchemaAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteSchemaVersion(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteSchemaVersionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeCodeBinding(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeCodeBindingAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeDiscoverer(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeDiscovererAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeRegistry(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeRegistryAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeSchema(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeSchemaAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getCodeBindingSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getCodeBindingSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getDiscoveredSchema(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDiscoveredSchemaAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getResourcePolicy(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getResourcePolicyAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listDiscoverers(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listDiscoverersAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listRegistries(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listRegistriesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listSchemaVersions(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listSchemaVersionsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listSchemas(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listSchemasAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result putCodeBinding(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise putCodeBindingAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result putResourcePolicy(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise putResourcePolicyAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result searchSchemas(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise searchSchemasAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result startDiscoverer(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise startDiscovererAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result stopDiscoverer(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise stopDiscovererAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateDiscoverer(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateDiscovererAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateRegistry(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateRegistryAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateSchema(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateSchemaAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result exportSchema(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise exportSchemaAsync(array $args = [])
+ */
+class SchemasClient extends AwsClient {}

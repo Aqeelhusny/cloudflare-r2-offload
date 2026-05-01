@@ -1,0 +1,78 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\BillingConductor;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **AWSBillingConductor** service.
+ * @method \R2Offload\Vendor\Aws\Result associateAccounts(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise associateAccountsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result associatePricingRules(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise associatePricingRulesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result batchAssociateResourcesToCustomLineItem(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise batchAssociateResourcesToCustomLineItemAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result batchDisassociateResourcesFromCustomLineItem(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise batchDisassociateResourcesFromCustomLineItemAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createBillingGroup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createBillingGroupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createCustomLineItem(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createCustomLineItemAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createPricingPlan(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createPricingPlanAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createPricingRule(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createPricingRuleAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteBillingGroup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteBillingGroupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteCustomLineItem(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteCustomLineItemAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deletePricingPlan(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deletePricingPlanAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deletePricingRule(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deletePricingRuleAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result disassociateAccounts(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise disassociateAccountsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result disassociatePricingRules(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise disassociatePricingRulesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getBillingGroupCostReport(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getBillingGroupCostReportAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listAccountAssociations(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listAccountAssociationsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listBillingGroupCostReports(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listBillingGroupCostReportsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listBillingGroups(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listBillingGroupsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listCustomLineItemVersions(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listCustomLineItemVersionsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listCustomLineItems(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listCustomLineItemsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listPricingPlans(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listPricingPlansAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listPricingPlansAssociatedWithPricingRule(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listPricingPlansAssociatedWithPricingRuleAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listPricingRules(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listPricingRulesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listPricingRulesAssociatedToPricingPlan(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listPricingRulesAssociatedToPricingPlanAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listResourcesAssociatedToCustomLineItem(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listResourcesAssociatedToCustomLineItemAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateBillingGroup(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateBillingGroupAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateCustomLineItem(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateCustomLineItemAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updatePricingPlan(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updatePricingPlanAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updatePricingRule(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updatePricingRuleAsync(array $args = [])
+ */
+class BillingConductorClient extends AwsClient {}

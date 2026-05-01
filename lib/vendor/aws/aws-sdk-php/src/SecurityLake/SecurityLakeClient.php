@@ -1,0 +1,76 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\SecurityLake;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **Amazon Security Lake** service.
+ * @method \R2Offload\Vendor\Aws\Result createAwsLogSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createAwsLogSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createCustomLogSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createCustomLogSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createDataLake(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createDataLakeAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createDataLakeExceptionSubscription(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createDataLakeExceptionSubscriptionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createDataLakeOrganizationConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createDataLakeOrganizationConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createSubscriber(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createSubscriberAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createSubscriberNotification(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createSubscriberNotificationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteAwsLogSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteAwsLogSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteCustomLogSource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteCustomLogSourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteDataLake(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteDataLakeAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteDataLakeExceptionSubscription(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteDataLakeExceptionSubscriptionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteDataLakeOrganizationConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteDataLakeOrganizationConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteSubscriber(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteSubscriberAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteSubscriberNotification(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteSubscriberNotificationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deregisterDataLakeDelegatedAdministrator(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deregisterDataLakeDelegatedAdministratorAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getDataLakeExceptionSubscription(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDataLakeExceptionSubscriptionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getDataLakeOrganizationConfiguration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDataLakeOrganizationConfigurationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getDataLakeSources(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDataLakeSourcesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getSubscriber(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getSubscriberAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listDataLakeExceptions(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listDataLakeExceptionsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listDataLakes(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listDataLakesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listLogSources(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listLogSourcesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listSubscribers(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listSubscribersAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listTagsForResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result registerDataLakeDelegatedAdministrator(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise registerDataLakeDelegatedAdministratorAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagResource(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateDataLake(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateDataLakeAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateDataLakeExceptionSubscription(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateDataLakeExceptionSubscriptionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateSubscriber(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateSubscriberAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateSubscriberNotification(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateSubscriberNotificationAsync(array $args = [])
+ */
+class SecurityLakeClient extends AwsClient {}

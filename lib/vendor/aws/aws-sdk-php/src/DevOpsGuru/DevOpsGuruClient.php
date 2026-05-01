@@ -1,0 +1,76 @@
+<?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\DevOpsGuru;
+
+use R2Offload\Vendor\Aws\AwsClient;
+
+/**
+ * This client is used to interact with the **Amazon DevOps Guru** service.
+ * @method \R2Offload\Vendor\Aws\Result addNotificationChannel(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise addNotificationChannelAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteInsight(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteInsightAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeAccountHealth(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeAccountHealthAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeAccountOverview(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeAccountOverviewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeAnomaly(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeAnomalyAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeEventSourcesConfig(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeEventSourcesConfigAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeFeedback(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeFeedbackAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeInsight(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeInsightAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeOrganizationHealth(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeOrganizationHealthAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeOrganizationOverview(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeOrganizationOverviewAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeOrganizationResourceCollectionHealth(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeOrganizationResourceCollectionHealthAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeResourceCollectionHealth(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeResourceCollectionHealthAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeServiceIntegration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeServiceIntegrationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getCostEstimation(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getCostEstimationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getResourceCollection(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getResourceCollectionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listAnomaliesForInsight(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listAnomaliesForInsightAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listAnomalousLogGroups(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listAnomalousLogGroupsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listEvents(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listEventsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listInsights(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listInsightsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listMonitoredResources(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listMonitoredResourcesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listNotificationChannels(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listNotificationChannelsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listOrganizationInsights(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listOrganizationInsightsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listRecommendations(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listRecommendationsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result putFeedback(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise putFeedbackAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result removeNotificationChannel(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise removeNotificationChannelAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result searchInsights(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise searchInsightsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result searchOrganizationInsights(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise searchOrganizationInsightsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result startCostEstimation(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise startCostEstimationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateEventSourcesConfig(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateEventSourcesConfigAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateResourceCollection(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateResourceCollectionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateServiceIntegration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateServiceIntegrationAsync(array $args = [])
+ */
+class DevOpsGuruClient extends AwsClient {}

@@ -52,9 +52,9 @@ class Plugin {
         $this->url_rewriter = new UrlRewriter( $this->settings );
         $this->url_rewriter->register_hooks();
 
-        // Everything below is only needed for admin, AJAX, cron, or upload hooks.
+        // Everything below is only needed for admin, AJAX, cron, REST API, or upload hooks.
         // On a pure frontend page view with no uploads, none of this runs.
-        if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || $this->is_upload_request() ) {
+        if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || $this->is_rest_request() || $this->is_upload_request() ) {
             $this->boot_full();
         } else {
             // Deferred boot: if a new upload happens on the frontend (e.g. front-end
@@ -103,6 +103,14 @@ class Plugin {
             $admin = new Admin\Admin( $this->settings, $this->logger, $this->r2 );
             $admin->register();
         }
+    }
+
+    private function is_rest_request(): bool {
+        if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+            return true;
+        }
+        $rest_prefix = rest_get_url_prefix();
+        return isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], '/' . $rest_prefix . '/' ) !== false;
     }
 
     private function is_upload_request(): bool {

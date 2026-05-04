@@ -321,6 +321,11 @@ class FileManagerPage {
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'cloudflare-r2-offload' ) ], 403 );
         }
+        $throttle_key = 'r2_throttle_fm_del_' . get_current_user_id();
+        if ( get_transient( $throttle_key ) ) {
+            wp_send_json_error( [ 'message' => __( 'Please wait a few seconds before trying again.', 'cloudflare-r2-offload' ) ], 429 );
+        }
+        set_transient( $throttle_key, 1, 3 );
         $key = isset( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : '';
         if ( ! $key ) {
             wp_send_json_error( [ 'message' => __( 'No key provided.', 'cloudflare-r2-offload' ) ] );

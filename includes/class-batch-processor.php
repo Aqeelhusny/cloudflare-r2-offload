@@ -97,15 +97,8 @@ class BatchProcessor {
             }
 
             // Mark as processing.
-            $ids_int      = array_map( fn( $item ) => (int) $item->id, $items );
-            $placeholders = implode( ',', array_fill( 0, count( $ids_int ), '%d' ) );
-            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-            $wpdb->query(
-                $wpdb->prepare(
-                    "UPDATE `{$table}` SET status = 'processing', updated_at = %s WHERE id IN ({$placeholders})",
-                    array_merge( [ $now ], $ids_int )
-                )
-            );
+            $ids_int = array_map( fn( $item ) => (int) $item->id, $items );
+            $this->mark_as_processing( $ids_int, $table, $now );
 
             foreach ( $items as $item ) {
                 // Time guard inside the inner loop too.
@@ -304,15 +297,8 @@ class BatchProcessor {
             }
 
             // Mark as processing.
-            $ids_int      = array_map( fn( $item ) => (int) $item->id, $items );
-            $placeholders = implode( ',', array_fill( 0, count( $ids_int ), '%d' ) );
-            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-            $wpdb->query(
-                $wpdb->prepare(
-                    "UPDATE `{$table}` SET status = 'processing', updated_at = %s WHERE id IN ({$placeholders})",
-                    array_merge( [ $now ], $ids_int )
-                )
-            );
+            $ids_int = array_map( fn( $item ) => (int) $item->id, $items );
+            $this->mark_as_processing( $ids_int, $table, $now );
 
             foreach ( $items as $item ) {
                 if ( ( time() - $start_time ) >= self::MAX_EXECUTION_SEC ) {
@@ -382,6 +368,30 @@ class BatchProcessor {
             do_action( $complete_action );
             $this->logger->info( "Bulk {$job_type} complete.", [ 'processed_this_run' => $processed ] );
         }
+    }
+
+    /**
+     * Mark a set of queue rows as 'processing' atomically.
+     *
+     * Uses a two-pass prepare to satisfy wpdb and phpcs: first prepare the
+     * IN clause with the correct number of %d placeholders, then prepare the
+     * outer UPDATE with the timestamp. This avoids the fragile single-pass
+     * pattern that required phpcs:ignore.
+     *
+     * @param int[]  $ids   Row IDs (already cast to int).
+     * @param string $table Fully-qualified table name.
+     * @param string $now   MySQL datetime string (UTC).
+     */
+    private function mark_as_processing( array $ids, string $table, string $now ): void {
+        global $wpdb;
+
+        $in_clause = implode( ',', array_map( 'absint', $ids ) );
+        $wpdb->query(
+            $wpdb->prepare(
+                "UPDATE `{$table}` SET status = 'processing', updated_at = %s WHERE id IN ({$in_clause})",
+                $now
+            )
+        );
     }
 
     private function cleanup_bulk_queue( string $table, string $job_type, string $pause_option ): void {

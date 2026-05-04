@@ -13,6 +13,9 @@ class Settings {
     /** @var array In-request cache */
     private array $cache = [];
 
+    /** @var bool Whether decryption of the stored secret key failed this request. */
+    private bool $decryption_failed = false;
+
     /**
      * Register settings with WordPress.
      */
@@ -72,7 +75,18 @@ class Settings {
 
     public function get_secret_access_key(): string {
         $encrypted = $this->cached( 'r2_offload_secret_access_key', '' );
-        return $encrypted ? $this->decrypt( $encrypted ) : '';
+        if ( ! $encrypted ) {
+            return '';
+        }
+        $decrypted = $this->decrypt( $encrypted );
+        if ( $decrypted === '' && strpos( $encrypted, 'r2enc:' ) === 0 ) {
+            $this->decryption_failed = true;
+        }
+        return $decrypted;
+    }
+
+    public function has_decryption_failed(): bool {
+        return $this->decryption_failed;
     }
 
     public function get_bucket(): string {

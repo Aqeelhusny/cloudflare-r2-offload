@@ -8,20 +8,25 @@ WordPress plugin that offloads your entire media library to **Cloudflare R2** ob
 
 - **Full media offload** — uploads the original file and every registered image size (thumbnail, medium, large, custom sizes) using the same `YYYY/MM/` directory structure WordPress uses
 - **New uploads** — automatically syncs to R2 the moment a file is uploaded, after all image sizes have been generated
+- **Background offload** — optionally queue new uploads for WP-Cron processing instead of syncing inline, keeping media upload responses fast on slow or high-latency connections
 - **Bulk migration** — migrates your entire existing media library in the background via WP-Cron batches with Start / Pause / Resume / Cancel / Retry controls
 - **Restore from R2 to server** — download files from R2 back to the local server at any time; supports single attachment, bulk selected, or restore all
 - **Auto-delete local files** — free up server disk space by deleting local copies of files already safely stored on R2; works per-upload automatically or as a bulk operation for your entire library
 - **Restore & Remove from R2** — fully disconnect from R2 by restoring all files to the server, verifying each download, then deleting from R2 and clearing all sync metadata
 - **Custom CDN domain** — serve files from your own domain (e.g. `cdn.yourdomain.com`) instead of the R2 public URL
 - **URL rewriting** — rewrites all URLs: attachment URLs, srcset, `the_content`, and WooCommerce product image responses
-- **WooCommerce compatible** — handles WooCommerce image sizes, REST API responses, HPOS, and lazy-regenerated sizes
-- **Optimized multipart upload** — files under 5 MB use a single request; larger files use AWS SDK `MultipartUploader` with parallel part uploads and automatic retry
+- **WooCommerce compatible** — handles WooCommerce image sizes, REST API responses, HPOS, Cart & Checkout Blocks, and lazy-regenerated sizes
+- **Optimized multipart upload** — files under 5 MB use a single request; larger files use AWS SDK `MultipartUploader` with parallel part uploads and automatic retry (up to 3 attempts with exponential backoff)
 - **Advanced file manager** — browse, filter, copy URLs, and delete objects directly in the R2 bucket (enable/disable toggle)
 - **Upload stats dashboard** — 30-day chart of uploads, bytes offloaded, and failures
 - **Structured logging** — JSON-lines log files using WordPress timezone with in-admin log viewer and one-click delete
-- **Secure credential storage** — secret key encrypted at rest with AES-256-CBC
+- **Secure credential storage** — secret key encrypted at rest with AES-256-CBC; never echoed back to the browser
 - **Media Library integration** — R2 Status column, per-attachment row actions, and bulk actions directly in the WordPress Media Library
 - **Live dashboard** — migration page auto-refreshes stats every 10 seconds; all operations show real-time progress with polling
+- **Auto-cleanup on delete** — when a media item is deleted from WordPress, its R2 copies are automatically removed
+- **MIME type exclusions** — skip specific file types (e.g. `video/mp4`) from being uploaded to R2
+- **Lazy boot** — only the lightweight URL rewriter loads on frontend page views; the full stack (AWS SDK, admin classes) only loads for admin, AJAX, cron, and REST requests
+- **Deferred frontend uploads** — if a front-end form plugin triggers a media upload, the full sync stack boots on demand via a lazy hook
 
 ---
 
@@ -115,6 +120,7 @@ Click **Test Connection** to verify your credentials before saving.
 | Field | Default | Description |
 |---|---|---|
 | Auto-upload New Media | On | Sync every new upload to R2 immediately after WordPress generates all image sizes |
+| Background Offload | Off | Queue new uploads for WP-Cron batch processing instead of syncing inline. Keeps upload responses fast on slow connections. When enabled, new uploads are inserted into the migration queue and processed by the batch processor within seconds |
 | Delete Local Files | Off | Automatically delete local files after each confirmed upload to R2. **Irreversible without using Restore. Only enable if R2 is your sole storage.** |
 | Enable File Manager | Off | Show the R2 File Manager and log viewer in the admin menu |
 | Migration Batch Size | 10 | Attachments processed per WP-Cron batch (1–50). Lower values are safer on shared hosting |
@@ -407,7 +413,7 @@ The plugin stores the following post meta keys on each attachment post:
 
 ## Security
 
-- **Credential encryption:** The R2 secret key is encrypted with AES-256-CBC using `wp_salt('auth')` as the key material before being stored in `wp_options`. It is never echoed back to the browser — the settings form shows a placeholder.
+- **Credential encryption:** The R2 secret key is encrypted with AES-256-CBC using `wp_salt('auth')` as the key material before being stored in `wp_options`. It is never echoed back to the browser — the settings form shows a placeholder. To use a stable encryption key that survives WordPress salt changes, define `R2_OFFLOAD_ENCRYPTION_KEY` in `wp-config.php`.
 - **Nonce verification:** Every AJAX endpoint verifies `wp_nonce` via `check_ajax_referer()`.
 - **Capability check:** All admin pages and AJAX endpoints require `manage_options`.
 - **Output escaping:** All admin output uses `esc_html()`, `esc_attr()`, `esc_url()`.
@@ -425,7 +431,7 @@ Deactivating the plugin stops all background processing and clears scheduled cro
 
 **Deleting** the plugin via WordPress admin triggers `uninstall.php`, which:
 
-- Drops the `{prefix}r2_offload_migration_queue` database table
+- Drops the `{prefix}r2_offload_migration_queue` and `{prefix}r2_offload_bulk_queue` database tables
 - Deletes all `r2_offload_*` options from `wp_options` (including restore, local-delete, and desync queue state)
 - Deletes all `_r2_offload_*` post meta from `wp_postmeta`
 - Clears all scheduled cron events (migration, restore, local-delete, desync)
@@ -440,16 +446,19 @@ Deactivating the plugin stops all background processing and clears scheduled cro
 ```
 cloudflare-r2-offload/
 ├── cloudflare-r2-offload.php          # Plugin bootstrap, constants, HPOS declaration
-├── composer.json                       # AWS SDK v3 dependency
+├── composer.json                       # AWS SDK v3 + Strauss dependency config
+├── build.php                           # Build automation for Strauss namespace prefixing
+├── find-deps.php                       # Utility to identify required AWS service packages
 ├── uninstall.php                       # Cleanup on plugin deletion
-├── vendor/                             # AWS SDK + Guzzle (Composer)
+├── vendor/                             # Composer dependencies (dev + runtime)
+├── lib/vendor/                         # Strauss-scoped AWS SDK (prefixed to avoid conflicts)
 ├── includes/
-│   ├── class-plugin.php               # Singleton orchestrator
-│   ├── class-settings.php             # Settings registration + AES-256-CBC encryption
+│   ├── class-plugin.php               # Singleton orchestrator, DB migrations
+│   ├── class-settings.php             # Settings registration, sanitization, AES-256-CBC encryption
 │   ├── class-r2-client.php            # S3Client wrapper (upload, download, delete, list)
 │   ├── class-attachment-sync.php      # Upload, restore, desync, and local-delete per attachment
-│   ├── class-upload-handler.php       # WP/WooCommerce upload + delete hooks
-│   ├── class-url-rewriter.php         # URL rewriting filters (WP + WooCommerce)
+│   ├── class-upload-handler.php       # WP/WooCommerce upload + delete hooks, background offload
+│   ├── class-url-rewriter.php         # URL rewriting filters (WP + WooCommerce + multisite)
 │   ├── class-media-library.php        # Media Library column, row actions, bulk actions
 │   ├── class-migration.php            # All AJAX handlers (migration, restore, local-delete, desync)
 │   ├── class-batch-processor.php      # WP-Cron engines for migration, restore, local-delete, desync
@@ -460,9 +469,16 @@ cloudflare-r2-offload/
 │   ├── class-migration-page.php       # Migration, restore, local-delete, and desync dashboard
 │   ├── class-stats-page.php           # Stats chart
 │   └── class-file-manager-page.php    # R2 file browser + log viewer
-└── assets/
-    ├── css/admin.css
-    └── js/admin.js                    # Migration, restore, local-delete, desync, file manager JS
+├── assets/
+│   ├── css/admin.css
+│   └── js/admin.js                    # Migration, restore, local-delete, desync, file manager JS
+├── tests/                              # Unit and integration tests
+│   ├── bootstrap.php
+│   ├── bootstrap-connection.php
+│   ├── test-attachment-sync.php
+│   └── test-connection-migration.php
+└── languages/                          # i18n translation files
+    └── cloudflare-r2-offload.pot
 ```
 
 ---
@@ -494,6 +510,16 @@ cloudflare-r2-offload/
 - **Fix:** WooCommerce compatibility — HPOS declaration, REST API URL rewriting, lazy image size regeneration handling
 - **Fix:** Multipart upload threshold sanitizer now correctly converts MB to bytes
 - **Fix:** Multisite URL cache no longer stale after `switch_to_blog()`
+
+### 1.0.1
+- **Fix:** Migration INSERT query column mismatch causing silent failures on MySQL strict mode
+- **Fix:** Double-encryption of secret key when saving via AJAX then submitting the settings form
+- **Improved:** Batch processor now loops continuously within a 50-second window for faster bulk migrations
+- **Improved:** Added `spawn_cron()` calls for reliable WP-Cron triggering on all hosts
+- **New:** "Process Batch Now" button for manual batch processing when WP-Cron is unreliable
+- **New:** "Serve from Cloudflare R2" toggle for instant CDN on/off switching
+- **New:** Live stat updates during migration polling
+- **New:** Image-based nested tree view in File Manager
 
 ### 1.0.0
 - Initial release

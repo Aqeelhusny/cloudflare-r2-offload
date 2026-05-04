@@ -46,6 +46,14 @@ class Plugin {
         // Run DB migrations when the plugin is updated (activation hook doesn't fire on updates).
         $this->maybe_upgrade_db();
 
+        // Probe for encryption key mismatch early so we can surface an admin notice.
+        if ( is_admin() ) {
+            $this->settings->get_secret_access_key();
+            if ( $this->settings->has_decryption_failed() ) {
+                add_action( 'admin_notices', [ $this, 'notice_decryption_failed' ] );
+            }
+        }
+
         // URL rewriting — the only thing needed on every frontend request.
         // register_hooks() internally checks the toggle and returns immediately
         // if serving is disabled, so zero overhead when OFF.
@@ -163,23 +171,15 @@ class Plugin {
             }
 
             foreach ( array_chunk( $ids, 500 ) as $chunk ) {
-                $values      = [];
-                $args        = [];
+                $tuples = [];
                 foreach ( $chunk as $attachment_id ) {
-                    $values[] = '(%d, %s, %s, %s, %s)';
-                    $args[]   = (int) $attachment_id;
-                    $args[]   = $job_type;
-                    $args[]   = 'pending';
-                    $args[]   = $now;
-                    $args[]   = $now;
+                    $tuples[] = $wpdb->prepare(
+                        '(%d, %s, %s, %s, %s)',
+                        absint( $attachment_id ), $job_type, 'pending', $now, $now
+                    );
                 }
-                $values_sql = implode( ', ', $values );
-                // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
                 $wpdb->query(
-                    $wpdb->prepare(
-                        "INSERT IGNORE INTO `{$table}` (attachment_id, job_type, status, created_at, updated_at) VALUES {$values_sql}",
-                        $args
-                    )
+                    "INSERT IGNORE INTO `{$table}` (attachment_id, job_type, status, created_at, updated_at) VALUES " . implode( ', ', $tuples )
                 );
             }
 
@@ -224,6 +224,25 @@ class Plugin {
         delete_transient( BatchProcessor::RESTORE_LOCK_KEY );
         delete_transient( BatchProcessor::LOCAL_DEL_LOCK );
         delete_transient( BatchProcessor::DESYNC_LOCK );
+    }
+
+    /**
+     * Admin notice shown when the stored R2 secret key cannot be decrypted.
+     * This happens when WordPress security salts change and no stable
+     * R2_OFFLOAD_ENCRYPTION_KEY constant was defined.
+     */
+    public function notice_decryption_failed(): void {
+        echo '<div class="notice notice-error"><p>';
+        echo wp_kses(
+            sprintf(
+                /* translators: 1: wp-config.php constant name, 2: link to settings page */
+                __( '<strong>Cloudflare R2 Offload:</strong> Your stored R2 secret key could not be decrypted. This usually means your WordPress security salts have changed. Please <a href="%2$s">re-enter your R2 credentials</a>, or define <code>%1$s</code> in <code>wp-config.php</code> to use a stable encryption key.', 'cloudflare-r2-offload' ),
+                'R2_OFFLOAD_ENCRYPTION_KEY',
+                esc_url( admin_url( 'admin.php?page=r2-offload-settings' ) )
+            ),
+            [ 'strong' => [], 'a' => [ 'href' => [] ], 'code' => [] ]
+        );
+        echo '</p></div>';
     }
 
     // -------------------------------------------------------------------------

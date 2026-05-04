@@ -2,7 +2,7 @@
 Contributors: aqeelhusny
 Tags: cloudflare, r2, media, offload, cdn
 Requires at least: 5.8
-Tested up to: 6.7
+Tested up to: 6.8
 Requires PHP: 7.4
 Stable tag: 1.3.1
 License: GPLv2 or later
@@ -17,19 +17,25 @@ Cloudflare R2 Offload automatically uploads your WordPress media library to Clou
 **Key Features:**
 
 * **Automatic upload** — new media is uploaded to R2 immediately after WordPress generates all image sizes.
+* **Background offload** — optionally queue new uploads for WP-Cron processing instead of syncing inline, keeping upload responses fast on slow connections.
 * **Bulk migration** — migrate your entire existing media library to R2 with a one-click background process powered by WP-Cron.
 * **Custom CDN domain** — serve media from your own domain (e.g. cdn.example.com) via Cloudflare's CDN.
 * **Serve from R2 toggle** — instantly switch between serving from R2/CDN and your local server.
-* **WooCommerce compatible** — product images, gallery thumbnails, and REST API image URLs are all rewritten automatically.
-* **Multipart upload** — large files are uploaded using multipart upload for reliability.
-* **Delete local files** — optionally delete local copies after upload to free server disk space.
-* **Restore from R2** — download files back from R2 to your server at any time, with live progress tracking.
-* **Restore & Remove from R2** — fully disconnect from R2 by restoring all files, verifying downloads, then deleting from R2.
-* **File manager** — browse, search, and manage files stored in your R2 bucket directly from WordPress.
+* **WooCommerce compatible** — product images, gallery thumbnails, REST API image URLs, HPOS, and Cart & Checkout Blocks are all supported.
+* **Multipart upload** — large files are uploaded using multipart upload with parallel parts and automatic retry.
+* **Delete local files** — optionally delete local copies after upload to free server disk space (per-upload or bulk).
+* **Restore from R2** — download files back from R2 to your server at any time (single, bulk, or all), with live progress tracking.
+* **Restore & Remove from R2** — fully disconnect from R2 by restoring all files, verifying downloads, then deleting from R2 and clearing all sync metadata.
+* **File manager** — browse, search, copy URLs, and delete objects in your R2 bucket directly from WordPress.
 * **Upload stats** — daily upload counts, bytes transferred, and failure tracking with a 30-day chart.
+* **Media Library integration** — R2 Status column, per-attachment row actions, and bulk actions in the Media Library list view.
 * **Live dashboard** — migration page auto-refreshes stats every 10 seconds with real-time progress for all operations.
-* **Multisite support** — works correctly across multisite blog switches.
-* **Secure credentials** — API keys are encrypted with AES-256-CBC before storage.
+* **Multisite support** — works correctly across multisite blog switches with per-blog URL cache invalidation.
+* **Secure credentials** — API keys are encrypted with AES-256-CBC before storage; secret key is never echoed back.
+* **Lazy boot** — only the lightweight URL rewriter loads on frontend page views; the full stack only loads for admin, AJAX, cron, and REST requests.
+* **Auto-cleanup on delete** — when a media item is deleted from WordPress, its R2 copies are automatically removed.
+* **MIME type exclusions** — skip specific file types from being uploaded to R2.
+* **Developer hooks** — filters and actions for batch size, multipart settings, and completion events.
 
 **How It Works:**
 
@@ -62,11 +68,15 @@ Your API token needs **Object Read & Write** permissions on the target bucket. Y
 
 = Will this slow down my site? =
 
-No. The plugin uses a lazy boot architecture: on frontend page views, only the lightweight URL rewriter loads. The AWS SDK and all admin classes are only loaded for admin, AJAX, and cron requests.
+No. The plugin uses a lazy boot architecture: on frontend page views, only the lightweight URL rewriter loads. The AWS SDK and all admin classes are only loaded for admin, AJAX, and cron requests. Enable "Background Offload" to defer R2 uploads to WP-Cron so media uploads return instantly.
 
 = What happens if I deactivate the plugin? =
 
 Media URLs revert to your local server. Your files remain in R2 — nothing is deleted. Re-activate to resume serving from R2.
+
+= What happens if I delete the plugin? =
+
+The uninstaller removes all plugin data from the database (options, post meta, queue tables, cron events, and local log files). Your R2 objects are NOT deleted — use Restore & Remove from R2 before deleting if you want to clean up R2.
 
 = Can I restore files from R2 back to my server? =
 
@@ -78,11 +88,19 @@ Yes. Use the "Restore & Remove from R2" feature on the Migration page. It restor
 
 = Is WooCommerce supported? =
 
-Yes. Product images, gallery thumbnails, srcset attributes, and WooCommerce REST API image URLs are all rewritten to use your CDN domain.
+Yes. Product images, gallery thumbnails, srcset attributes, WooCommerce REST API image URLs, HPOS, and Cart & Checkout Blocks are all supported. WooCommerce image regeneration is handled automatically.
 
 = Does it work with multisite? =
 
 Yes. URL caches are flushed on blog switches, and wp_upload_dir() is used per-blog.
+
+= Can I exclude certain file types from being uploaded to R2? =
+
+Yes. Go to Settings > Excluded MIME Types and enter one MIME type per line (e.g. `video/mp4`). Files matching those types will not be uploaded to R2.
+
+= What if my encryption key changes? =
+
+If you reset WordPress security keys in wp-config.php, your stored R2 secret key will become unreadable. Define `R2_OFFLOAD_ENCRYPTION_KEY` as a constant in wp-config.php to use a stable encryption key that survives salt changes.
 
 == Screenshots ==
 
@@ -97,6 +115,7 @@ Yes. URL caches are flushed on blog switches, and wp_upload_dir() is used per-bl
 = 1.3.1 =
 * New: Restore & Remove from R2 — fully disconnect from R2 by restoring all files to the server, verifying downloads, then deleting from R2 and clearing all sync metadata.
 * New: Restore progress polling — bulk restore now shows live progress with 3-second polling.
+* New: Desync status AJAX endpoint for real-time progress tracking.
 * New: Background page refresh — stats cards and button visibility auto-update every 10 seconds on the migration page.
 * Fixed: Progress bar percentage overcounting — local-delete and restore now count per attachment instead of per individual file.
 * Fixed: Stale progress status after completion — all operations now clean up their tracking data on completion.
@@ -106,6 +125,17 @@ Yes. URL caches are flushed on blog switches, and wp_upload_dir() is used per-bl
 * Fixed: Restore and local-delete buttons no longer start polling when there is nothing to process.
 * Improved: Log timestamps now use WordPress timezone instead of UTC.
 * Improved: Log filenames now rotate based on WordPress local date.
+
+= 1.1.0 =
+* New: Restore files from R2 to server — single attachment (row action), bulk selected, restore missing, or restore all.
+* New: Auto-delete local files per-upload (automatic) and bulk delete for entire synced library.
+* New: Media Library R2 Status column with Synced / R2 only / Not synced / Error badges.
+* New: Media Library row actions — Restore from R2 / Delete local file (AJAX, no page reload).
+* New: Media Library bulk actions — R2: Restore to server / R2: Delete local files.
+* New: Three independent WP-Cron batch engines (migration, bulk restore, bulk local-delete) each with their own lock and progress tracking.
+* Fixed: WooCommerce compatibility — HPOS declaration, REST API URL rewriting, lazy image size regeneration handling.
+* Fixed: Multipart upload threshold sanitizer now correctly converts MB to bytes.
+* Fixed: Multisite URL cache no longer stale after switch_to_blog().
 
 = 1.0.1 =
 * Fixed: Migration INSERT query column mismatch causing silent failures on MySQL strict mode.
@@ -124,3 +154,6 @@ Yes. URL caches are flushed on blog switches, and wp_upload_dir() is used per-bl
 
 = 1.3.1 =
 Adds Restore & Remove from R2 feature, fixes progress bar bugs, and adds live dashboard auto-refresh. Recommended for all users.
+
+= 1.1.0 =
+Adds restore from R2, auto-delete local files, Media Library integration with R2 Status column and row/bulk actions, and WooCommerce compatibility fixes.

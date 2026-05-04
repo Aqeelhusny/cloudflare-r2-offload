@@ -54,6 +54,15 @@ class Migration {
         }
     }
 
+    private const READ_ONLY_ACTIONS = [
+        'r2_offload_migration_status',
+        'r2_offload_restore_status',
+        'r2_offload_local_delete_status',
+        'r2_offload_desync_status',
+        'r2_offload_background_queue_status',
+        'r2_offload_background_queue_logs',
+    ];
+
     public function handle_ajax(): void {
         $action = isset( $_REQUEST['action'] ) ? sanitize_key( $_REQUEST['action'] ) : '';
         $method = 'ajax_' . str_replace( 'r2_offload_', '', $action );
@@ -66,6 +75,15 @@ class Migration {
 
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'cloudflare-r2-offload' ) ], 403 );
+        }
+
+        // Throttle mutating endpoints: one call per action per 3 seconds.
+        if ( ! in_array( $action, self::READ_ONLY_ACTIONS, true ) ) {
+            $throttle_key = 'r2_throttle_' . md5( $action . get_current_user_id() );
+            if ( get_transient( $throttle_key ) ) {
+                wp_send_json_error( [ 'message' => __( 'Please wait a few seconds before trying again.', 'cloudflare-r2-offload' ) ], 429 );
+            }
+            set_transient( $throttle_key, 1, 3 );
         }
 
         $this->$method();

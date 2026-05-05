@@ -247,11 +247,12 @@ class BatchProcessor {
     }
 
     // =========================================================================
-    // Validate pre-uploaded batch — checks each attachment's expected R2 keys
-    // via HeadObject and marks synced if all are present.
-    // Safe to run alongside an active migration: the HeadObject check is
-    // read-only, and validate_pre_uploaded() re-checks _r2_offload_synced
-    // before writing meta, so a concurrent migration completing first is fine.
+    // Validate pre-uploaded batch — confirms manually-uploaded files exist in R2
+    // and claims them as synced so migration skips them.
+    // Uses ListObjectsV2 (one call per unique year/month folder) pre-fetched for
+    // the whole batch — not HeadObject per file.
+    // Safe to run alongside an active migration: validate_pre_uploaded() re-checks
+    // _r2_offload_synced before writing meta, so concurrent migration wins are fine.
     // =========================================================================
 
     public function process_validate_batch(): void {
@@ -327,6 +328,14 @@ class BatchProcessor {
             $ids_int = array_map( fn( $item ) => (int) $item->id, $items );
             $this->mark_as_processing( $ids_int, $table, $now );
 
+            // For validate batches: pre-fetch R2 folder listings once per unique
+            // year/month prefix so all attachments in the same folder share one
+            // ListObjectsV2 call instead of issuing one per attachment.
+            $validate_key_cache = [];
+            if ( $job_type === 'validate' ) {
+                $validate_key_cache = $this->prefetch_r2_key_sets( $items );
+            }
+
             foreach ( $items as $item ) {
                 if ( ( time() - $start_time ) >= self::MAX_EXECUTION_SEC ) {
                     $wpdb->update(
@@ -366,9 +375,11 @@ class BatchProcessor {
                         break;
 
                     case 'validate':
-                        $result  = $this->sync->validate_pre_uploaded( $attachment_id );
-                        // claimed → success. skipped (already synced) → success, drains queue.
-                        // missing → failed, records which keys were absent for the admin.
+                        // Resolve which pre-fetched key set to pass.
+                        // The cache key is the R2 directory prefix for this attachment.
+                        $r2_key_set_for_item = $this->resolve_key_set_for_attachment( $attachment_id, $validate_key_cache );
+                        $result  = $this->sync->validate_pre_uploaded( $attachment_id, $r2_key_set_for_item );
+                        // claimed/skipped → success. missing → failed with details.
                         $success = $result['claimed'] > 0 || $result['skipped'] > 0;
                         if ( ! $success && ! empty( $result['missing_keys'] ) ) {
                             $error_message = 'Missing in R2: ' . implode( ', ', $result['missing_keys'] );
@@ -407,6 +418,86 @@ class BatchProcessor {
             do_action( $complete_action );
             $this->logger->info( "Bulk {$job_type} complete.", [ 'processed_this_run' => $processed ] );
         }
+    }
+
+    /**
+     * Pre-fetch R2 key sets for all unique directory prefixes in a batch of validate items.
+     *
+     * Groups attachment IDs by their year/month prefix, then issues one paginated
+     * ListObjectsV2 per unique prefix. Returns a map of [ prefix => [ key => true ] ]
+     * that validate_pre_uploaded() can use directly — avoiding one API call per attachment.
+     *
+     * @param object[] $items Queue rows with attachment_id properties.
+     * @return array<string, array<string, bool>>  prefix → key set
+     */
+    private function prefetch_r2_key_sets( array $items ): array {
+        $plugin      = Plugin::get_instance();
+        $r2          = $plugin->r2;
+        $path_prefix = $this->settings->get_path_prefix();
+        $upload_dir  = wp_upload_dir();
+        $base_dir    = trailingslashit( $upload_dir['basedir'] );
+
+        // Map each attachment to its R2 directory prefix.
+        $prefix_to_ids = [];
+        foreach ( $items as $item ) {
+            $attachment_id = (int) $item->attachment_id;
+            $attached      = get_post_meta( $attachment_id, '_wp_attached_file', true );
+            if ( ! $attached ) {
+                continue;
+            }
+            $original_key = $path_prefix ? "{$path_prefix}/{$attached}" : $attached;
+            $dir_prefix   = trailingslashit( dirname( $original_key ) );
+            if ( $dir_prefix === './' ) {
+                $dir_prefix = '';
+            }
+            $prefix_to_ids[ $dir_prefix ][] = $attachment_id;
+        }
+
+        // One paginated ListObjectsV2 per unique prefix.
+        $key_sets = [];
+        foreach ( array_keys( $prefix_to_ids ) as $dir_prefix ) {
+            $key_set = [];
+            $token   = '';
+            do {
+                $listed = $r2->list_objects( $dir_prefix, 1000, $token );
+                foreach ( $listed['objects'] as $obj ) {
+                    $key_set[ $obj['Key'] ] = true;
+                }
+                $token = $listed['next_token'] ?? '';
+            } while ( $token );
+
+            $key_sets[ $dir_prefix ] = $key_set;
+
+            $this->logger->info( 'Validate batch: pre-fetched R2 folder.', [
+                'prefix'      => $dir_prefix ?: '(root)',
+                'keys_found'  => count( $key_set ),
+                'attachments' => count( $prefix_to_ids[ $dir_prefix ] ),
+            ] );
+        }
+
+        return $key_sets;
+    }
+
+    /**
+     * Resolve the pre-fetched key set for a given attachment.
+     * Returns null if the prefix wasn't pre-fetched (falls back to per-attachment listing).
+     *
+     * @param int                          $attachment_id
+     * @param array<string, array<string,bool>> $key_cache
+     * @return array<string, bool>|null
+     */
+    private function resolve_key_set_for_attachment( int $attachment_id, array $key_cache ): ?array {
+        $path_prefix  = $this->settings->get_path_prefix();
+        $attached     = get_post_meta( $attachment_id, '_wp_attached_file', true );
+        if ( ! $attached ) {
+            return null;
+        }
+        $original_key = $path_prefix ? "{$path_prefix}/{$attached}" : $attached;
+        $dir_prefix   = trailingslashit( dirname( $original_key ) );
+        if ( $dir_prefix === './' ) {
+            $dir_prefix = '';
+        }
+        return $key_cache[ $dir_prefix ] ?? null;
     }
 
     /**

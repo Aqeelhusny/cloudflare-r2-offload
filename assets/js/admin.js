@@ -445,6 +445,119 @@
     });
 
     // =========================================================================
+    // Validate pre-uploaded files
+    // =========================================================================
+
+    var valPollInterval = null;
+
+    function updateValProgress(done, total, failed) {
+        var pct = total > 0 ? Math.round(done / total * 100) : 0;
+        $('#r2-val-fill').css('width', pct + '%');
+        $('#r2-val-text').text(done + ' / ' + total);
+        $('#r2-val-pct').text(pct + '%');
+        $('#r2-val-stat-failed').text(failed || 0);
+        $('#r2-val-progress-wrap').show();
+    }
+
+    function showValMessage(msg, type) {
+        $('#r2-val-message').removeClass('notice-success notice-error notice-warning notice-info')
+            .addClass('notice notice-' + (type || 'info')).text(msg).show();
+    }
+
+    function startValPolling(total) {
+        if (valPollInterval) return;
+        valPollInterval = setInterval(function () {
+            $.post(R2Offload.ajaxUrl, {
+                action: 'r2_offload_validate_status',
+                nonce:  R2Offload.nonce
+            }, function (res) {
+                if (!res.success) return;
+                var d = res.data;
+                var t = d.total || total;
+                var done = (d.done || 0) + (d.failed || 0);
+
+                if (d.claimed !== undefined) {
+                    $('#r2-val-stat-claimed').text(d.claimed);
+                }
+
+                if (t === 0 && done === 0 && total > 0) {
+                    // Queue drained and cleaned up.
+                    clearInterval(valPollInterval);
+                    valPollInterval = null;
+                    updateValProgress(total, total, d.failed || 0);
+                    showValMessage('Validation complete. Check "Claimed from R2" and "Not Found in R2" counts above.', 'success');
+                    $('#r2-btn-validate').prop('disabled', false);
+                    $('#r2-btn-validate-cancel').hide();
+                    // Refresh the main synced stat.
+                    if (d.claimed !== undefined) $('#r2-stat-synced').text(d.claimed);
+                    return;
+                }
+
+                updateValProgress(done, t, d.failed || 0);
+
+                if (done >= t && t > 0) {
+                    clearInterval(valPollInterval);
+                    valPollInterval = null;
+                    var msg = 'Validation complete.';
+                    if (d.failed > 0) {
+                        msg += ' ' + d.failed + ' attachment(s) not found in R2 — migration will upload those.';
+                    }
+                    showValMessage(msg, d.failed > 0 ? 'warning' : 'success');
+                    $('#r2-btn-validate').prop('disabled', false);
+                    $('#r2-btn-validate-cancel').hide();
+                }
+            });
+        }, 3000);
+    }
+
+    $('#r2-btn-validate').on('click', function () {
+        if (!confirm('This will check every unsynced attachment against R2 via HeadObject requests. For large libraries this may take several minutes. Continue?')) return;
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+        showValMessage('Starting validation…', 'info');
+
+        $.post(R2Offload.ajaxUrl, {
+            action: 'r2_offload_start_validate',
+            nonce:  R2Offload.nonce
+        }, function (res) {
+            if (res.success) {
+                showValMessage(res.data.message, 'success');
+                if (!res.data.total || res.data.total === 0) {
+                    $btn.prop('disabled', false);
+                    return;
+                }
+                updateValProgress(0, res.data.total, 0);
+                $('#r2-btn-validate-cancel').show();
+                startValPolling(res.data.total);
+            } else {
+                $btn.prop('disabled', false);
+                showValMessage((res.data && res.data.message) || 'Error.', 'error');
+            }
+        }).fail(function () {
+            $btn.prop('disabled', false);
+            showValMessage('Request failed.', 'error');
+        });
+    });
+
+    $('#r2-btn-validate-cancel').on('click', function () {
+        if (!confirm('Cancel validation? Progress so far will be kept — already claimed attachments stay synced.')) return;
+        clearInterval(valPollInterval);
+        valPollInterval = null;
+
+        $.post(R2Offload.ajaxUrl, {
+            action: 'r2_offload_cancel_validate',
+            nonce:  R2Offload.nonce
+        }, function (res) {
+            if (res.success) {
+                showValMessage(res.data.message, 'warning');
+                $('#r2-btn-validate').prop('disabled', false);
+                $('#r2-btn-validate-cancel').hide();
+                $('#r2-val-progress-wrap').hide();
+            }
+        });
+    });
+
+    // =========================================================================
     // Bulk restore & desync (restore from R2, verify, delete from R2)
     // =========================================================================
 

@@ -189,6 +189,74 @@ class MigrationPage {
             <?php endif; ?>
 
             <!-- ============================================================
+                 Feature: Validate Pre-Uploaded Files
+                 ============================================================ -->
+            <h2><?php esc_html_e( 'Validate Pre-Uploaded Files', 'cloudflare-r2-offload' ); ?></h2>
+            <p class="description">
+                <?php esc_html_e( 'If you manually uploaded your wp-content/uploads folder to R2 (e.g. via rclone or Wrangler) before running migration, use this to claim those files. Each attachment is checked against R2 — if all its files are already there, WordPress is updated to treat it as synced and migration will skip it entirely.', 'cloudflare-r2-offload' ); ?>
+            </p>
+            <p class="description">
+                <?php esc_html_e( 'Safe to run alongside an active migration — they use separate queues and locks and will not conflict.', 'cloudflare-r2-offload' ); ?>
+            </p>
+            <?php
+            $val_counts = $this->bulk_queue_counts( 'validate' );
+            $val_done   = $val_counts['complete'];
+            $val_failed = $val_counts['failed'];
+            $val_total  = $val_counts['pending'] + $val_counts['processing'] + $val_done + $val_failed;
+            ?>
+            <div class="r2-stats-bar" style="margin:12px 0 16px;">
+                <div class="r2-stat">
+                    <span class="r2-stat-number" id="r2-val-stat-unsynced"><?php echo esc_html( $all_attachments - $synced_all ); ?></span>
+                    <span class="r2-stat-label"><?php esc_html_e( 'Not Yet Synced', 'cloudflare-r2-offload' ); ?></span>
+                </div>
+                <div class="r2-stat r2-stat--success">
+                    <span class="r2-stat-number" id="r2-val-stat-claimed">—</span>
+                    <span class="r2-stat-label"><?php esc_html_e( 'Claimed from R2', 'cloudflare-r2-offload' ); ?></span>
+                </div>
+                <div class="r2-stat r2-stat--error">
+                    <span class="r2-stat-number" id="r2-val-stat-failed"><?php echo esc_html( $val_failed ); ?></span>
+                    <span class="r2-stat-label"><?php esc_html_e( 'Not Found in R2', 'cloudflare-r2-offload' ); ?></span>
+                </div>
+            </div>
+            <?php if ( $val_total > 0 ) : ?>
+            <div class="r2-progress-wrap" id="r2-val-progress-wrap">
+                <div class="r2-progress-bar-track">
+                    <?php $val_pct = $val_total > 0 ? round( ( $val_done + $val_failed ) / $val_total * 100 ) : 0; ?>
+                    <div class="r2-progress-bar-fill" id="r2-val-fill" style="width:<?php echo esc_attr( $val_pct ); ?>%;background:#2271b1;"></div>
+                </div>
+                <div class="r2-progress-label">
+                    <span id="r2-val-text"><?php echo esc_html( ( $val_done + $val_failed ) . ' / ' . $val_total ); ?></span>
+                    <span id="r2-val-pct"><?php echo esc_html( $val_pct . '%' ); ?></span>
+                </div>
+            </div>
+            <?php else : ?>
+            <div class="r2-progress-wrap" id="r2-val-progress-wrap" style="display:none;">
+                <div class="r2-progress-bar-track">
+                    <div class="r2-progress-bar-fill" id="r2-val-fill" style="width:0%;background:#2271b1;"></div>
+                </div>
+                <div class="r2-progress-label">
+                    <span id="r2-val-text">0 / 0</span>
+                    <span id="r2-val-pct">0%</span>
+                </div>
+            </div>
+            <?php endif; ?>
+            <div id="r2-val-message" class="r2-message" style="display:none;"></div>
+            <div class="r2-controls">
+                <button type="button" id="r2-btn-validate" class="button button-primary">
+                    <?php esc_html_e( 'Validate Pre-Uploaded Files', 'cloudflare-r2-offload' ); ?>
+                </button>
+                <button type="button" id="r2-btn-validate-cancel" class="button button-link-delete"
+                        style="<?php echo $val_total > 0 ? '' : 'display:none;'; ?>">
+                    <?php esc_html_e( 'Cancel', 'cloudflare-r2-offload' ); ?>
+                </button>
+                <p class="description" style="margin:6px 0 0;">
+                    <?php esc_html_e( 'Attachments with missing files in R2 are marked "Not Found in R2" — migration will upload those normally.', 'cloudflare-r2-offload' ); ?>
+                </p>
+            </div>
+
+            <hr style="margin:32px 0 24px;">
+
+            <!-- ============================================================
                  Feature: Restore from R2 → Server
                  ============================================================ -->
             <h2><?php esc_html_e( 'Restore Files from R2 to Server', 'cloudflare-r2-offload' ); ?></h2>

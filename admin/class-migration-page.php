@@ -249,10 +249,15 @@ class MigrationPage {
                         style="<?php echo $val_total > 0 ? '' : 'display:none;'; ?>">
                     <?php esc_html_e( 'Cancel', 'cloudflare-r2-offload' ); ?>
                 </button>
+                <button type="button" id="r2-btn-diagnose" class="button" style="margin-left:8px;"
+                        title="<?php esc_attr_e( 'Check one sample attachment to confirm the plugin\'s expected R2 path matches where you uploaded your files.', 'cloudflare-r2-offload' ); ?>">
+                    <?php esc_html_e( 'Check Path', 'cloudflare-r2-offload' ); ?>
+                </button>
                 <p class="description" style="margin:6px 0 0;">
-                    <?php esc_html_e( 'Attachments with missing files in R2 are marked "Not Found in R2" — migration will upload those normally.', 'cloudflare-r2-offload' ); ?>
+                    <?php esc_html_e( 'Before running validation, click "Check Path" to confirm your manual upload path matches what the plugin expects. Attachments with missing files in R2 are marked "Not Found in R2" — migration will upload those normally.', 'cloudflare-r2-offload' ); ?>
                 </p>
             </div>
+            <div id="r2-diagnose-result" style="display:none;margin-top:12px;padding:12px;background:#f6f7f7;border:1px solid #ddd;border-radius:4px;font-family:monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-all;"></div>
 
             <hr style="margin:32px 0 24px;">
 

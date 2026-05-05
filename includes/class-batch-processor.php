@@ -44,16 +44,15 @@ class BatchProcessor {
      * Self-reschedules if items remain.
      */
     public function process_batch(): void {
-        // Check pause flag.
         if ( get_option( 'r2_offload_migration_paused' ) ) {
             return;
         }
-
-        // Acquire transient lock to prevent overlapping runs.
         if ( get_transient( self::LOCK_KEY ) ) {
+            $this->logger->info( 'Migration batch: skipped — another instance is running (lock held).' );
             return;
         }
         set_transient( self::LOCK_KEY, 1, self::LOCK_TTL );
+        $this->logger->info( 'Migration batch: cron fired, starting run.' );
 
         try {
             $this->run_batch();
@@ -257,12 +256,15 @@ class BatchProcessor {
 
     public function process_validate_batch(): void {
         if ( get_option( 'r2_offload_validate_paused' ) ) {
+            $this->logger->info( 'Validate batch: skipped — paused.' );
             return;
         }
         if ( get_transient( self::VALIDATE_LOCK ) ) {
+            $this->logger->info( 'Validate batch: skipped — another instance is running (lock held).' );
             return;
         }
         set_transient( self::VALIDATE_LOCK, 1, self::LOCK_TTL );
+        $this->logger->info( 'Validate batch: cron fired, starting run.' );
 
         try {
             $this->run_bulk_batch( 'validate', self::VALIDATE_HOOK, 'r2_offload_validate_paused', 'r2_offload_validate_complete' );
@@ -303,6 +305,18 @@ class BatchProcessor {
         $batch_size = $this->settings->get_batch_size();
         $start_time = time();
         $processed  = 0;
+
+        // Stale-processing recovery: rows stuck in 'processing' for longer than
+        // LOCK_TTL mean a previous cron run died mid-batch. Reset them to 'pending'
+        // so they are picked up by this run rather than blocking it forever.
+        $stale_cutoff = gmdate( 'Y-m-d H:i:s', time() - self::LOCK_TTL );
+        $wpdb->query(
+            $wpdb->prepare(
+                "UPDATE `{$table}` SET status = 'pending', updated_at = %s
+                 WHERE job_type = %s AND status = 'processing' AND updated_at < %s",
+                current_time( 'mysql', true ), $job_type, $stale_cutoff
+            )
+        );
 
         while ( ( time() - $start_time ) < self::MAX_EXECUTION_SEC ) {
             if ( get_option( $pause_option ) ) {
@@ -348,12 +362,6 @@ class BatchProcessor {
                     continue;
                 }
 
-                if ( function_exists( 'wp_cache_flush_runtime' ) ) {
-                    wp_cache_flush_runtime();
-                } else {
-                    wp_cache_flush();
-                }
-
                 $attachment_id = (int) $item->attachment_id;
                 $success       = false;
                 $error_message = null;
@@ -395,8 +403,16 @@ class BatchProcessor {
                 }
 
                 $wpdb->update( $table, $row_data, [ 'id' => (int) $item->id ], $row_format, [ '%d' ] );
-
                 $processed++;
+
+                // Flush object cache after each item to control memory on large runs.
+                // Done here (after processing) so validate's pre-fetched key cache and
+                // post meta are still available during the item's own execution above.
+                if ( function_exists( 'wp_cache_flush_runtime' ) ) {
+                    wp_cache_flush_runtime();
+                } else {
+                    wp_cache_flush();
+                }
             }
         }
 

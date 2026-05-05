@@ -558,6 +558,56 @@
     });
 
     // =========================================================================
+    // Validate — path diagnostic
+    // =========================================================================
+
+    $('#r2-btn-diagnose').on('click', function () {
+        var $btn = $(this);
+        var $out = $('#r2-diagnose-result');
+        $btn.prop('disabled', true).text('Checking…');
+        $out.hide().text('');
+
+        $.post(R2Offload.ajaxUrl, {
+            action: 'r2_offload_validate_diagnose',
+            nonce:  R2Offload.nonce
+        }, function (res) {
+            $btn.prop('disabled', false).text('Check Path');
+            if (!res.success) {
+                $out.text('Error: ' + ((res.data && res.data.message) || 'Unknown error')).show();
+                return;
+            }
+            var d = res.data;
+            if (d.message) {
+                $out.text(d.message).show();
+                return;
+            }
+
+            var lines = [];
+            lines.push('Attachment ID : ' + d.attachment_id);
+            lines.push('WP file meta  : ' + d.wp_file);
+            lines.push('Path prefix   : ' + d.path_prefix);
+            lines.push('R2 list prefix: ' + d.r2_list_prefix);
+            lines.push('');
+            lines.push('Expected R2 keys:');
+            $.each(d.keys, function (i, k) {
+                var status = k.exists ? '✓ EXISTS' : '✗ MISSING';
+                lines.push('  ' + status + '  ' + k.key);
+            });
+            lines.push('');
+            lines.push('→ ' + d.hint);
+
+            var allExist = d.keys.every(function(k){ return k.exists; });
+            $out.css('border-color', allExist ? '#00a32a' : '#d63638')
+                .css('background', allExist ? '#f0fff4' : '#fff5f5')
+                .text(lines.join('\n'))
+                .show();
+        }).fail(function () {
+            $btn.prop('disabled', false).text('Check Path');
+            $out.text('Request failed. Check your connection.').show();
+        });
+    });
+
+    // =========================================================================
     // Bulk restore & desync (restore from R2, verify, delete from R2)
     // =========================================================================
 

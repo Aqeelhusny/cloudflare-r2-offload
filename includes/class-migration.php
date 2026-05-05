@@ -52,6 +52,8 @@ class Migration {
             'r2_offload_start_validate',
             'r2_offload_validate_status',
             'r2_offload_cancel_validate',
+            // Feature: Path diagnostic — shows expected R2 keys vs what actually exists.
+            'r2_offload_validate_diagnose',
         ];
         foreach ( $actions as $action ) {
             add_action( "wp_ajax_{$action}", [ $this, 'handle_ajax' ] );
@@ -66,6 +68,7 @@ class Migration {
         'r2_offload_background_queue_status',
         'r2_offload_background_queue_logs',
         'r2_offload_validate_status',
+        'r2_offload_validate_diagnose',
     ];
 
     public function handle_ajax(): void {
@@ -714,9 +717,142 @@ class Migration {
     }
 
     // =========================================================================
+    // Feature: Path diagnostic for validate pre-upload.
+    // Takes one sample attachment ID and returns:
+    //   - the path_prefix setting
+    //   - the exact R2 keys the plugin expects
+    //   - whether each key exists in R2 right now
+    //   - the R2 directory prefix it will list
+    // This lets the admin immediately see if their manual upload path was wrong.
+    // =========================================================================
+
+    private function ajax_validate_diagnose(): void {
+        $attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
+
+        // If no attachment given, pick the first unsynced one automatically.
+        if ( ! $attachment_id ) {
+            global $wpdb;
+            $attachment_id = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT p.ID FROM {$wpdb->posts} p
+                     LEFT JOIN {$wpdb->postmeta} pm
+                           ON pm.post_id = p.ID AND pm.meta_key = %s AND pm.meta_value = %s
+                     WHERE p.post_type = %s AND pm.meta_id IS NULL
+                     ORDER BY p.ID ASC LIMIT 1",
+                    '_r2_offload_synced', '1', 'attachment'
+                )
+            );
+        }
+
+        if ( ! $attachment_id ) {
+            wp_send_json_success( [ 'message' => 'No unsynced attachments found — all are already synced.' ] );
+        }
+
+        $plugin      = Plugin::get_instance();
+        $settings    = $plugin->settings;
+        $r2          = $plugin->r2;
+        $path_prefix = $settings->get_path_prefix();
+
+        $attached  = get_post_meta( $attachment_id, '_wp_attached_file', true );
+        $metadata  = wp_get_attachment_metadata( $attachment_id );
+        $upload_dir = wp_upload_dir();
+        $base_dir  = trailingslashit( $upload_dir['basedir'] );
+
+        if ( ! $attached ) {
+            wp_send_json_error( [ 'message' => "Attachment {$attachment_id} has no _wp_attached_file meta — WordPress database may be incomplete." ] );
+        }
+
+        // Build the expected key map exactly as validate_pre_uploaded() does.
+        $all_files = $plugin->sync->collect_files_public( $attached, $metadata, $base_dir, $path_prefix );
+        $r2_keys   = array_values( $all_files );
+
+        // Derive the directory prefix that will be listed.
+        $original_key = reset( $all_files );
+        $dir_prefix   = trailingslashit( dirname( $original_key ) );
+        if ( $dir_prefix === './' ) {
+            $dir_prefix = '';
+        }
+
+        // Check each key individually via HeadObject for the diagnostic
+        // (this is one-off admin use, not a bulk cron operation).
+        $key_checks = [];
+        foreach ( $r2_keys as $r2_key ) {
+            $key_checks[] = [
+                'key'    => $r2_key,
+                'exists' => $r2->file_exists( $r2_key ),
+            ];
+        }
+
+        $this->logger->info( 'Validate diagnostic run.', [
+            'attachment_id' => $attachment_id,
+            'file'          => $attached,
+            'path_prefix'   => $path_prefix ?: '(none)',
+            'r2_list_prefix' => $dir_prefix ?: '(root)',
+            'keys'          => $key_checks,
+        ] );
+
+        wp_send_json_success( [
+            'attachment_id'  => $attachment_id,
+            'wp_file'        => $attached,
+            'path_prefix'    => $path_prefix ?: '(none — files stored at bucket root)',
+            'r2_list_prefix' => $dir_prefix ?: '(root)',
+            'keys'           => $key_checks,
+            'hint'           => $this->build_path_hint( $key_checks, $path_prefix, $attached ),
+        ] );
+    }
+
+    private function build_path_hint( array $key_checks, string $path_prefix, string $attached ): string {
+        $all_missing = array_filter( $key_checks, fn( $k ) => ! $k['exists'] );
+        if ( empty( $all_missing ) ) {
+            return 'All expected keys exist in R2. Validate should claim this attachment successfully.';
+        }
+
+        $r2          = Plugin::get_instance()->r2;
+        $first_key   = reset( $all_missing )['key'];
+
+        // Try to detect common upload path mismatches by probing alternative prefixes.
+        // Most common case: customer copied the uploads/ folder without wp-content/
+        // so R2 has uploads/2025/10/file.jpg but plugin expects wp-content/uploads/2025/10/file.jpg.
+        $alternatives = [];
+
+        if ( $path_prefix ) {
+            // Strip leading path segments one at a time and check if the file exists there.
+            $parts = explode( '/', $path_prefix );
+            for ( $i = 1; $i < count( $parts ); $i++ ) {
+                $shorter_prefix = implode( '/', array_slice( $parts, $i ) );
+                $alt_key        = $shorter_prefix . '/' . $attached;
+                if ( $r2->file_exists( $alt_key ) ) {
+                    $alternatives[] = "Found at '{$alt_key}' — your files were uploaded with prefix '{$shorter_prefix}' instead of '{$path_prefix}'. "
+                        . "Fix: go to plugin Settings and change Path Prefix to '{$shorter_prefix}', then run Validate again. "
+                        . "Or re-upload your files to match the expected prefix '{$path_prefix}'.";
+                    break;
+                }
+            }
+            // Also check with no prefix at all.
+            if ( empty( $alternatives ) && $r2->file_exists( $attached ) ) {
+                $alternatives[] = "Found at '{$attached}' (no prefix) — your files were uploaded to the bucket root. "
+                    . "Fix: go to plugin Settings and clear the Path Prefix field, then run Validate again. "
+                    . "Or re-upload your files under the expected prefix '{$path_prefix}'.";
+            }
+        }
+
+        if ( ! empty( $alternatives ) ) {
+            return implode( ' ', $alternatives );
+        }
+
+        $prefix_note = $path_prefix
+            ? "Your path prefix is set to '{$path_prefix}' — the plugin expects files at '{$path_prefix}/2025/10/file.jpg' in R2. "
+            : "No path prefix is set — the plugin expects files at the bucket root (e.g. '2025/10/file.jpg' in R2). ";
+
+        return "Keys are missing and no alternative path was found in R2. "
+            . $prefix_note
+            . "Make sure your manual upload recreated the full path including the prefix, and that folder names use zero-padded months (e.g. '02' not '2').";
+    }
+
+    // =========================================================================
     // Feature: Validate pre-uploaded files (customer manually uploaded to R2).
     // Queues all unsynced attachments and checks each expected R2 key via
-    // HeadObject. Runs via cron so it can't exhaust the web server.
+    // ListObjectsV2 prefix scan. Runs via cron so it can't exhaust the web server.
     // =========================================================================
 
     private function ajax_start_validate(): void {

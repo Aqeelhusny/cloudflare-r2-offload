@@ -477,6 +477,14 @@ class AttachmentSync {
      * which automatically covers WooCommerce-registered sizes
      * (woocommerce_thumbnail, woocommerce_single, woocommerce_gallery_thumbnail).
      */
+    /**
+     * Public wrapper for the diagnostic tool — exposes collect_files() without
+     * making the internal method public (preserves internal call sites unchanged).
+     */
+    public function collect_files_public( string $attached, ?array $metadata, string $base_dir, string $path_prefix ): array {
+        return $this->collect_files( $attached, $metadata, $base_dir, $path_prefix );
+    }
+
     private function collect_files( string $attached, ?array $metadata, string $base_dir, string $path_prefix ): array {
         $files = [];
 

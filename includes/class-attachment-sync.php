@@ -326,6 +326,72 @@ class AttachmentSync {
     }
 
     /**
+     * Validate that a pre-uploaded attachment already exists in R2 and mark it synced.
+     *
+     * Used when a customer manually uploaded the wp-content/uploads folder to R2
+     * before activating the plugin. Checks every expected R2 key via HeadObject;
+     * if all are present, writes the sync meta so the migration skips the attachment.
+     *
+     * @param int $attachment_id
+     * @return array{ claimed: int, missing: int, skipped: int }
+     */
+    public function validate_pre_uploaded( int $attachment_id ): array {
+        $result = [ 'claimed' => 0, 'missing' => 0, 'skipped' => 0 ];
+
+        // Already synced by the plugin — nothing to do.
+        if ( get_post_meta( $attachment_id, '_r2_offload_synced', true ) === '1' ) {
+            $result['skipped']++;
+            return $result;
+        }
+
+        if ( ! $this->settings->is_configured() ) {
+            $result['skipped']++;
+            return $result;
+        }
+
+        $attached = get_post_meta( $attachment_id, '_wp_attached_file', true );
+        if ( ! $attached ) {
+            $result['skipped']++;
+            return $result;
+        }
+
+        $mime = get_post_mime_type( $attachment_id );
+        if ( $mime && in_array( $mime, $this->settings->get_excluded_mime_types(), true ) ) {
+            $result['skipped']++;
+            return $result;
+        }
+
+        $metadata    = wp_get_attachment_metadata( $attachment_id );
+        $upload_dir  = wp_upload_dir();
+        $base_dir    = trailingslashit( $upload_dir['basedir'] );
+        $path_prefix = $this->settings->get_path_prefix();
+
+        $all_files = $this->collect_files( $attached, $metadata, $base_dir, $path_prefix );
+        $r2_keys   = array_values( $all_files );
+
+        foreach ( $r2_keys as $r2_key ) {
+            if ( ! $this->r2->file_exists( $r2_key ) ) {
+                $result['missing']++;
+            }
+        }
+
+        if ( $result['missing'] > 0 ) {
+            // At least one expected file is absent — not fully pre-uploaded.
+            return $result;
+        }
+
+        // All keys confirmed in R2 — claim the attachment as synced.
+        update_post_meta( $attachment_id, '_r2_offload_synced',    '1' );
+        update_post_meta( $attachment_id, '_r2_offload_keys',      wp_json_encode( $r2_keys ) );
+        update_post_meta( $attachment_id, '_r2_offload_synced_at', time() );
+        delete_post_meta( $attachment_id, '_r2_offload_error' );
+        delete_post_meta( $attachment_id, '_r2_offload_retry_count' );
+
+        $result['claimed']++;
+        return $result;
+    }
+
+    /**
      * Remove all R2 objects for an attachment and clean up post meta.
      */
     public function desync_attachment( int $attachment_id ): bool {

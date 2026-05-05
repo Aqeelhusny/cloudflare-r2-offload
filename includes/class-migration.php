@@ -48,6 +48,10 @@ class Migration {
             'r2_offload_background_queue_status',
             'r2_offload_background_queue_logs',
             'r2_offload_clear_activity_logs',
+            // Feature: Validate pre-uploaded files (customer manually uploaded to R2).
+            'r2_offload_start_validate',
+            'r2_offload_validate_status',
+            'r2_offload_cancel_validate',
         ];
         foreach ( $actions as $action ) {
             add_action( "wp_ajax_{$action}", [ $this, 'handle_ajax' ] );
@@ -61,6 +65,7 @@ class Migration {
         'r2_offload_desync_status',
         'r2_offload_background_queue_status',
         'r2_offload_background_queue_logs',
+        'r2_offload_validate_status',
     ];
 
     public function handle_ajax(): void {
@@ -706,6 +711,96 @@ class Migration {
         }
 
         wp_send_json_success( [ 'message' => __( 'Activity logs cleared.', 'cloudflare-r2-offload' ) ] );
+    }
+
+    // =========================================================================
+    // Feature: Validate pre-uploaded files (customer manually uploaded to R2).
+    // Queues all unsynced attachments and checks each expected R2 key via
+    // HeadObject. Runs via cron so it can't exhaust the web server.
+    // =========================================================================
+
+    private function ajax_start_validate(): void {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'r2_offload_bulk_queue';
+        $this->ensure_bulk_queue_table( $table );
+
+        // Clear any previous validate queue rows.
+        $wpdb->delete( $table, [ 'job_type' => 'validate' ], [ '%s' ] );
+        delete_option( 'r2_offload_validate_paused' );
+
+        $now = current_time( 'mysql', true );
+
+        // Queue all attachments that are NOT yet marked synced.
+        $inserted = $wpdb->query(
+            $wpdb->prepare(
+                "INSERT INTO `{$table}` (attachment_id, job_type, status, created_at, updated_at)
+                 SELECT p.ID, 'validate', 'pending', %s, %s
+                 FROM {$wpdb->posts} p
+                 LEFT JOIN {$wpdb->postmeta} pm
+                       ON pm.post_id = p.ID
+                      AND pm.meta_key = %s
+                      AND pm.meta_value = %s
+                 WHERE p.post_type = %s
+                   AND pm.meta_id IS NULL
+                 ORDER BY p.ID ASC",
+                $now, $now, '_r2_offload_synced', '1', 'attachment'
+            )
+        );
+
+        $total = (int) $inserted;
+
+        if ( $total === 0 ) {
+            wp_send_json_success( [ 'message' => __( 'All attachments are already synced — nothing to validate.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
+        }
+
+        wp_schedule_single_event( time() + 2, BatchProcessor::VALIDATE_HOOK );
+
+        $this->logger->info( 'Pre-upload validation started.', [ 'total' => $total ] );
+
+        wp_send_json_success( [
+            'message' => sprintf(
+                /* translators: %d: number of attachments queued */
+                __( 'Validation started. %d attachments will be checked against R2.', 'cloudflare-r2-offload' ),
+                $total
+            ),
+            'total' => $total,
+        ] );
+    }
+
+    private function ajax_validate_status(): void {
+        global $wpdb;
+        $table  = $wpdb->prefix . 'r2_offload_bulk_queue';
+        $counts = $this->bulk_queue_counts( $table, 'validate' );
+
+        $claimed = wp_cache_get( 'r2_offload_validate_claimed' );
+        if ( false === $claimed ) {
+            $claimed = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
+                    '_r2_offload_synced', '1'
+                )
+            );
+            wp_cache_set( 'r2_offload_validate_claimed', $claimed, '', 10 );
+        }
+
+        wp_send_json_success( [
+            'total'   => $counts['pending'] + $counts['processing'] + $counts['complete'] + $counts['failed'],
+            'done'    => $counts['complete'],
+            'failed'  => $counts['failed'],
+            'claimed' => (int) $claimed,
+            'paused'  => (bool) get_option( 'r2_offload_validate_paused', false ),
+        ] );
+    }
+
+    private function ajax_cancel_validate(): void {
+        global $wpdb;
+        $table = $wpdb->prefix . 'r2_offload_bulk_queue';
+        $wpdb->delete( $table, [ 'job_type' => 'validate' ], [ '%s' ] );
+        delete_option( 'r2_offload_validate_paused' );
+        wp_clear_scheduled_hook( BatchProcessor::VALIDATE_HOOK );
+        $this->logger->info( 'Pre-upload validation cancelled.' );
+        wp_send_json_success( [ 'message' => __( 'Validation cancelled.', 'cloudflare-r2-offload' ) ] );
     }
 
     // =========================================================================

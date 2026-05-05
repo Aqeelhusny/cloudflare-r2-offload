@@ -220,10 +220,12 @@ class Plugin {
         wp_clear_scheduled_hook( BatchProcessor::RESTORE_HOOK );
         wp_clear_scheduled_hook( BatchProcessor::LOCAL_DEL_HOOK );
         wp_clear_scheduled_hook( BatchProcessor::DESYNC_HOOK );
+        wp_clear_scheduled_hook( BatchProcessor::VALIDATE_HOOK );
         delete_transient( BatchProcessor::LOCK_KEY );
         delete_transient( BatchProcessor::RESTORE_LOCK_KEY );
         delete_transient( BatchProcessor::LOCAL_DEL_LOCK );
         delete_transient( BatchProcessor::DESYNC_LOCK );
+        delete_transient( BatchProcessor::VALIDATE_LOCK );
     }
 
     /**
@@ -273,7 +275,7 @@ class Plugin {
         $sql_bulk = "CREATE TABLE {$bulk_table} (
             id            BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             attachment_id BIGINT(20) UNSIGNED NOT NULL,
-            job_type      ENUM('restore','local_delete','desync') NOT NULL,
+            job_type      ENUM('restore','local_delete','desync','validate') NOT NULL,
             status        ENUM('pending','processing','complete','failed') NOT NULL DEFAULT 'pending',
             created_at    DATETIME NOT NULL,
             updated_at    DATETIME NOT NULL,

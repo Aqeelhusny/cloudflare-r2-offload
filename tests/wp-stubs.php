@@ -193,7 +193,7 @@ if ( ! defined( 'FS_CHMOD_FILE' ) ) {
 }
 
 if ( ! defined( 'R2_OFFLOAD_DB_VERSION' ) ) {
-    define( 'R2_OFFLOAD_DB_VERSION', '1.1.0' );
+    define( 'R2_OFFLOAD_DB_VERSION', '1.2.0' );
 }
 
 if ( ! defined( 'R2_OFFLOAD_BASENAME' ) ) {

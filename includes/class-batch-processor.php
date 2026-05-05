@@ -16,10 +16,12 @@ class BatchProcessor {
     const RESTORE_HOOK      = 'r2_offload_process_restore_batch';
     const LOCAL_DEL_HOOK    = 'r2_offload_process_local_delete_batch';
     const DESYNC_HOOK       = 'r2_offload_process_desync_batch';
+    const VALIDATE_HOOK     = 'r2_offload_process_validate_batch';
     const LOCK_KEY          = 'r2_offload_batch_lock';
     const RESTORE_LOCK_KEY  = 'r2_offload_restore_lock';
     const LOCAL_DEL_LOCK    = 'r2_offload_local_del_lock';
     const DESYNC_LOCK       = 'r2_offload_desync_lock';
+    const VALIDATE_LOCK     = 'r2_offload_validate_lock';
     const LOCK_TTL          = 300; // 5 minutes
     const MAX_EXECUTION_SEC = 50;  // keep under PHP max_execution_time (usually 60s)
 
@@ -34,6 +36,7 @@ class BatchProcessor {
         add_action( self::RESTORE_HOOK,   [ $this, 'process_restore_batch' ] );
         add_action( self::LOCAL_DEL_HOOK, [ $this, 'process_local_delete_batch' ] );
         add_action( self::DESYNC_HOOK,    [ $this, 'process_desync_batch' ] );
+        add_action( self::VALIDATE_HOOK,  [ $this, 'process_validate_batch' ] );
     }
 
     /**
@@ -244,6 +247,30 @@ class BatchProcessor {
     }
 
     // =========================================================================
+    // Validate pre-uploaded batch — checks each attachment's expected R2 keys
+    // via HeadObject and marks synced if all are present.
+    // Safe to run alongside an active migration: the HeadObject check is
+    // read-only, and validate_pre_uploaded() re-checks _r2_offload_synced
+    // before writing meta, so a concurrent migration completing first is fine.
+    // =========================================================================
+
+    public function process_validate_batch(): void {
+        if ( get_option( 'r2_offload_validate_paused' ) ) {
+            return;
+        }
+        if ( get_transient( self::VALIDATE_LOCK ) ) {
+            return;
+        }
+        set_transient( self::VALIDATE_LOCK, 1, self::LOCK_TTL );
+
+        try {
+            $this->run_bulk_batch( 'validate', self::VALIDATE_HOOK, 'r2_offload_validate_paused', 'r2_offload_validate_complete' );
+        } finally {
+            delete_transient( self::VALIDATE_LOCK );
+        }
+    }
+
+    // =========================================================================
     // Bulk Desync batch — restore from R2, verify, then delete from R2.
     // =========================================================================
 
@@ -335,6 +362,14 @@ class BatchProcessor {
                     case 'desync':
                         $result  = $this->sync->restore_and_desync_attachment( $attachment_id );
                         $success = $result['desynced'];
+                        break;
+
+                    case 'validate':
+                        $result  = $this->sync->validate_pre_uploaded( $attachment_id );
+                        // claimed=1 → success. missing>0 → the file isn't on R2, mark failed
+                        // so the admin can see which attachments still need uploading.
+                        // skipped (already synced) counts as success so it drains the queue.
+                        $success = $result['claimed'] > 0 || $result['skipped'] > 0;
                         break;
                 }
 

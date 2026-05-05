@@ -347,6 +347,7 @@ class BatchProcessor {
 
                 $attachment_id = (int) $item->attachment_id;
                 $success       = false;
+                $error_message = null;
 
                 switch ( $job_type ) {
                     case 'restore':
@@ -366,20 +367,23 @@ class BatchProcessor {
 
                     case 'validate':
                         $result  = $this->sync->validate_pre_uploaded( $attachment_id );
-                        // claimed=1 → success. missing>0 → the file isn't on R2, mark failed
-                        // so the admin can see which attachments still need uploading.
-                        // skipped (already synced) counts as success so it drains the queue.
+                        // claimed → success. skipped (already synced) → success, drains queue.
+                        // missing → failed, records which keys were absent for the admin.
                         $success = $result['claimed'] > 0 || $result['skipped'] > 0;
+                        if ( ! $success && ! empty( $result['missing_keys'] ) ) {
+                            $error_message = 'Missing in R2: ' . implode( ', ', $result['missing_keys'] );
+                        }
                         break;
                 }
 
-                $wpdb->update(
-                    $table,
-                    [ 'status' => $success ? 'complete' : 'failed', 'updated_at' => current_time( 'mysql', true ) ],
-                    [ 'id' => (int) $item->id ],
-                    [ '%s', '%s' ],
-                    [ '%d' ]
-                );
+                $row_data   = [ 'status' => $success ? 'complete' : 'failed', 'updated_at' => current_time( 'mysql', true ) ];
+                $row_format = [ '%s', '%s' ];
+                if ( $error_message !== null ) {
+                    $row_data['error_message'] = $error_message;
+                    $row_format[]              = '%s';
+                }
+
+                $wpdb->update( $table, $row_data, [ 'id' => (int) $item->id ], $row_format, [ '%d' ] );
 
                 $processed++;
             }

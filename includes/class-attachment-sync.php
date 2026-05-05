@@ -328,17 +328,24 @@ class AttachmentSync {
     /**
      * Validate that a pre-uploaded attachment already exists in R2 and mark it synced.
      *
-     * Used when a customer manually uploaded the wp-content/uploads folder to R2
-     * before activating the plugin. Checks every expected R2 key via HeadObject;
-     * if all are present, writes the sync meta so the migration skips the attachment.
+     * Architecture: instead of one HeadObject per file (N×sizes API calls), we issue
+     * a single ListObjectsV2 for the attachment's directory prefix, build a key set in
+     * memory, then check each expected key against that set — 1 API call per attachment
+     * regardless of how many sizes it has.
      *
-     * @param int $attachment_id
-     * @return array{ claimed: int, missing: int, skipped: int }
+     * An optional $r2_key_set can be passed when the caller has already fetched the full
+     * bucket listing for the prefix (e.g. BatchProcessor pre-fetching a shared year/month
+     * directory). When provided, no API call is made at all — just a set lookup.
+     *
+     * @param int        $attachment_id
+     * @param array|null $r2_key_set Flat array of R2 keys already known to exist (keys are values).
+     *                               Pass null to trigger a ListObjectsV2 for this attachment's prefix.
+     * @return array{ claimed: int, missing: int, skipped: int, missing_keys: string[] }
      */
-    public function validate_pre_uploaded( int $attachment_id ): array {
-        $result = [ 'claimed' => 0, 'missing' => 0, 'skipped' => 0 ];
+    public function validate_pre_uploaded( int $attachment_id, ?array $r2_key_set = null ): array {
+        $result = [ 'claimed' => 0, 'missing' => 0, 'skipped' => 0, 'missing_keys' => [] ];
 
-        // Already synced by the plugin — nothing to do.
+        // Already synced — nothing to do.
         if ( get_post_meta( $attachment_id, '_r2_offload_synced', true ) === '1' ) {
             $result['skipped']++;
             return $result;
@@ -369,14 +376,32 @@ class AttachmentSync {
         $all_files = $this->collect_files( $attached, $metadata, $base_dir, $path_prefix );
         $r2_keys   = array_values( $all_files );
 
+        if ( $r2_key_set === null ) {
+            // Derive the directory prefix from the original file's R2 key.
+            // All sizes for an attachment live in the same year/month folder.
+            $original_key   = reset( $all_files ); // first entry is always the original
+            $dir_prefix     = trailingslashit( dirname( $original_key ) );
+            // dirname of a root-level key returns '.' — treat as no prefix.
+            if ( $dir_prefix === './' ) {
+                $dir_prefix = '';
+            }
+
+            // One ListObjectsV2 fetches every key in this folder (up to 1000).
+            // Normal year/month upload folders have far fewer than 1000 objects.
+            $listed     = $this->r2->list_objects( $dir_prefix, 1000 );
+            $r2_key_set = array_flip( array_column( $listed['objects'], 'Key' ) );
+        }
+
+        $missing_keys = [];
         foreach ( $r2_keys as $r2_key ) {
-            if ( ! $this->r2->file_exists( $r2_key ) ) {
-                $result['missing']++;
+            if ( ! isset( $r2_key_set[ $r2_key ] ) ) {
+                $missing_keys[] = $r2_key;
             }
         }
 
-        if ( $result['missing'] > 0 ) {
-            // At least one expected file is absent — not fully pre-uploaded.
+        if ( ! empty( $missing_keys ) ) {
+            $result['missing']      = count( $missing_keys );
+            $result['missing_keys'] = $missing_keys;
             return $result;
         }
 
@@ -386,6 +411,10 @@ class AttachmentSync {
         update_post_meta( $attachment_id, '_r2_offload_synced_at', time() );
         delete_post_meta( $attachment_id, '_r2_offload_error' );
         delete_post_meta( $attachment_id, '_r2_offload_retry_count' );
+
+        // Increment the validate-specific claimed counter for accurate UI reporting.
+        $claimed_so_far = (int) get_option( 'r2_offload_validate_claimed', 0 );
+        update_option( 'r2_offload_validate_claimed', $claimed_so_far + 1, false );
 
         $result['claimed']++;
         return $result;

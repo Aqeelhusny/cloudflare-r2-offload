@@ -725,9 +725,10 @@ class Migration {
         $table = $wpdb->prefix . 'r2_offload_bulk_queue';
         $this->ensure_bulk_queue_table( $table );
 
-        // Clear any previous validate queue rows.
+        // Clear previous validate queue rows and reset the claimed counter.
         $wpdb->delete( $table, [ 'job_type' => 'validate' ], [ '%s' ] );
         delete_option( 'r2_offload_validate_paused' );
+        delete_option( 'r2_offload_validate_claimed' );
 
         $now = current_time( 'mysql', true );
 
@@ -773,22 +774,15 @@ class Migration {
         $table  = $wpdb->prefix . 'r2_offload_bulk_queue';
         $counts = $this->bulk_queue_counts( $table, 'validate' );
 
-        $claimed = wp_cache_get( 'r2_offload_validate_claimed' );
-        if ( false === $claimed ) {
-            $claimed = (int) $wpdb->get_var(
-                $wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
-                    '_r2_offload_synced', '1'
-                )
-            );
-            wp_cache_set( 'r2_offload_validate_claimed', $claimed, '', 10 );
-        }
+        // Use the dedicated counter incremented by validate_pre_uploaded() — this
+        // counts only attachments claimed by THIS validate run, not all-time synced.
+        $claimed = (int) get_option( 'r2_offload_validate_claimed', 0 );
 
         wp_send_json_success( [
             'total'   => $counts['pending'] + $counts['processing'] + $counts['complete'] + $counts['failed'],
             'done'    => $counts['complete'],
             'failed'  => $counts['failed'],
-            'claimed' => (int) $claimed,
+            'claimed' => $claimed,
             'paused'  => (bool) get_option( 'r2_offload_validate_paused', false ),
         ] );
     }
@@ -798,6 +792,7 @@ class Migration {
         $table = $wpdb->prefix . 'r2_offload_bulk_queue';
         $wpdb->delete( $table, [ 'job_type' => 'validate' ], [ '%s' ] );
         delete_option( 'r2_offload_validate_paused' );
+        delete_option( 'r2_offload_validate_claimed' );
         wp_clear_scheduled_hook( BatchProcessor::VALIDATE_HOOK );
         $this->logger->info( 'Pre-upload validation cancelled.' );
         wp_send_json_success( [ 'message' => __( 'Validation cancelled.', 'cloudflare-r2-offload' ) ] );

@@ -150,6 +150,16 @@ class Plugin {
 
         self::create_table();
         $this->migrate_option_queues_to_table();
+
+        // 1.2.0: dbDelta cannot alter ENUMs on existing tables — do it explicitly.
+        // Also adds error_message column to bulk_queue for validate failure reporting.
+        if ( version_compare( $installed_version, '1.2.0', '<' ) ) {
+            global $wpdb;
+            $bulk_table = $wpdb->prefix . 'r2_offload_bulk_queue';
+            $wpdb->query( "ALTER TABLE `{$bulk_table}` MODIFY COLUMN job_type ENUM('restore','local_delete','desync','validate') NOT NULL" );
+            $wpdb->query( "ALTER TABLE `{$bulk_table}` ADD COLUMN IF NOT EXISTS error_message TEXT NULL AFTER status" );
+        }
+
         update_option( 'r2_offload_db_version', R2_OFFLOAD_DB_VERSION );
     }
 
@@ -277,6 +287,7 @@ class Plugin {
             attachment_id BIGINT(20) UNSIGNED NOT NULL,
             job_type      ENUM('restore','local_delete','desync','validate') NOT NULL,
             status        ENUM('pending','processing','complete','failed') NOT NULL DEFAULT 'pending',
+            error_message TEXT NULL,
             created_at    DATETIME NOT NULL,
             updated_at    DATETIME NOT NULL,
             PRIMARY KEY (id),

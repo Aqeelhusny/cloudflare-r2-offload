@@ -727,6 +727,15 @@ class Migration {
     // =========================================================================
 
     private function ajax_validate_diagnose(): void {
+        try {
+            $this->do_validate_diagnose();
+        } catch ( \Throwable $e ) {
+            $this->logger->error( 'Validate diagnose fatal.', [ 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString() ] );
+            wp_send_json_error( [ 'message' => 'Internal error: ' . $e->getMessage() ] );
+        }
+    }
+
+    private function do_validate_diagnose(): void {
         $attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
 
         // If no attachment given, pick the first unsynced one automatically.

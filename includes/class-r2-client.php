@@ -138,6 +138,9 @@ class R2Client {
             return true;
         } catch ( AwsException $e ) {
             return false;
+        } catch ( \Throwable $e ) {
+            $this->logger->error( 'file_exists: unexpected exception.', [ 'key' => $r2_key, 'error' => $e->getMessage() ] );
+            return false;
         }
     }
 

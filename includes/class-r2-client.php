@@ -145,6 +145,40 @@ class R2Client {
     }
 
     /**
+     * Check whether a key exists in R2, distinguishing a genuine 404 from an API error.
+     *
+     * Returns:
+     *   'found'   — HeadObject succeeded (object exists)
+     *   'missing' — HeadObject returned 404/NoSuchKey (object does not exist)
+     *   'error'   — any other failure (credentials, network, 403, 5xx, no client)
+     *
+     * @return 'found'|'missing'|'error'
+     */
+    public function check_key( string $r2_key ): string {
+        $client = $this->get_client();
+        if ( ! $client ) {
+            return 'error';
+        }
+        try {
+            $client->headObject( [
+                'Bucket' => $this->settings->get_bucket(),
+                'Key'    => $r2_key,
+            ] );
+            return 'found';
+        } catch ( AwsException $e ) {
+            $code = $e->getStatusCode();
+            if ( $code === 404 || $e->getAwsErrorCode() === 'NoSuchKey' ) {
+                return 'missing';
+            }
+            $this->logger->error( 'check_key: API error.', [ 'key' => $r2_key, 'status' => $code, 'error' => $e->getAwsErrorCode() ] );
+            return 'error';
+        } catch ( \Throwable $e ) {
+            $this->logger->error( 'check_key: unexpected exception.', [ 'key' => $r2_key, 'error' => $e->getMessage() ] );
+            return 'error';
+        }
+    }
+
+    /**
      * Test the connection by issuing a HeadBucket request.
      *
      * @return array{ success: bool, message: string }

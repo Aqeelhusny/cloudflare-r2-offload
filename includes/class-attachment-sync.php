@@ -380,12 +380,21 @@ class AttachmentSync {
         $all_files = $this->collect_files( $attached, $metadata, $base_dir, $path_prefix );
         $r2_keys   = array_values( $all_files );
 
-        // Check each expected key directly via HeadObject — only the exact keys
-        // under the configured prefix are tested, nothing else in the bucket is touched.
+        // Check each expected key via HeadObject — only exact keys under the configured
+        // prefix are tested. API errors (network, credentials, 5xx) are logged and skipped
+        // so one bad key never prevents the remaining keys from being checked.
         $missing_keys = [];
+        $error_keys   = [];
         foreach ( $r2_keys as $r2_key ) {
-            if ( ! $this->r2->file_exists( $r2_key ) ) {
+            $status = $this->r2->check_key( $r2_key );
+            if ( $status === 'missing' ) {
                 $missing_keys[] = $r2_key;
+            } elseif ( $status === 'error' ) {
+                $error_keys[] = $r2_key;
+                $this->logger->error( 'Validate: API error checking key — skipping key, continuing with others.', [
+                    'attachment_id' => $attachment_id,
+                    'key'           => $r2_key,
+                ] );
             }
         }
 
@@ -393,6 +402,7 @@ class AttachmentSync {
             'attachment_id' => $attachment_id,
             'checked'       => count( $r2_keys ),
             'missing'       => count( $missing_keys ),
+            'errors'        => count( $error_keys ),
         ] );
 
         if ( ! empty( $missing_keys ) ) {
@@ -401,6 +411,23 @@ class AttachmentSync {
             $this->logger->warning( 'Validate: attachment not fully on R2 — missing keys.', [
                 'attachment_id' => $attachment_id,
                 'missing'       => $missing_keys,
+            ] );
+            if ( ! empty( $error_keys ) ) {
+                $this->logger->error( 'Validate: some keys could not be checked due to API errors.', [
+                    'attachment_id' => $attachment_id,
+                    'error_keys'    => $error_keys,
+                ] );
+            }
+            return $result;
+        }
+
+        // If every key either errored or was found, but at least one errored, we cannot
+        // safely claim the attachment — skip it so it is retried on the next run.
+        if ( ! empty( $error_keys ) ) {
+            $result['skipped']++;
+            $this->logger->error( 'Validate: skipped claim — one or more keys could not be verified due to API errors.', [
+                'attachment_id' => $attachment_id,
+                'error_keys'    => $error_keys,
             ] );
             return $result;
         }

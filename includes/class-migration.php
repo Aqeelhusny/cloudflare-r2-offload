@@ -202,10 +202,14 @@ class Migration {
             wp_send_json_success( [ 'message' => __( 'All attachments are already synced.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
         }
 
-        wp_schedule_single_event( time(), 'r2_offload_process_batch' );
-        spawn_cron();
-
         $this->logger->info( 'Migration started.', [ 'total' => $total ] );
+
+        // Schedule with a 2-second delay so the DB write is fully committed and
+        // visible to the cron process before the batch tries to read from the queue.
+        // Log before scheduling so "Migration started" always appears before
+        // "Migration batch: cron fired" in the activity log.
+        wp_schedule_single_event( time() + 2, 'r2_offload_process_batch' );
+        spawn_cron();
 
         wp_send_json_success( [
             'message' => sprintf(

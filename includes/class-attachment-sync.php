@@ -342,7 +342,7 @@ class AttachmentSync {
      *                               Pass null to trigger a ListObjectsV2 for this attachment's prefix.
      * @return array{ claimed: int, missing: int, skipped: int, missing_keys: string[] }
      */
-    public function validate_pre_uploaded( int $attachment_id, ?array $r2_key_set = null ): array {
+    public function validate_pre_uploaded( int $attachment_id ): array {
         $result = [ 'claimed' => 0, 'missing' => 0, 'skipped' => 0, 'missing_keys' => [] ];
 
         // Already synced — nothing to do.
@@ -372,7 +372,7 @@ class AttachmentSync {
             return $result;
         }
 
-        $metadata    = wp_get_attachment_metadata( $attachment_id );
+        $metadata    = wp_get_attachment_metadata( $attachment_id ) ?: null;
         $upload_dir  = wp_upload_dir();
         $base_dir    = trailingslashit( $upload_dir['basedir'] );
         $path_prefix = $this->settings->get_path_prefix();
@@ -380,41 +380,20 @@ class AttachmentSync {
         $all_files = $this->collect_files( $attached, $metadata, $base_dir, $path_prefix );
         $r2_keys   = array_values( $all_files );
 
-        if ( $r2_key_set === null ) {
-            // Derive the directory prefix from the original file's R2 key.
-            // All sizes for an attachment live in the same year/month folder.
-            $original_key = reset( $all_files );
-            $dir_prefix   = trailingslashit( dirname( $original_key ) );
-            if ( $dir_prefix === './' ) {
-                $dir_prefix = '';
-            }
-
-            // Paginate ListObjectsV2 fully — folders with 1000+ objects (busy months)
-            // would silently miss keys if we capped at 1000.
-            $r2_key_set = [];
-            $token      = '';
-            do {
-                $listed = $this->r2->list_objects( $dir_prefix, 1000, $token );
-                foreach ( $listed['objects'] as $obj ) {
-                    $r2_key_set[ $obj['Key'] ] = true;
-                }
-                $token = $listed['next_token'] ?? '';
-            } while ( $token );
-
-            $this->logger->info( 'Validate: listed R2 folder.', [
-                'attachment_id' => $attachment_id,
-                'prefix'        => $dir_prefix,
-                'keys_found'    => count( $r2_key_set ),
-                'expecting'     => count( $r2_keys ),
-            ] );
-        }
-
+        // Check each expected key directly via HeadObject — only the exact keys
+        // under the configured prefix are tested, nothing else in the bucket is touched.
         $missing_keys = [];
         foreach ( $r2_keys as $r2_key ) {
-            if ( ! isset( $r2_key_set[ $r2_key ] ) ) {
+            if ( ! $this->r2->file_exists( $r2_key ) ) {
                 $missing_keys[] = $r2_key;
             }
         }
+
+        $this->logger->info( 'Validate: checked R2 keys.', [
+            'attachment_id' => $attachment_id,
+            'checked'       => count( $r2_keys ),
+            'missing'       => count( $missing_keys ),
+        ] );
 
         if ( ! empty( $missing_keys ) ) {
             $result['missing']      = count( $missing_keys );

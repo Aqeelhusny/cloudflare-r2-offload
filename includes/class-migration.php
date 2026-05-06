@@ -829,46 +829,15 @@ class Migration {
             return 'All expected keys exist in R2. Validate should claim this attachment successfully.';
         }
 
-        $r2          = Plugin::get_instance()->r2;
-        $first_key   = reset( $all_missing )['key'];
-
-        // Try to detect common upload path mismatches by probing alternative prefixes.
-        // Most common case: customer copied the uploads/ folder without wp-content/
-        // so R2 has uploads/2025/10/file.jpg but plugin expects wp-content/uploads/2025/10/file.jpg.
-        $alternatives = [];
-
-        if ( $path_prefix ) {
-            // Strip leading path segments one at a time and check if the file exists there.
-            $parts = explode( '/', $path_prefix );
-            for ( $i = 1; $i < count( $parts ); $i++ ) {
-                $shorter_prefix = implode( '/', array_slice( $parts, $i ) );
-                $alt_key        = $shorter_prefix . '/' . $attached;
-                if ( $r2->file_exists( $alt_key ) ) {
-                    $alternatives[] = "Found at '{$alt_key}' — your files were uploaded with prefix '{$shorter_prefix}' instead of '{$path_prefix}'. "
-                        . "Fix: go to plugin Settings and change Path Prefix to '{$shorter_prefix}', then run Validate again. "
-                        . "Or re-upload your files to match the expected prefix '{$path_prefix}'.";
-                    break;
-                }
-            }
-            // Also check with no prefix at all.
-            if ( empty( $alternatives ) && $r2->file_exists( $attached ) ) {
-                $alternatives[] = "Found at '{$attached}' (no prefix) — your files were uploaded to the bucket root. "
-                    . "Fix: go to plugin Settings and clear the Path Prefix field, then run Validate again. "
-                    . "Or re-upload your files under the expected prefix '{$path_prefix}'.";
-            }
-        }
-
-        if ( ! empty( $alternatives ) ) {
-            return implode( ' ', $alternatives );
-        }
+        $missing_keys = array_column( array_values( $all_missing ), 'key' );
 
         $prefix_note = $path_prefix
-            ? "Your path prefix is set to '{$path_prefix}' — the plugin expects files at '{$path_prefix}/2025/10/file.jpg' in R2. "
-            : "No path prefix is set — the plugin expects files at the bucket root (e.g. '2025/10/file.jpg' in R2). ";
+            ? "Your path prefix is set to '{$path_prefix}' — the plugin expects files at '{$path_prefix}/{year}/{month}/filename' in R2. "
+            : "No path prefix is set — the plugin expects files at the bucket root (e.g. '{year}/{month}/filename' in R2). ";
 
-        return "Keys are missing and no alternative path was found in R2. "
+        return "The following key(s) are missing under the configured prefix: " . implode( ', ', $missing_keys ) . ". "
             . $prefix_note
-            . "Make sure your manual upload recreated the full path including the prefix, and that folder names use zero-padded months (e.g. '02' not '2').";
+            . "Make sure your uploaded files are stored under this exact prefix in R2, and that folder names use zero-padded months (e.g. '08' not '8').";
     }
 
     // =========================================================================

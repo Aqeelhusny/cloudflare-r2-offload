@@ -132,21 +132,14 @@ class BatchProcessor {
                 }
 
                 $attachment_id = (int) $item->attachment_id;
+                $result        = $this->sync->sync_attachment( $attachment_id );
+                $item_now      = current_time( 'mysql', true );
 
-                // Flush object cache to manage memory on large migrations.
-                if ( function_exists( 'wp_cache_flush_runtime' ) ) {
-                    wp_cache_flush_runtime();
-                } else {
-                    wp_cache_flush();
-                }
-
-                $result   = $this->sync->sync_attachment( $attachment_id );
-                $item_now = current_time( 'mysql', true );
-
+                // Success: no failures and at least one file was uploaded or already on R2.
+                // "Nothing happened" (all zeros) means plugin not configured/credentials bad — treat as failure.
                 $is_success = $result['failed'] === 0 && ( $result['uploaded'] > 0 || $result['skipped'] > 0 );
-                $is_nothing = $result['uploaded'] === 0 && $result['failed'] === 0 && $result['skipped'] === 0;
 
-                if ( $is_success && ! $is_nothing ) {
+                if ( $is_success ) {
                     $wpdb->update(
                         $table,
                         [ 'status' => 'complete', 'updated_at' => $item_now ],
@@ -157,7 +150,7 @@ class BatchProcessor {
                 } else {
                     $retry_count = (int) $item->retry_count + 1;
                     $new_status  = $retry_count >= 3 ? 'failed' : 'pending';
-                    $error_msg   = $is_nothing
+                    $error_msg   = ( $result['uploaded'] === 0 && $result['failed'] === 0 )
                         ? 'Skipped: plugin not configured or credentials invalid.'
                         : "Uploaded: {$result['uploaded']}, Failed: {$result['failed']}";
 
@@ -173,6 +166,13 @@ class BatchProcessor {
                         [ '%s', '%d', '%s', '%s' ],
                         [ '%d' ]
                     );
+                }
+
+                // Flush object cache after processing to manage memory on large migrations.
+                if ( function_exists( 'wp_cache_flush_runtime' ) ) {
+                    wp_cache_flush_runtime();
+                } else {
+                    wp_cache_flush();
                 }
 
                 $processed++;
@@ -374,28 +374,47 @@ class BatchProcessor {
                 $success       = false;
                 $error_message = null;
 
+                $requeue = false; // set true to leave row pending for a future run
+
                 switch ( $job_type ) {
                     case 'restore':
                         $result  = $this->sync->restore_from_r2( $attachment_id );
                         $success = $result['failed'] === 0;
+                        if ( ! $success ) {
+                            $error_message = "Restored: {$result['restored']}, Failed: {$result['failed']}";
+                        }
                         break;
 
                     case 'local_delete':
                         $result  = $this->sync->delete_local_for_attachment( $attachment_id );
-                        $success = $result['deleted'] > 0;
+                        // deleted > 0 OR skipped > 0 (files already gone) both mean success —
+                        // the local copy is absent and the attachment is R2-only either way.
+                        $success = $result['deleted'] > 0 || $result['skipped'] > 0;
                         break;
 
                     case 'desync':
                         $result  = $this->sync->restore_and_desync_attachment( $attachment_id );
                         $success = $result['desynced'];
+                        if ( ! $success ) {
+                            $error_message = "Restored: {$result['restored']}, Failed: {$result['failed']}";
+                        }
                         break;
 
                     case 'validate':
                         $result  = $this->sync->validate_pre_uploaded( $attachment_id );
-                        // claimed/skipped → success. missing → failed with details.
-                        $success = $result['claimed'] > 0 || $result['skipped'] > 0;
-                        if ( ! $success && ! empty( $result['missing_keys'] ) ) {
+                        if ( $result['claimed'] > 0 ) {
+                            // Confirmed present and claimed — done.
+                            $success = true;
+                        } elseif ( ! empty( $result['missing_keys'] ) ) {
+                            // Confirmed absent — permanently failed for this run.
+                            $success       = false;
                             $error_message = 'Missing in R2: ' . implode( ', ', $result['missing_keys'] );
+                        } else {
+                            // Skipped (already synced, excluded MIME, or API error) —
+                            // mark complete so it doesn't count as a failure, but don't
+                            // requeue: already-synced stays complete, API errors will be
+                            // retried on the next validate run started by the admin.
+                            $success = true;
                         }
                         break;
                 }
@@ -411,8 +430,6 @@ class BatchProcessor {
                 $processed++;
 
                 // Flush object cache after each item to control memory on large runs.
-                // Done here (after processing) so validate's pre-fetched key cache and
-                // post meta are still available during the item's own execution above.
                 if ( function_exists( 'wp_cache_flush_runtime' ) ) {
                     wp_cache_flush_runtime();
                 } else {

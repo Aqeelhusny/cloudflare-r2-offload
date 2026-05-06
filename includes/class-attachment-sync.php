@@ -327,19 +327,9 @@ class AttachmentSync {
 
     /**
      * Validate that a pre-uploaded attachment already exists in R2 and mark it synced.
+     * Issues one HeadObject per expected key (original + all sizes) — only keys under
+     * the configured path prefix are checked; nothing else in the bucket is touched.
      *
-     * Architecture: instead of one HeadObject per file (N×sizes API calls), we issue
-     * a single ListObjectsV2 for the attachment's directory prefix, build a key set in
-     * memory, then check each expected key against that set — 1 API call per attachment
-     * regardless of how many sizes it has.
-     *
-     * An optional $r2_key_set can be passed when the caller has already fetched the full
-     * bucket listing for the prefix (e.g. BatchProcessor pre-fetching a shared year/month
-     * directory). When provided, no API call is made at all — just a set lookup.
-     *
-     * @param int        $attachment_id
-     * @param array|null $r2_key_set Flat array of R2 keys already known to exist (keys are values).
-     *                               Pass null to trigger a ListObjectsV2 for this attachment's prefix.
      * @return array{ claimed: int, missing: int, skipped: int, missing_keys: string[] }
      */
     public function validate_pre_uploaded( int $attachment_id ): array {

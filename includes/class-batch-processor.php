@@ -76,6 +76,21 @@ class BatchProcessor {
         $start_time = time();
         $processed  = 0;
 
+        // Recover rows stuck in 'processing' from a previous run that died or was paused
+        // mid-batch. Without this, resume after pause sees an empty pending queue and
+        // incorrectly reports migration complete while those rows remain unprocessed.
+        $stale_cutoff = gmdate( 'Y-m-d H:i:s', time() - self::LOCK_TTL );
+        $recovered    = $wpdb->query(
+            $wpdb->prepare(
+                "UPDATE `{$table}` SET status = 'pending', updated_at = %s
+                 WHERE status = 'processing' AND updated_at < %s",
+                current_time( 'mysql', true ), $stale_cutoff
+            )
+        );
+        if ( $recovered ) {
+            $this->logger->info( 'Migration batch: recovered stale processing rows.', [ 'count' => $recovered ] );
+        }
+
         while ( ( time() - $start_time ) < self::MAX_EXECUTION_SEC ) {
             // Check pause flag each iteration so pause takes effect mid-run.
             if ( get_option( 'r2_offload_migration_paused' ) ) {

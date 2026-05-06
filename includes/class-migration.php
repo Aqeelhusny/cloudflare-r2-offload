@@ -224,6 +224,19 @@ class Migration {
     }
 
     private function ajax_resume_migration(): void {
+        global $wpdb;
+
+        // Reset any rows stuck in 'processing' from before the pause so they are
+        // re-picked by the next batch run. Without this, resuming within LOCK_TTL
+        // leaves those rows stranded and the batch sees an empty pending queue.
+        $table = $wpdb->prefix . 'r2_offload_migration_queue';
+        $wpdb->query(
+            $wpdb->prepare(
+                "UPDATE `{$table}` SET status = 'pending', updated_at = %s WHERE status = 'processing'",
+                current_time( 'mysql', true )
+            )
+        );
+
         delete_option( 'r2_offload_migration_paused' );
         wp_schedule_single_event( time(), 'r2_offload_process_batch' );
         spawn_cron();

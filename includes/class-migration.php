@@ -776,7 +776,7 @@ class Migration {
         $path_prefix = $settings->get_path_prefix();
 
         $attached  = get_post_meta( $attachment_id, '_wp_attached_file', true );
-        $metadata  = wp_get_attachment_metadata( $attachment_id );
+        $metadata  = wp_get_attachment_metadata( $attachment_id ) ?: null;
         $upload_dir = wp_upload_dir();
         $base_dir  = trailingslashit( $upload_dir['basedir'] );
 

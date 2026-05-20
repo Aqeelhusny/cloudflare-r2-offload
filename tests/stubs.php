@@ -8,8 +8,8 @@ namespace R2Offload;
 class R2Client {
     public bool   $upload_returns   = true;
     public bool   $download_returns = true;
-    public string $check_key_default = 'found'; // returned when key not in $check_key_responses
-    public array  $check_key_responses = [];    // key => 'found'|'missing'|'error'
+    public string $check_key_default = 'missing'; // returned when key not in $check_key_responses
+    public array  $check_key_responses = [];      // key => 'found'|'missing'|'error'
     public array  $uploaded      = [];
     public array  $downloaded    = [];
     public array  $deleted_keys  = [];

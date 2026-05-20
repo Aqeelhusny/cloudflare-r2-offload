@@ -8,7 +8,7 @@ namespace R2Offload;
 class R2Client {
     public bool   $upload_returns    = true;
     public bool   $download_returns  = true;
-    public string $check_key_default = 'found';
+    public string $check_key_default = 'missing';
     public array  $check_key_responses = [];
     public array  $uploaded      = [];
     public array  $downloaded    = [];

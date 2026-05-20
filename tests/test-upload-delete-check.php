@@ -464,7 +464,7 @@ make_sync( null, new R2Client(), $log )->sync_attachment( 117 );
 $t->assertEqual( 1, count( $log->migration_terminal ), '2.18a: 1 terminal entry written' );
 $entry = $log->migration_terminal[0];
 $t->assertEqual( 117, $entry['id'],       '2.18b: correct attachment ID' );
-$t->assertEqual( 'photo.jpg', $entry['file'], '2.18c: basename in entry' );
+$t->assertEqual( '2024/03/photo.jpg', $entry['file'], '2.18c: full relative path in entry' );
 $t->assertEqual( 1, $entry['up'],         '2.18d: up=1' );
 $t->assertEqual( 0, $entry['fail'],       '2.18e: fail=0' );
 
@@ -648,7 +648,7 @@ $res = make_sync( null, $r2 )->restore_and_desync_attachment( 303 );
 $t->assert( $res['desynced'], '4.4a: desynced successfully' );
 $t->assertEqual( 2, $res['restored'], '4.4b: 2 files restored' );
 $t->assertEqual( '', get_post_meta( 303, '_r2_offload_synced', true ), '4.4c: synced cleared' );
-$t->assertEqual( [], array_filter( $r2->deleted_keys ) === [] ? $r2->deleted_keys : [], $r2->deleted_keys, '4.4d: R2 keys deleted' );
+$t->assert( count( $r2->deleted_keys ) === 2, '4.4d: R2 keys deleted' );
 
 // Test 4.5: restore_and_desync — download fails → aborts, meta preserved
 echo "\nTest 4.5: restore_and_desync — download fails → aborts\n";
@@ -992,7 +992,7 @@ make_sync()->delete_local_for_attachment( 700 );
 $r2_restore = new R2Client();
 $r2_restore->download_returns = true;
 $res_restore = make_sync( null, $r2_restore )->restore_from_r2( 700 );
-$t->assertEqual( 0, $res_restore['restored'], '6.5b: skips restore (local files were already deleted by delete_local, now re-created by download; but actually the delete was done above)' );
+$t->assertEqual( 1, $res_restore['restored'], '6.5b: file restored from R2 after local delete' );
 
 // Re-sync: since keys are still tracked and synced=1, this should be all-skipped.
 $r2_resync = new R2Client();

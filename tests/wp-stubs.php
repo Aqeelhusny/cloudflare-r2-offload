@@ -68,9 +68,15 @@ function wp_mkdir_p( string $target ): bool {
     return true;
 }
 
-function current_time( string $type, bool $gmt = false ): string {
+function current_time( string $type, bool $gmt = false ) {
+    if ( $type === 'timestamp' ) {
+        return time();
+    }
     if ( $type === 'c' ) {
         return date( 'c' );
+    }
+    if ( $type === 'Y-m-d' ) {
+        return date( 'Y-m-d' );
     }
     return date( 'Y-m-d H:i:s' );
 }
@@ -203,3 +209,72 @@ if ( ! defined( 'R2_OFFLOAD_BASENAME' ) ) {
 if ( ! defined( 'OPENSSL_RAW_DATA' ) ) {
     define( 'OPENSSL_RAW_DATA', 1 );
 }
+
+if ( ! defined( 'DAY_IN_SECONDS' ) ) {
+    define( 'DAY_IN_SECONDS', 86400 );
+}
+
+if ( ! defined( 'WP_DEBUG' ) ) {
+    define( 'WP_DEBUG', false );
+}
+
+// ---------------------------------------------------------------------------
+// WP_Filesystem stubs — used by ErrorLogger for local log writes.
+// WP_Filesystem_Base is abstract in real WP; we provide a direct-file
+// implementation so the real ErrorLogger can run in test contexts.
+// ---------------------------------------------------------------------------
+
+if ( ! class_exists( 'WP_Filesystem_Base' ) ) {
+    class WP_Filesystem_Base {
+        public function exists( string $path ): bool   { return file_exists( $path ); }
+        public function is_dir( string $path ): bool   { return is_dir( $path ); }
+        public function size( string $path )           { return file_exists( $path ) ? filesize( $path ) : false; }
+        public function get_contents( string $path )   { return file_exists( $path ) ? file_get_contents( $path ) : false; }
+        public function put_contents( string $path, string $contents, $mode = false ): bool {
+            $dir = dirname( $path );
+            if ( ! is_dir( $dir ) ) {
+                mkdir( $dir, 0755, true );
+            }
+            return file_put_contents( $path, $contents ) !== false;
+        }
+        public function delete( string $path, bool $recursive = false ): bool {
+            return file_exists( $path ) ? unlink( $path ) : true;
+        }
+        public function move( string $source, string $destination ): bool {
+            return rename( $source, $destination );
+        }
+        public function dirlist( string $path ): array {
+            if ( ! is_dir( $path ) ) {
+                return [];
+            }
+            $list = [];
+            foreach ( scandir( $path ) as $name ) {
+                if ( $name === '.' || $name === '..' ) {
+                    continue;
+                }
+                $list[ $name ] = [ 'name' => $name, 'type' => is_dir( $path . '/' . $name ) ? 'd' : 'f' ];
+            }
+            return $list;
+        }
+        public function mkdir( string $path, $chmod = false, $chown = false, $chgrp = false ): bool {
+            return wp_mkdir_p( $path );
+        }
+    }
+}
+
+if ( ! function_exists( 'WP_Filesystem' ) ) {
+    function WP_Filesystem(): bool {
+        global $wp_filesystem;
+        if ( ! $wp_filesystem ) {
+            $wp_filesystem = new WP_Filesystem_Base();
+        }
+        return true;
+    }
+}
+
+// Pre-initialise filesystem so ErrorLogger::get_filesystem() skips the require_once.
+if ( ! isset( $GLOBALS['wp_filesystem'] ) ) {
+    $GLOBALS['wp_filesystem'] = new WP_Filesystem_Base();
+}
+
+function current_time_timestamp(): int { return time(); }

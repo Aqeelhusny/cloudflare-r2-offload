@@ -442,17 +442,26 @@ class R2Client {
             return null;
         }
 
+        $sdk_args = [
+            'version'                 => 'latest',
+            'region'                  => 'auto',
+            'endpoint'                => "https://{$account_id}.r2.cloudflarestorage.com",
+            'use_path_style_endpoint' => true,
+            'credentials'             => [
+                'key'    => $key,
+                'secret' => $secret,
+            ],
+        ];
+
+        // Allow a custom CA bundle via constant (wp-config.php) or AWS_CA_BUNDLE env var.
+        // Useful on Windows dev environments where PHP ships without a system CA bundle.
+        $ca_bundle = defined( 'R2_OFFLOAD_CA_BUNDLE' ) ? R2_OFFLOAD_CA_BUNDLE : (string) getenv( 'AWS_CA_BUNDLE' );
+        if ( $ca_bundle && file_exists( $ca_bundle ) ) {
+            $sdk_args['http'] = [ 'verify' => $ca_bundle ];
+        }
+
         try {
-            $this->client = new S3Client( [
-                'version'                 => 'latest',
-                'region'                  => 'auto',
-                'endpoint'                => "https://{$account_id}.r2.cloudflarestorage.com",
-                'use_path_style_endpoint' => true,
-                'credentials'             => [
-                    'key'    => $key,
-                    'secret' => $secret,
-                ],
-            ] );
+            $this->client = new S3Client( $sdk_args );
         } catch ( \Exception $e ) {
             $this->logger->error( 'Failed to instantiate S3Client.', [ 'message' => $e->getMessage() ] );
             return null;

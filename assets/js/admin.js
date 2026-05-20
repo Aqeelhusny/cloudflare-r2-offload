@@ -43,6 +43,12 @@
 
     startBackgroundRefresh();
 
+    // Restore migration terminal output after a page refresh.
+    // Must run after restoreMigTerminal() is defined (it's declared below with function hoisting).
+    if ($('#r2-mig-terminal-wrap').length) {
+        restoreMigTerminal();
+    }
+
     // =========================================================================
     // Migration controls
     // =========================================================================
@@ -185,6 +191,7 @@
     var migTermOffset   = 0;
     var migTermInterval = null;
     var migRunning      = false;
+    var MIG_RUN_ALL_KEY = 'r2MigRunAllActive';
 
     function migTermLine(entry) {
         var color, icon, detail;
@@ -261,6 +268,109 @@
         });
     }
 
+    // Restore terminal from the server file on page load.
+    // If pending > 0, keep polling for new entries.
+    // If localStorage says run-all was active, resume it automatically.
+    function restoreMigTerminal() {
+        $.post(R2Offload.ajaxUrl, {
+            action: 'r2_offload_migration_log',
+            nonce:  R2Offload.nonce,
+            offset: 0
+        }, function (res) {
+            if (!res.success) return;
+            var entries = res.data.entries || [];
+            migTermOffset = res.data.next_offset || 0;
+
+            if (entries.length === 0 && !localStorage.getItem(MIG_RUN_ALL_KEY)) return;
+
+            $('#r2-mig-terminal-wrap').show();
+            if (entries.length > 0) {
+                appendMigTermLines(entries);
+            }
+
+            // Check queue status to decide whether to keep polling / resume run-all.
+            $.post(R2Offload.ajaxUrl, {
+                action: 'r2_offload_migration_status',
+                nonce:  R2Offload.nonce
+            }, function (sres) {
+                if (!sres.success) return;
+                var sd      = sres.data;
+                var pending = parseInt(sd.pending, 10) + parseInt(sd.processing || 0, 10);
+
+                if (pending > 0) {
+                    // Queue still has work — show cursor and keep polling.
+                    $('#r2-mig-terminal-cursor').show();
+                    $('#r2-mig-terminal-status').text('Running…');
+                    if (!migTermInterval) {
+                        migTermInterval = setInterval(pollMigTerminal, 2000);
+                    }
+
+                    // If run-all was active before the refresh, resume it.
+                    if (localStorage.getItem(MIG_RUN_ALL_KEY)) {
+                        var $btn = $('#r2-btn-run-all');
+                        migRunning = true;
+                        $btn.text('■ Stop').removeClass('button-primary').addClass('button-secondary');
+                        $('#r2-btn-run-now').prop('disabled', true);
+                        showMessage('Resuming run-until-complete after page reload…', 'info');
+
+                        function runNextBatchResume() {
+                            if (!migRunning) {
+                                $btn.prop('disabled', false).text('⚡ Run Until Complete').removeClass('button-secondary').addClass('button-primary');
+                                $('#r2-btn-run-now').prop('disabled', false);
+                                stopMigTerminal('Stopped');
+                                localStorage.removeItem(MIG_RUN_ALL_KEY);
+                                showMessage('Stopped by user.', 'warning');
+                                return;
+                            }
+                            $.post(R2Offload.ajaxUrl, {
+                                action: 'r2_offload_run_batch_now',
+                                nonce:  R2Offload.nonce
+                            }, function (bres) {
+                                if (!bres.success) {
+                                    migRunning = false;
+                                    $btn.prop('disabled', false).text('⚡ Run Until Complete').removeClass('button-secondary').addClass('button-primary');
+                                    $('#r2-btn-run-now').prop('disabled', false);
+                                    stopMigTerminal('Error');
+                                    localStorage.removeItem(MIG_RUN_ALL_KEY);
+                                    showMessage((bres.data && bres.data.message) || 'Batch failed.', 'error');
+                                    return;
+                                }
+                                updateProgress(bres.data);
+                                var bp = parseInt(bres.data.pending, 10) + parseInt(bres.data.processing || 0, 10);
+                                if (bp <= 0) {
+                                    migRunning = false;
+                                    $btn.prop('disabled', false).text('⚡ Run Until Complete').removeClass('button-secondary').addClass('button-primary');
+                                    $('#r2-btn-run-now').prop('disabled', false);
+                                    stopMigTerminal('Complete');
+                                    localStorage.removeItem(MIG_RUN_ALL_KEY);
+                                    showMessage(R2Offload.i18n.complete || 'Migration complete!', 'success');
+                                    $('#r2-btn-run-now').hide();
+                                    $('#r2-btn-run-all').hide();
+                                    stopPolling();
+                                } else {
+                                    setTimeout(runNextBatchResume, 500);
+                                }
+                            }).fail(function () {
+                                migRunning = false;
+                                $btn.prop('disabled', false).text('⚡ Run Until Complete').removeClass('button-secondary').addClass('button-primary');
+                                $('#r2-btn-run-now').prop('disabled', false);
+                                stopMigTerminal('Error');
+                                localStorage.removeItem(MIG_RUN_ALL_KEY);
+                                showMessage('Request failed.', 'error');
+                            });
+                        }
+                        runNextBatchResume();
+                    }
+                } else {
+                    // Queue drained — show history without cursor.
+                    $('#r2-mig-terminal-cursor').hide();
+                    $('#r2-mig-terminal-status').text(localStorage.getItem(MIG_RUN_ALL_KEY) ? 'Complete' : 'Done');
+                    localStorage.removeItem(MIG_RUN_ALL_KEY);
+                }
+            });
+        });
+    }
+
     // "Run Until Complete" — chains batches from the browser until the queue is empty.
     $('#r2-btn-run-all').on('click', function () {
         var $btn = $(this);
@@ -272,6 +382,7 @@
         }
 
         migRunning = true;
+        localStorage.setItem(MIG_RUN_ALL_KEY, '1');
         $btn.text('■ Stop').removeClass('button-primary').addClass('button-secondary');
         $('#r2-btn-run-now').prop('disabled', true);
         startMigTerminal();
@@ -282,6 +393,7 @@
                 $btn.prop('disabled', false).text('⚡ Run Until Complete').removeClass('button-secondary').addClass('button-primary');
                 $('#r2-btn-run-now').prop('disabled', false);
                 stopMigTerminal('Stopped');
+                localStorage.removeItem(MIG_RUN_ALL_KEY);
                 showMessage('Stopped by user.', 'warning');
                 return;
             }
@@ -295,6 +407,7 @@
                     $btn.prop('disabled', false).text('⚡ Run Until Complete').removeClass('button-secondary').addClass('button-primary');
                     $('#r2-btn-run-now').prop('disabled', false);
                     stopMigTerminal('Error');
+                    localStorage.removeItem(MIG_RUN_ALL_KEY);
                     showMessage((res.data && res.data.message) || 'Batch failed.', 'error');
                     return;
                 }
@@ -307,6 +420,7 @@
                     $btn.prop('disabled', false).text('⚡ Run Until Complete').removeClass('button-secondary').addClass('button-primary');
                     $('#r2-btn-run-now').prop('disabled', false);
                     stopMigTerminal('Complete');
+                    localStorage.removeItem(MIG_RUN_ALL_KEY);
                     showMessage(R2Offload.i18n.complete || 'Migration complete!', 'success');
                     $('#r2-btn-run-now').hide();
                     $('#r2-btn-run-all').hide();
@@ -319,6 +433,7 @@
                 $btn.prop('disabled', false).text('⚡ Run Until Complete').removeClass('button-secondary').addClass('button-primary');
                 $('#r2-btn-run-now').prop('disabled', false);
                 stopMigTerminal('Error');
+                localStorage.removeItem(MIG_RUN_ALL_KEY);
                 showMessage('Request failed.', 'error');
             });
         }
@@ -351,6 +466,7 @@
             showMessage(data.message, 'warning');
             migRunning = false;
             stopMigTerminal('Cancelled');
+            localStorage.removeItem(MIG_RUN_ALL_KEY);
             $('#r2-btn-pause').hide();
             $('#r2-btn-resume').hide();
             $('#r2-btn-run-now').hide();

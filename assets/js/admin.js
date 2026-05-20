@@ -976,6 +976,25 @@
         startBgQueuePolling();
     }
 
+    function bgLogLine(log) {
+        var color, label;
+        switch (log.level) {
+            case 'error':   color = '#ff6b6b'; label = 'ERR '; break;
+            case 'warning': color = '#ffaa44'; label = 'WARN'; break;
+            case 'debug':   color = '#666666'; label = 'DBG '; break;
+            default:        color = '#4ec94e'; label = 'INFO'; break;
+        }
+        var ts = log.timestamp ? escHtml(log.timestamp.substr(11, 8)) : '';
+        var ctxRaw = log.context;
+        var ctxEmpty = !ctxRaw || (Array.isArray(ctxRaw) && ctxRaw.length === 0) || (typeof ctxRaw === 'object' && Object.keys(ctxRaw).length === 0);
+        var ctxStr = ctxEmpty ? '' : ' <span style="color:#888;font-size:11px;">' + escHtml(JSON.stringify(ctxRaw)) + '</span>';
+        return '<div style="color:' + color + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+               '<span style="color:#555;user-select:none;">[' + ts + ']</span> ' +
+               '<span style="opacity:.7;">' + label + '</span>' +
+               '&nbsp;' + escHtml(log.message) + ctxStr +
+               '</div>';
+    }
+
     function refreshBgLogs() {
         $.post(R2Offload.ajaxUrl, {
             action: 'r2_offload_background_queue_logs',
@@ -983,31 +1002,19 @@
             limit:  50
         }, function (res) {
             if (!res.success || !res.data.logs) return;
-            var $tbody = $('#r2-bg-logs-body');
-            $tbody.empty();
+            var $lines = $('#r2-bg-terminal-lines');
+            $lines.empty();
             if (res.data.logs.length === 0) {
-                $tbody.append('<tr><td colspan="4">No log entries yet.</td></tr>');
+                $lines.html('<span style="color:#555;font-style:italic;">No log entries yet.</span>');
                 return;
             }
+            var html = '';
             $.each(res.data.logs, function (i, log) {
-                var levelClass = '';
-                if (log.level === 'error') levelClass = 'r2-log-error';
-                else if (log.level === 'warning') levelClass = 'r2-log-warning';
-
-                var badgeClass = 'r2-log-badge r2-log-badge--' + log.level;
-                var ctxRaw = log.context;
-                var ctxEmpty = !ctxRaw || (Array.isArray(ctxRaw) && ctxRaw.length === 0) || (typeof ctxRaw === 'object' && Object.keys(ctxRaw).length === 0);
-                var ctxCell = ctxEmpty ? '' : '<code style="font-size:11px;word-break:break-all;">' + escHtml(JSON.stringify(ctxRaw)) + '</code>';
-
-                $tbody.append(
-                    '<tr class="' + levelClass + '">' +
-                    '<td>' + escHtml(log.timestamp) + '</td>' +
-                    '<td><span class="' + badgeClass + '">' + escHtml(log.level.toUpperCase()) + '</span></td>' +
-                    '<td>' + escHtml(log.message) + '</td>' +
-                    '<td>' + ctxCell + '</td>' +
-                    '</tr>'
-                );
+                html += bgLogLine(log);
             });
+            $lines.html(html);
+            var $term = $('#r2-bg-terminal');
+            $term.scrollTop($term[0].scrollHeight);
         });
     }
 
@@ -1035,7 +1042,7 @@
         }, function (res) {
             $btn.prop('disabled', false).text('Clear Logs');
             if (res.success) {
-                $('#r2-bg-logs-body').empty().append('<tr><td colspan="4">No log entries yet.</td></tr>');
+                $('#r2-bg-terminal-lines').html('<span style="color:#555;font-style:italic;">No log entries yet.</span>');
             } else {
                 alert((res.data && res.data.message) || 'Failed to clear logs.');
             }

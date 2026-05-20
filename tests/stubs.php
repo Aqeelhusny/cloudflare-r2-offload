@@ -6,16 +6,19 @@
 namespace R2Offload;
 
 class R2Client {
-    public bool $upload_returns = true;
-    public bool $download_returns = true;
-    public array $uploaded = [];
-    public array $downloaded = [];
-    public array $deleted_keys = [];
+    public bool   $upload_returns   = true;
+    public bool   $download_returns = true;
+    public string $check_key_default = 'found'; // returned when key not in $check_key_responses
+    public array  $check_key_responses = [];    // key => 'found'|'missing'|'error'
+    public array  $uploaded      = [];
+    public array  $downloaded    = [];
+    public array  $deleted_keys  = [];
+    public array  $checked_keys  = [];
 
     public function __construct( ...$args ) {}
 
     public function upload_file( string $local_path, string $r2_key, string $mime_type, array $extra_args = [] ): bool {
-        $this->uploaded[] = [ 'path' => $local_path, 'key' => $r2_key ];
+        $this->uploaded[] = [ 'path' => $local_path, 'key' => $r2_key, 'mime' => $mime_type ];
         return $this->upload_returns;
     }
 
@@ -31,10 +34,17 @@ class R2Client {
     public function delete_files( array $keys ): void {
         $this->deleted_keys = array_merge( $this->deleted_keys, $keys );
     }
+
+    public function check_key( string $key ): string {
+        $this->checked_keys[] = $key;
+        return $this->check_key_responses[ $key ] ?? $this->check_key_default;
+    }
 }
 
 class ErrorLogger {
-    public array $logs = [];
+    public array $logs              = [];
+    public array $validate_terminal = [];
+    public array $migration_terminal = [];
 
     public function __construct( ...$args ) {}
 
@@ -56,6 +66,14 @@ class ErrorLogger {
 
     public function debug( string $message, array $context = [] ): void {
         $this->log( 'debug', $message, $context );
+    }
+
+    public function write_validate_terminal( array $entry ): void {
+        $this->validate_terminal[] = $entry;
+    }
+
+    public function write_migration_terminal( array $entry ): void {
+        $this->migration_terminal[] = $entry;
     }
 }
 

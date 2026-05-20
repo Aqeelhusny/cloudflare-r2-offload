@@ -689,6 +689,364 @@ cleanup_temp_file( $retry_local );
 cleanup_temp_file( $retry_local2 );
 
 // ---------------------------------------------------------------------------
+// SECTION 14: Content Verification — exact bytes round-trip
+// Upload a file, download it, verify the content matches byte-for-byte.
+// ---------------------------------------------------------------------------
+
+echo "\n--- SECTION 14: Content Verification ---\n\n";
+
+$cv_key      = TEST_PREFIX . 'content-verify.bin';
+$cv_content  = 'R2-content-verify-' . random_bytes( 32 );  // unique payload each run
+$cv_local    = make_temp_file( 'content-verify.bin', $cv_content );
+$cv_download = sys_get_temp_dir() . '/r2-live-cv-download.bin';
+cleanup_temp_file( $cv_download );
+
+echo "Test 14.1: upload binary content and download — bytes match exactly\n";
+$r2->upload_file( $cv_local, $cv_key, 'application/octet-stream' );
+$r2->download_file( $cv_key, $cv_download );
+$t->assert( file_exists( $cv_download ), '14.1a: download file created' );
+$t->assert( hash_file( 'sha256', $cv_local ) === hash_file( 'sha256', $cv_download ), '14.1b: sha256 matches — exact content round-trip' );
+$t->assertEqual( strlen( $cv_content ), filesize( $cv_download ), '14.1c: file size matches' );
+
+echo "\nTest 14.2: text file round-trip with known content\n";
+$txt_key     = TEST_PREFIX . 'text-verify.txt';
+$txt_content = "Line1\nLine2\nLine3\n";
+$txt_local   = make_temp_file( 'text-verify.txt', $txt_content );
+$txt_dl      = sys_get_temp_dir() . '/r2-live-txt-download.txt';
+cleanup_temp_file( $txt_dl );
+$r2->upload_file( $txt_local, $txt_key, 'text/plain' );
+$r2->download_file( $txt_key, $txt_dl );
+$t->assertEqual( $txt_content, file_get_contents( $txt_dl ), '14.2a: text content matches exactly' );
+
+cleanup_temp_file( $cv_local );
+cleanup_temp_file( $cv_download );
+cleanup_temp_file( $txt_local );
+cleanup_temp_file( $txt_dl );
+$r2->delete_file( $cv_key );
+$r2->delete_file( $txt_key );
+
+// ---------------------------------------------------------------------------
+// SECTION 15: Overwrite Existing Key
+// Re-uploading to the same key should replace the content silently.
+// ---------------------------------------------------------------------------
+
+echo "\n--- SECTION 15: Overwrite Existing Key ---\n\n";
+
+$ow_key    = TEST_PREFIX . 'overwrite-test.txt';
+$ow_v1     = make_temp_file( 'overwrite-v1.txt', 'VERSION-ONE' );
+$ow_v2     = make_temp_file( 'overwrite-v2.txt', 'VERSION-TWO' );
+$ow_dl     = sys_get_temp_dir() . '/r2-live-ow-download.txt';
+
+echo "Test 15.1: upload v1 to key\n";
+$ok = $r2->upload_file( $ow_v1, $ow_key, 'text/plain' );
+$t->assert( $ok === true, '15.1a: v1 uploaded' );
+$t->assert( $r2->file_exists( $ow_key ), '15.1b: key exists after v1' );
+
+echo "\nTest 15.2: overwrite key with v2 — new content wins\n";
+$ok = $r2->upload_file( $ow_v2, $ow_key, 'text/plain' );
+$t->assert( $ok === true, '15.2a: v2 uploaded successfully' );
+$t->assert( $r2->file_exists( $ow_key ), '15.2b: key still exists after overwrite' );
+cleanup_temp_file( $ow_dl );
+$r2->download_file( $ow_key, $ow_dl );
+$t->assertEqual( 'VERSION-TWO', file_get_contents( $ow_dl ), '15.2c: content is v2 — overwrite succeeded' );
+
+cleanup_temp_file( $ow_v1 );
+cleanup_temp_file( $ow_v2 );
+cleanup_temp_file( $ow_dl );
+$r2->delete_file( $ow_key );
+
+// ---------------------------------------------------------------------------
+// SECTION 16: Special Characters in Filenames
+// Filenames with spaces, hyphens, underscores, plus signs, and unicode chars.
+// ---------------------------------------------------------------------------
+
+echo "\n--- SECTION 16: Special Characters in Filenames ---\n\n";
+
+$special_cases = [
+    'spaces'      => TEST_PREFIX . 'file with spaces.txt',
+    'underscores' => TEST_PREFIX . 'file_with_underscores.txt',
+    'hyphens'     => TEST_PREFIX . 'file-with-hyphens.txt',
+    'dots'        => TEST_PREFIX . 'file.with.dots.txt',
+    'parens'      => TEST_PREFIX . 'file(1).txt',
+    'brackets'    => TEST_PREFIX . 'file[2].txt',
+    'plus'        => TEST_PREFIX . 'file+plus.txt',
+];
+
+echo "Test 16.1: upload, verify, delete files with special characters\n";
+foreach ( $special_cases as $label => $key ) {
+    $tmp = make_temp_file( "special-{$label}.txt", "content-{$label}" );
+    $ok  = $r2->upload_file( $tmp, $key, 'text/plain' );
+    $t->assert( $ok === true, "16.1-upload-{$label}: upload returned true" );
+    $t->assert( $r2->file_exists( $key ), "16.1-exists-{$label}: file_exists true" );
+    $t->assertEqual( 'found', $r2->check_key( $key ), "16.1-check-{$label}: check_key=found" );
+    $r2->delete_file( $key );
+    $t->assert( ! $r2->file_exists( $key ), "16.1-deleted-{$label}: deleted" );
+    cleanup_temp_file( $tmp );
+}
+
+// ---------------------------------------------------------------------------
+// SECTION 17: Zero-byte (Empty) File Upload
+// ---------------------------------------------------------------------------
+
+echo "\n--- SECTION 17: Empty File Upload ---\n\n";
+
+$empty_key   = TEST_PREFIX . 'empty-file.txt';
+$empty_local = make_temp_file( 'empty.txt', '' );  // 0 bytes
+
+echo "Test 17.1: upload empty file\n";
+$ok = $r2->upload_file( $empty_local, $empty_key, 'text/plain' );
+$t->assert( $ok === true, '17.1a: empty file upload returns true' );
+$t->assert( $r2->file_exists( $empty_key ), '17.1b: empty file exists in R2' );
+$t->assertEqual( 'found', $r2->check_key( $empty_key ), '17.1c: check_key=found for empty file' );
+
+$empty_dl = sys_get_temp_dir() . '/r2-live-empty-download.txt';
+cleanup_temp_file( $empty_dl );
+$ok = $r2->download_file( $empty_key, $empty_dl );
+$t->assert( $ok === true, '17.1d: empty file download returns true' );
+$t->assertEqual( 0, filesize( $empty_dl ), '17.1e: downloaded file is 0 bytes' );
+
+cleanup_temp_file( $empty_local );
+cleanup_temp_file( $empty_dl );
+$r2->delete_file( $empty_key );
+
+// ---------------------------------------------------------------------------
+// SECTION 18: Delete Non-Existent Key (Graceful No-Op)
+// S3 / R2: DeleteObject on a missing key is a successful no-op.
+// ---------------------------------------------------------------------------
+
+echo "\n--- SECTION 18: Delete Non-Existent Key ---\n\n";
+
+$ghost_key = TEST_PREFIX . 'does-not-exist-ghost-' . time() . '.txt';
+
+echo "Test 18.1: delete_file for key that does not exist\n";
+$ok = $r2->delete_file( $ghost_key );
+$t->assert( $ok === true, '18.1a: delete_file on missing key returns true (S3 no-op)' );
+$t->assert( ! $r2->file_exists( $ghost_key ), '18.1b: file still does not exist' );
+
+echo "\nTest 18.2: delete_files batch with non-existent keys\n";
+$ghost_keys = [
+    TEST_PREFIX . 'ghost-a-' . time() . '.txt',
+    TEST_PREFIX . 'ghost-b-' . time() . '.txt',
+];
+$ok = $r2->delete_files( $ghost_keys );
+$t->assert( $ok === true, '18.2a: delete_files on missing keys returns true' );
+
+// ---------------------------------------------------------------------------
+// SECTION 19: delete_files Edge Cases
+// ---------------------------------------------------------------------------
+
+echo "\n--- SECTION 19: delete_files Edge Cases ---\n\n";
+
+echo "Test 19.1: delete_files with empty array — no-op, returns true\n";
+$ok = $r2->delete_files( [] );
+$t->assert( $ok === true, '19.1a: delete_files([]) returns true' );
+
+echo "\nTest 19.2: delete_files removes all objects in a single batch call\n";
+$batch_keys = [];
+for ( $i = 1; $i <= 5; $i++ ) {
+    $bk  = TEST_PREFIX . "batch-del-{$i}.txt";
+    $btf = make_temp_file( "batch-del-{$i}.txt", "content-{$i}" );
+    $r2->upload_file( $btf, $bk, 'text/plain' );
+    $batch_keys[] = $bk;
+    cleanup_temp_file( $btf );
+}
+foreach ( $batch_keys as $bk ) {
+    $t->assert( $r2->file_exists( $bk ), "19.2-pre: {$bk} exists before batch delete" );
+}
+$ok = $r2->delete_files( $batch_keys );
+$t->assert( $ok === true, '19.2a: delete_files returns true' );
+foreach ( $batch_keys as $bk ) {
+    $t->assert( ! $r2->file_exists( $bk ), "19.2-post: {$bk} gone after batch delete" );
+}
+
+// ---------------------------------------------------------------------------
+// SECTION 20: check_key / file_exists — All States
+// Exhaustive verification of all return values.
+// ---------------------------------------------------------------------------
+
+echo "\n--- SECTION 20: check_key and file_exists — All States ---\n\n";
+
+$ck_key  = TEST_PREFIX . 'check-key-test.txt';
+$ck_file = make_temp_file( 'check-key.txt', 'check-key-content' );
+
+echo "Test 20.1: file_exists = false before upload\n";
+$t->assert( ! $r2->file_exists( $ck_key ), '20.1a: file_exists false before upload' );
+$t->assertEqual( 'missing', $r2->check_key( $ck_key ), '20.1b: check_key=missing before upload' );
+
+echo "\nTest 20.2: file_exists = true and check_key = found after upload\n";
+$r2->upload_file( $ck_file, $ck_key, 'text/plain' );
+$t->assert( $r2->file_exists( $ck_key ), '20.2a: file_exists true after upload' );
+$t->assertEqual( 'found', $r2->check_key( $ck_key ), '20.2b: check_key=found after upload' );
+
+echo "\nTest 20.3: file_exists = false and check_key = missing after delete\n";
+$r2->delete_file( $ck_key );
+$t->assert( ! $r2->file_exists( $ck_key ), '20.3a: file_exists false after delete' );
+$t->assertEqual( 'missing', $r2->check_key( $ck_key ), '20.3b: check_key=missing after delete' );
+
+echo "\nTest 20.4: check multiple keys in sequence\n";
+$multi_keys = [];
+for ( $i = 1; $i <= 3; $i++ ) {
+    $mk  = TEST_PREFIX . "multi-check-{$i}.txt";
+    $mtf = make_temp_file( "multi-{$i}.txt", "multi-content-{$i}" );
+    $r2->upload_file( $mtf, $mk, 'text/plain' );
+    $multi_keys[] = $mk;
+    cleanup_temp_file( $mtf );
+}
+foreach ( $multi_keys as $idx => $mk ) {
+    $n = $idx + 1;
+    $t->assert( $r2->file_exists( $mk ), "20.4-exists-{$n}: file {$n} exists" );
+    $t->assertEqual( 'found', $r2->check_key( $mk ), "20.4-check-{$n}: check_key=found for file {$n}" );
+}
+$r2->delete_files( $multi_keys );
+foreach ( $multi_keys as $idx => $mk ) {
+    $n = $idx + 1;
+    $t->assert( ! $r2->file_exists( $mk ), "20.4-gone-{$n}: file {$n} gone after batch delete" );
+    $t->assertEqual( 'missing', $r2->check_key( $mk ), "20.4-miss-{$n}: check_key=missing for file {$n}" );
+}
+
+cleanup_temp_file( $ck_file );
+
+// ---------------------------------------------------------------------------
+// SECTION 21: validate_pre_uploaded with Real R2
+// Upload files, then reset meta and run validate — confirms the file-based
+// key-checking path works end-to-end with the real R2 HeadObject API.
+// ---------------------------------------------------------------------------
+
+echo "\n--- SECTION 21: validate_pre_uploaded with Real R2 ---\n\n";
+
+$val_id      = 9040;
+$val_file    = '2024/05/validate-live.jpg';
+$val_thumb   = '2024/05/validate-live-150x150.jpg';
+$val_lp      = $wp_uploads . '/' . $val_file;
+$val_tp      = $wp_uploads . '/' . $val_thumb;
+$val_r2_orig = 'wp-content/uploads/' . $val_file;
+$val_r2_thm  = 'wp-content/uploads/' . $val_thumb;
+
+file_put_contents( $val_lp, 'validate-live-original-content' );
+file_put_contents( $val_tp, 'validate-live-thumb-content' );
+
+$GLOBALS['__wp_postmeta'][ $val_id ]['_wp_attached_file']       = $val_file;
+$GLOBALS['__wp_postmeta'][ $val_id ]['_wp_attachment_metadata'] = [
+    'sizes' => [ 'thumbnail' => [ 'file' => 'validate-live-150x150.jpg' ] ],
+];
+
+$sync_val = new \R2Offload\AttachmentSync( $r2, $settings, $logger );
+
+echo "Test 21.1: upload both files to real R2\n";
+$r1 = $sync_val->sync_attachment( $val_id );
+$t->assertEqual( 2, $r1['uploaded'], '21.1a: 2 uploaded' );
+$t->assert( $r2->file_exists( $val_r2_orig ), '21.1b: original in R2' );
+$t->assert( $r2->file_exists( $val_r2_thm ),  '21.1c: thumbnail in R2' );
+
+echo "\nTest 21.2: reset meta, validate_pre_uploaded claims both keys\n";
+delete_post_meta( $val_id, '_r2_offload_synced' );
+delete_post_meta( $val_id, '_r2_offload_keys' );
+$r2_validate = new \R2Offload\AttachmentSync( $r2, $settings, $logger );
+$vres = $r2_validate->validate_pre_uploaded( $val_id );
+$t->assertEqual( 1, $vres['claimed'], '21.2a: claimed' );
+$t->assertEqual( 0, $vres['missing'], '21.2b: no missing' );
+$t->assertEqual( '1', get_post_meta( $val_id, '_r2_offload_synced', true ), '21.2c: marked synced by validate' );
+$vkeys = json_decode( get_post_meta( $val_id, '_r2_offload_keys', true ), true );
+$t->assertEqual( 2, count( $vkeys ), '21.2d: 2 keys tracked' );
+$t->assert( in_array( $val_r2_orig, $vkeys, true ), '21.2e: original key in tracked keys' );
+$t->assert( in_array( $val_r2_thm,  $vkeys, true ), '21.2f: thumbnail key in tracked keys' );
+
+echo "\nTest 21.3: delete one R2 file, re-validate reports it missing\n";
+$r2->delete_file( $val_r2_thm );
+delete_post_meta( $val_id, '_r2_offload_synced' );
+delete_post_meta( $val_id, '_r2_offload_keys' );
+$vres2 = $r2_validate->validate_pre_uploaded( $val_id );
+$t->assertEqual( 0, $vres2['claimed'], '21.3a: not claimed (thumbnail missing)' );
+$t->assertEqual( 1, $vres2['missing'], '21.3b: 1 missing' );
+$t->assert( in_array( $val_r2_thm, $vres2['missing_keys'], true ), '21.3c: thumbnail in missing_keys' );
+
+echo "\nTest 21.4: already-synced attachment is skipped by validate\n";
+// Restore synced meta.
+update_post_meta( $val_id, '_r2_offload_synced', '1' );
+$vres3 = $r2_validate->validate_pre_uploaded( $val_id );
+$t->assertEqual( 1, $vres3['skipped'], '21.4a: skipped (already synced)' );
+$t->assertEqual( 0, $vres3['claimed'], '21.4b: not re-claimed' );
+
+// Clean up validate live test objects.
+$r2->delete_file( $val_r2_orig );
+cleanup_temp_file( $val_lp );
+cleanup_temp_file( $val_tp );
+
+// ---------------------------------------------------------------------------
+// SECTION 22: MIME Type Handling
+// Verify that MIME types are preserved on upload (content-type header).
+// ---------------------------------------------------------------------------
+
+echo "\n--- SECTION 22: MIME Type Handling ---\n\n";
+
+$mime_cases = [
+    [ 'image/jpeg',        'photo.jpg',  'JPEG image'     ],
+    [ 'image/png',         'image.png',  'PNG image'      ],
+    [ 'text/plain',        'readme.txt', 'Plain text'     ],
+    [ 'application/pdf',   'doc.pdf',    'PDF document'   ],
+    [ 'application/octet-stream', 'data.bin', 'Binary data' ],
+];
+
+echo "Test 22.1: upload files with various MIME types — all succeed\n";
+foreach ( $mime_cases as [ $mime, $filename, $label ] ) {
+    $mk  = TEST_PREFIX . "mime-test-{$filename}";
+    $mtf = make_temp_file( "mime-{$filename}", "content for {$label}" );
+    $ok  = $r2->upload_file( $mtf, $mk, $mime );
+    $t->assert( $ok === true, "22.1-{$mime}: {$label} upload succeeded" );
+    $t->assert( $r2->file_exists( $mk ), "22.1-exists-{$mime}: file exists after upload" );
+    $r2->delete_file( $mk );
+    cleanup_temp_file( $mtf );
+}
+
+// ---------------------------------------------------------------------------
+// SECTION 23: list_objects — Pagination and Boundary Conditions
+// ---------------------------------------------------------------------------
+
+echo "\n--- SECTION 23: list_objects Pagination ---\n\n";
+
+// Upload 6 test objects to paginate over.
+$pg_prefix = TEST_PREFIX . 'paginate/';
+$pg_keys   = [];
+for ( $i = 1; $i <= 6; $i++ ) {
+    $pk  = $pg_prefix . "page-item-{$i}.txt";
+    $ptf = make_temp_file( "pg-{$i}.txt", "page-content-{$i}" );
+    $r2->upload_file( $ptf, $pk, 'text/plain' );
+    $pg_keys[] = $pk;
+    cleanup_temp_file( $ptf );
+}
+
+echo "Test 23.1: list_objects returns all 6 items in one call\n";
+$all = $r2->list_objects( $pg_prefix, 100 );
+$t->assert( is_array( $all['objects'] ), '23.1a: objects is array' );
+$t->assertEqual( 6, count( $all['objects'] ), '23.1b: 6 objects listed' );
+$listed_keys = array_column( $all['objects'] , 'Key' );
+foreach ( $pg_keys as $pk ) {
+    $t->assert( in_array( $pk, $listed_keys, true ), "23.1c: {$pk} in listing" );
+}
+
+echo "\nTest 23.2: list_objects with max_keys=2 returns first page + token\n";
+$page1 = $r2->list_objects( $pg_prefix, 2 );
+$t->assertEqual( 2, count( $page1['objects'] ), '23.2a: page 1 has 2 objects' );
+$t->assert( ! empty( $page1['next_token'] ), '23.2b: next_token present (more pages exist)' );
+
+echo "\nTest 23.3: second page retrieves next 2 objects\n";
+$page2 = $r2->list_objects( $pg_prefix, 2, $page1['next_token'] );
+$t->assert( is_array( $page2['objects'] ), '23.3a: page 2 is array' );
+$t->assertEqual( 2, count( $page2['objects'] ), '23.3b: page 2 has 2 objects' );
+$page1_keys = array_column( $page1['objects'], 'Key' );
+$page2_keys = array_column( $page2['objects'], 'Key' );
+$t->assertEqual( 0, count( array_intersect( $page1_keys, $page2_keys ) ), '23.3c: pages have no overlap' );
+
+echo "\nTest 23.4: empty prefix listing returns nothing\n";
+$no_match = $r2->list_objects( TEST_PREFIX . 'no-such-prefix-xyz/', 100 );
+$t->assert( is_array( $no_match['objects'] ), '23.4a: objects is array' );
+$t->assertEqual( 0, count( $no_match['objects'] ), '23.4b: 0 objects under non-existent prefix' );
+$t->assert( empty( $no_match['next_token'] ), '23.4c: no next_token for empty result' );
+
+// Clean up pagination test objects.
+$r2->delete_files( $pg_keys );
+
+// ---------------------------------------------------------------------------
 // Final cleanup — remove any leftover test objects under TEST_PREFIX
 // ---------------------------------------------------------------------------
 

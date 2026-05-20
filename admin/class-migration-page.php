@@ -160,47 +160,55 @@ class MigrationPage {
 
             <div id="r2-bg-queue-message" class="r2-message" style="display:none;"></div>
 
-            <!-- Background Queue Logs -->
+            <!-- Background Queue Logs — terminal style -->
             <div id="r2-bg-logs-wrap" style="margin-top:16px;">
-                <h3>
-                    <?php esc_html_e( 'Recent Activity', 'cloudflare-r2-offload' ); ?>
-                    <button type="button" id="r2-bg-refresh-logs" class="button button-small" style="margin-left:8px;">
-                        <?php esc_html_e( 'Refresh', 'cloudflare-r2-offload' ); ?>
-                    </button>
-                    <button type="button" id="r2-bg-clear-logs" class="button button-small" style="margin-left:4px;color:#d63638;">
-                        <?php esc_html_e( 'Clear Logs', 'cloudflare-r2-offload' ); ?>
-                    </button>
-                </h3>
-                <table class="wp-list-table widefat fixed striped" id="r2-bg-logs-table">
-                    <thead>
-                        <tr>
-                            <th style="width:180px;"><?php esc_html_e( 'Time', 'cloudflare-r2-offload' ); ?></th>
-                            <th style="width:80px;"><?php esc_html_e( 'Level', 'cloudflare-r2-offload' ); ?></th>
-                            <th><?php esc_html_e( 'Message', 'cloudflare-r2-offload' ); ?></th>
-                            <th style="width:250px;"><?php esc_html_e( 'Context', 'cloudflare-r2-offload' ); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody id="r2-bg-logs-body">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="font-size:13px;font-weight:600;color:#1d2327;"><?php esc_html_e( 'Recent Activity', 'cloudflare-r2-offload' ); ?></span>
+                        <button type="button" id="r2-bg-refresh-logs" class="button button-small"><?php esc_html_e( 'Refresh', 'cloudflare-r2-offload' ); ?></button>
+                        <button type="button" id="r2-bg-clear-logs" class="button button-small" style="color:#d63638;"><?php esc_html_e( 'Clear Logs', 'cloudflare-r2-offload' ); ?></button>
+                    </div>
+                    <span id="r2-bg-log-count" style="font-size:11px;color:#888;"></span>
+                </div>
+                <div id="r2-bg-terminal"
+                     style="background:#1a1a2e;color:#e0e0e0;font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.65;padding:12px 14px;border-radius:6px;height:300px;overflow-y:auto;border:1px solid #2d2d4e;">
+                    <div id="r2-bg-terminal-lines">
                         <?php
-                        $bg_logs = $this->logger->get_recent_entries( 30 );
+                        $bg_logs = $this->logger->get_recent_entries( 50 );
                         if ( empty( $bg_logs ) ) :
                         ?>
-                        <tr><td colspan="4"><?php esc_html_e( 'No log entries yet.', 'cloudflare-r2-offload' ); ?></td></tr>
+                        <span style="color:#555;font-style:italic;"><?php esc_html_e( 'No log entries yet.', 'cloudflare-r2-offload' ); ?></span>
                         <?php else :
-                            foreach ( $bg_logs as $entry ) :
-                                $level_class = '';
-                                if ( ( $entry['level'] ?? '' ) === 'error' ) $level_class = 'r2-log-error';
-                                elseif ( ( $entry['level'] ?? '' ) === 'warning' ) $level_class = 'r2-log-warning';
+                            foreach ( array_reverse( $bg_logs ) as $entry ) :
+                                $level   = $entry['level']   ?? 'info';
+                                $ts      = $entry['timestamp'] ?? '';
+                                $msg     = $entry['message']  ?? '';
+                                $ctx     = $entry['context']  ?? [];
+                                $ts_short = strlen( $ts ) >= 19 ? substr( $ts, 11, 8 ) : $ts;
+                                $color = match ( $level ) {
+                                    'error'   => '#ff6b6b',
+                                    'warning' => '#ffaa44',
+                                    'debug'   => '#666',
+                                    default   => '#4ec94e',
+                                };
+                                $label = match ( $level ) {
+                                    'error'   => 'ERR ',
+                                    'warning' => 'WARN',
+                                    'debug'   => 'DBG ',
+                                    default   => 'INFO',
+                                };
+                                $ctx_empty = empty( $ctx ) || ( is_array( $ctx ) && count( $ctx ) === 0 );
+                                $ctx_str   = $ctx_empty ? '' : '  ' . wp_json_encode( $ctx );
                         ?>
-                        <tr class="<?php echo esc_attr( $level_class ); ?>">
-                            <td><?php echo esc_html( $entry['timestamp'] ?? '' ); ?></td>
-                            <td><span class="r2-log-badge r2-log-badge--<?php echo esc_attr( $entry['level'] ?? 'info' ); ?>"><?php echo esc_html( strtoupper( $entry['level'] ?? 'INFO' ) ); ?></span></td>
-                            <td><?php echo esc_html( $entry['message'] ?? '' ); ?></td>
-                            <td><code style="font-size:11px;word-break:break-all;"><?php echo esc_html( wp_json_encode( $entry['context'] ?? [] ) ); ?></code></td>
-                        </tr>
+                        <div style="color:<?php echo esc_attr( $color ); ?>;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                            <span style="color:#555;user-select:none;">[<?php echo esc_html( $ts_short ); ?>]</span>
+                            <span style="opacity:.7;"><?php echo esc_html( $label ); ?></span>
+                            &nbsp;<?php echo esc_html( $msg ); ?>
+                            <?php if ( ! $ctx_empty ) : ?><span style="color:#888;font-size:11px;"><?php echo esc_html( $ctx_str ); ?></span><?php endif; ?>
+                        </div>
                         <?php endforeach; endif; ?>
-                    </tbody>
-                </table>
+                    </div>
+                </div>
             </div>
 
             <hr style="margin:32px 0 24px;">

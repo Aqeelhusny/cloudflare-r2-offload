@@ -46,7 +46,7 @@ class AttachmentSync {
             return $result;
         }
 
-        $metadata = wp_get_attachment_metadata( $attachment_id );
+        $metadata = wp_get_attachment_metadata( $attachment_id ) ?: null;
         $attached = get_post_meta( $attachment_id, '_wp_attached_file', true );
 
         if ( ! $attached ) {
@@ -294,7 +294,7 @@ class AttachmentSync {
             return $result;
         }
 
-        $metadata   = wp_get_attachment_metadata( $attachment_id );
+        $metadata   = wp_get_attachment_metadata( $attachment_id ) ?: null;
         $upload_dir = wp_upload_dir();
         $base_dir   = trailingslashit( $upload_dir['basedir'] );
 

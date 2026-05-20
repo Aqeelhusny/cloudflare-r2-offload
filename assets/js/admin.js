@@ -205,6 +205,10 @@
             color  = '#4ec94e';
             icon   = '✓';
             detail = file + '  <span style="color:#88cc88;">' + entry.up + ' file' + (entry.up === 1 ? '' : 's') + ' uploaded</span>';
+        } else if (entry.claimed > 0) {
+            color  = '#4ec9c9';
+            icon   = '↑';
+            detail = file + '  <span style="color:#88cccc;">verified on R2 (' + entry.claimed + ' file' + (entry.claimed === 1 ? '' : 's') + ')</span>';
         } else {
             color  = '#666';
             icon   = '–';

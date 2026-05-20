@@ -78,10 +78,20 @@ class AttachmentSync {
 
         $uploaded_keys = $existing_keys; // Carry forward what was already uploaded.
         $bytes_uploaded = 0;
+        $claimed = 0; // Files found on R2 via HeadObject and claimed without re-upload.
 
         foreach ( $all_files as $local_path => $r2_key ) {
-            // Skip files already confirmed in R2.
+            // Skip files already confirmed in R2 by WordPress meta.
             if ( isset( $existing_keys_set[ $r2_key ] ) ) {
+                $result['skipped']++;
+                continue;
+            }
+
+            // Check R2 directly so manually pre-uploaded files are claimed without
+            // re-uploading. A HeadObject is much cheaper than a redundant PutObject.
+            if ( $this->r2->check_key( $r2_key ) === 'found' ) {
+                $uploaded_keys[] = $r2_key;
+                $claimed++;
                 $result['skipped']++;
                 continue;
             }
@@ -139,11 +149,12 @@ class AttachmentSync {
 
         // Write to the migration terminal so the live UI can show per-attachment progress.
         $this->logger->write_migration_terminal( [
-            'id'   => $attachment_id,
-            'file' => $attached,
-            'up'   => $result['uploaded'],
-            'skip' => $result['skipped'],
-            'fail' => $result['failed'],
+            'id'      => $attachment_id,
+            'file'    => $attached,
+            'up'      => $result['uploaded'],
+            'skip'    => $result['skipped'],
+            'fail'    => $result['failed'],
+            'claimed' => $claimed,
         ] );
 
         return $result;

@@ -76,20 +76,22 @@ class Migration {
         $method = 'ajax_' . str_replace( 'r2_offload_', '', $action );
 
         if ( ! method_exists( $this, $method ) ) {
-            wp_send_json_error( [ 'message' => 'Unknown action.' ], 400 );
+            wp_send_json_error( [ 'message' => 'Unknown action.' ] );
         }
 
         check_ajax_referer( 'r2_offload_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'cloudflare-r2-offload' ) ], 403 );
+            wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'cloudflare-r2-offload' ) ] );
         }
 
         // Throttle mutating endpoints: one call per action per 3 seconds.
+        // Use 200 status so jQuery's .done() fires and the error message is shown,
+        // not .fail() which swallows the response body and shows "Request failed."
         if ( ! in_array( $action, self::READ_ONLY_ACTIONS, true ) ) {
             $throttle_key = 'r2_throttle_' . md5( $action . get_current_user_id() );
             if ( get_transient( $throttle_key ) ) {
-                wp_send_json_error( [ 'message' => __( 'Please wait a few seconds before trying again.', 'cloudflare-r2-offload' ) ], 429 );
+                wp_send_json_error( [ 'message' => __( 'Please wait a few seconds before trying again.', 'cloudflare-r2-offload' ) ] );
             }
             set_transient( $throttle_key, 1, 3 );
         }
@@ -116,7 +118,19 @@ class Migration {
         $plugin->settings->flush_cache();
         $plugin->rebuild_r2_client();
 
-        $plugin->batch_processor->process_batch();
+        // Allow up to 120 seconds — batch processing can be slow for large files.
+        // This overrides PHP's default max_execution_time (often 30s) which would
+        // otherwise kill the request mid-batch and return a 500 to the browser.
+        if ( ! ini_get( 'safe_mode' ) ) {
+            set_time_limit( 120 );
+        }
+
+        try {
+            $plugin->batch_processor->process_batch();
+        } catch ( \Throwable $e ) {
+            $plugin->logger->error( 'Batch run fatal error.', [ 'error' => $e->getMessage() ] );
+            wp_send_json_error( [ 'message' => 'Batch processing error: ' . $e->getMessage() ] );
+        }
 
         // Return current status after processing.
         global $wpdb;

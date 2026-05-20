@@ -740,14 +740,16 @@
                 else if (log.level === 'warning') levelClass = 'r2-log-warning';
 
                 var badgeClass = 'r2-log-badge r2-log-badge--' + log.level;
-                var ctx = JSON.stringify(log.context || {});
+                var ctxRaw = log.context;
+                var ctxEmpty = !ctxRaw || (Array.isArray(ctxRaw) && ctxRaw.length === 0) || (typeof ctxRaw === 'object' && Object.keys(ctxRaw).length === 0);
+                var ctxCell = ctxEmpty ? '' : '<code style="font-size:11px;word-break:break-all;">' + escHtml(JSON.stringify(ctxRaw)) + '</code>';
 
                 $tbody.append(
                     '<tr class="' + levelClass + '">' +
                     '<td>' + escHtml(log.timestamp) + '</td>' +
                     '<td><span class="' + badgeClass + '">' + escHtml(log.level.toUpperCase()) + '</span></td>' +
                     '<td>' + escHtml(log.message) + '</td>' +
-                    '<td><code style="font-size:11px;word-break:break-all;">' + escHtml(ctx) + '</code></td>' +
+                    '<td>' + ctxCell + '</td>' +
                     '</tr>'
                 );
             });

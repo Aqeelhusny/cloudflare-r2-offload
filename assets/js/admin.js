@@ -142,15 +142,18 @@
             $('#r2-progress-pct').text('0%');
             $('#r2-btn-pause').show();
             $('#r2-btn-run-now').show();
+            $('#r2-btn-run-all').show();
             $('#r2-btn-cancel').show();
             $('#r2-progress-wrap').show();
             startPolling();
+            startMigTerminal();
         });
     });
 
     $('#r2-btn-run-now').on('click', function () {
         var $btn = $(this);
         $btn.prop('disabled', true).text('Processing…');
+        startMigTerminal();
         $.post(R2Offload.ajaxUrl, {
             action: 'r2_offload_run_batch_now',
             nonce:  R2Offload.nonce
@@ -159,17 +162,168 @@
             if (res.success) {
                 showMessage(res.data.message, 'success');
                 updateProgress(res.data);
+                stopMigTerminal('Done');
                 if (res.data.pending === 0 && res.data.processing === 0) {
                     $('#r2-btn-run-now').hide();
                     stopPolling();
                 }
             } else {
+                stopMigTerminal('Error');
                 showMessage((res.data && res.data.message) || 'Batch failed.', 'error');
             }
         }).fail(function () {
             $btn.prop('disabled', false).text('Process Batch Now');
+            stopMigTerminal('Error');
             showMessage('Request failed.', 'error');
         });
+    });
+
+    // =========================================================================
+    // Migration upload terminal
+    // =========================================================================
+
+    var migTermOffset   = 0;
+    var migTermInterval = null;
+    var migRunning      = false;
+
+    function migTermLine(entry) {
+        var color, icon, detail;
+        var file = entry.file ? escHtml(entry.file) : ('#' + entry.id);
+
+        if (entry.fail > 0) {
+            color  = '#ff6b6b';
+            icon   = '✗';
+            detail = file + '  <span style="color:#ff9999;">' + entry.fail + ' failed</span>';
+        } else if (entry.up > 0) {
+            color  = '#4ec94e';
+            icon   = '✓';
+            detail = file + '  <span style="color:#88cc88;">' + entry.up + ' file' + (entry.up === 1 ? '' : 's') + ' uploaded</span>';
+        } else {
+            color  = '#666';
+            icon   = '–';
+            detail = file + '  <span style="color:#555;">skipped (' + (entry.skip || 0) + ')</span>';
+        }
+
+        return '<div style="color:' + color + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+               '<span style="user-select:none;opacity:.6;">' + icon + '</span>&nbsp;' +
+               '<span style="color:#888;font-size:11px;">#' + entry.id + '</span>&nbsp;&nbsp;' +
+               detail +
+               '</div>';
+    }
+
+    function appendMigTermLines(entries) {
+        var $lines  = $('#r2-mig-terminal-lines');
+        var $term   = $('#r2-mig-terminal');
+        var $cursor = $('#r2-mig-terminal-cursor');
+        var atBottom = $term[0].scrollHeight - $term.scrollTop() - $term.outerHeight() < 40;
+
+        var html = '';
+        for (var i = 0; i < entries.length; i++) {
+            html += migTermLine(entries[i]);
+        }
+        $cursor.before(html);
+
+        if (atBottom) {
+            $term.scrollTop($term[0].scrollHeight);
+        }
+    }
+
+    function startMigTerminal() {
+        migTermOffset = 0;
+        $('#r2-mig-terminal-lines').empty();
+        $('#r2-mig-terminal').scrollTop(0);
+        $('#r2-mig-terminal-cursor').show();
+        $('#r2-mig-terminal-status').text('Running…');
+        $('#r2-mig-terminal-wrap').show();
+
+        if (migTermInterval) clearInterval(migTermInterval);
+        migTermInterval = setInterval(pollMigTerminal, 2000);
+    }
+
+    function stopMigTerminal(msg) {
+        if (migTermInterval) { clearInterval(migTermInterval); migTermInterval = null; }
+        pollMigTerminal(); // final flush
+        $('#r2-mig-terminal-cursor').hide();
+        $('#r2-mig-terminal-status').text(msg || 'Done');
+    }
+
+    function pollMigTerminal() {
+        $.post(R2Offload.ajaxUrl, {
+            action: 'r2_offload_migration_log',
+            nonce:  R2Offload.nonce,
+            offset: migTermOffset
+        }, function (res) {
+            if (!res.success) return;
+            if (res.data.entries && res.data.entries.length) {
+                appendMigTermLines(res.data.entries);
+            }
+            migTermOffset = res.data.next_offset || migTermOffset;
+        });
+    }
+
+    // "Run Until Complete" — chains batches from the browser until the queue is empty.
+    $('#r2-btn-run-all').on('click', function () {
+        var $btn = $(this);
+
+        if (migRunning) {
+            migRunning = false;
+            $btn.prop('disabled', true).text('Stopping…');
+            return;
+        }
+
+        migRunning = true;
+        $btn.text('■ Stop').removeClass('button-primary').addClass('button-secondary');
+        $('#r2-btn-run-now').prop('disabled', true);
+        startMigTerminal();
+        showMessage('Running batches until complete…', 'info');
+
+        function runNextBatch() {
+            if (!migRunning) {
+                $btn.prop('disabled', false).text('⚡ Run Until Complete').removeClass('button-secondary').addClass('button-primary');
+                $('#r2-btn-run-now').prop('disabled', false);
+                stopMigTerminal('Stopped');
+                showMessage('Stopped by user.', 'warning');
+                return;
+            }
+
+            $.post(R2Offload.ajaxUrl, {
+                action: 'r2_offload_run_batch_now',
+                nonce:  R2Offload.nonce
+            }, function (res) {
+                if (!res.success) {
+                    migRunning = false;
+                    $btn.prop('disabled', false).text('⚡ Run Until Complete').removeClass('button-secondary').addClass('button-primary');
+                    $('#r2-btn-run-now').prop('disabled', false);
+                    stopMigTerminal('Error');
+                    showMessage((res.data && res.data.message) || 'Batch failed.', 'error');
+                    return;
+                }
+
+                updateProgress(res.data);
+
+                var pending = parseInt(res.data.pending, 10) + parseInt(res.data.processing || 0, 10);
+                if (pending <= 0) {
+                    migRunning = false;
+                    $btn.prop('disabled', false).text('⚡ Run Until Complete').removeClass('button-secondary').addClass('button-primary');
+                    $('#r2-btn-run-now').prop('disabled', false);
+                    stopMigTerminal('Complete');
+                    showMessage(R2Offload.i18n.complete || 'Migration complete!', 'success');
+                    $('#r2-btn-run-now').hide();
+                    $('#r2-btn-run-all').hide();
+                    stopPolling();
+                } else {
+                    setTimeout(runNextBatch, 500);
+                }
+            }).fail(function () {
+                migRunning = false;
+                $btn.prop('disabled', false).text('⚡ Run Until Complete').removeClass('button-secondary').addClass('button-primary');
+                $('#r2-btn-run-now').prop('disabled', false);
+                stopMigTerminal('Error');
+                showMessage('Request failed.', 'error');
+            });
+        }
+
+        runNextBatch();
     });
 
     $('#r2-btn-pause').on('click', function () {
@@ -195,9 +349,12 @@
         stopPolling();
         ajaxAction('r2_offload_cancel_migration', '#r2-btn-cancel', R2Offload.i18n.cancelling, function (data) {
             showMessage(data.message, 'warning');
+            migRunning = false;
+            stopMigTerminal('Cancelled');
             $('#r2-btn-pause').hide();
             $('#r2-btn-resume').hide();
             $('#r2-btn-run-now').hide();
+            $('#r2-btn-run-all').hide();
             $('#r2-btn-cancel').hide();
             $('#r2-progress-fill').css('width', '0%');
             $('#r2-progress-text').text('0 / 0');

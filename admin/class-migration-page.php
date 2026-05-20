@@ -86,6 +86,11 @@ class MigrationPage {
                         title="<?php esc_attr_e( 'Manually process one batch now — use this if cron is not running.', 'cloudflare-r2-offload' ); ?>">
                     <?php esc_html_e( 'Process Batch Now', 'cloudflare-r2-offload' ); ?>
                 </button>
+                <button type="button" id="r2-btn-run-all" class="button button-primary"
+                        style="<?php echo $pending > 0 ? '' : 'display:none;'; ?>"
+                        title="<?php esc_attr_e( 'Bypass WP-Cron and run batches continuously from your browser until the queue is empty. Keep this tab open.', 'cloudflare-r2-offload' ); ?>">
+                    <?php esc_html_e( '⚡ Run Until Complete', 'cloudflare-r2-offload' ); ?>
+                </button>
                 <button type="button" id="r2-btn-pause" class="button"
                         style="<?php echo ( ! $paused && $pending > 0 ) ? '' : 'display:none;'; ?>">
                     <?php esc_html_e( 'Pause', 'cloudflare-r2-offload' ); ?>
@@ -103,6 +108,19 @@ class MigrationPage {
                     <?php esc_html_e( 'Retry Failed', 'cloudflare-r2-offload' ); ?>
                 </button>
                 <?php endif; ?>
+            </div>
+
+            <!-- Migration mini terminal -->
+            <div id="r2-mig-terminal-wrap" style="display:none;margin-top:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.05em;">Upload Output</span>
+                    <span id="r2-mig-terminal-status" style="font-size:11px;color:#888;"></span>
+                </div>
+                <div id="r2-mig-terminal"
+                     style="background:#1a1a2e;color:#e0e0e0;font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.65;padding:12px 14px;border-radius:6px;height:260px;overflow-y:auto;border:1px solid #2d2d4e;">
+                    <div id="r2-mig-terminal-lines"></div>
+                    <span id="r2-mig-terminal-cursor" style="display:inline-block;width:8px;height:13px;background:#7c7cff;vertical-align:middle;animation:r2blink 1s step-end infinite;"></span>
+                </div>
             </div>
 
             <hr style="margin:32px 0 24px;">

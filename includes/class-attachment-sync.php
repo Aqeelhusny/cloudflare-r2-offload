@@ -137,6 +137,15 @@ class AttachmentSync {
             update_post_meta( $attachment_id, '_r2_offload_error', "Uploaded: {$result['uploaded']}, Failed: {$result['failed']}" );
         }
 
+        // Write to the migration terminal so the live UI can show per-attachment progress.
+        $this->logger->write_migration_terminal( [
+            'id'   => $attachment_id,
+            'file' => basename( $attached ),
+            'up'   => $result['uploaded'],
+            'skip' => $result['skipped'],
+            'fail' => $result['failed'],
+        ] );
+
         return $result;
     }
 

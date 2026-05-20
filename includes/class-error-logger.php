@@ -217,7 +217,61 @@ class ErrorLogger {
     }
 
     // =========================================================================
-    // Validate terminal log — streamed per-attachment output for the mini
+    // Migration terminal log — same file-based streaming pattern as validate.
+    // =========================================================================
+
+    public function write_migration_terminal( array $entry ): void {
+        if ( ! is_dir( $this->log_dir ) ) {
+            wp_mkdir_p( $this->log_dir );
+        }
+        file_put_contents(
+            $this->log_dir . '/migration-terminal.jsonl',
+            wp_json_encode( $entry ) . "\n",
+            FILE_APPEND | LOCK_EX
+        );
+    }
+
+    public function read_migration_terminal( int $byte_offset = 0 ): array {
+        $path = $this->log_dir . '/migration-terminal.jsonl';
+
+        if ( ! file_exists( $path ) ) {
+            return [ 'entries' => [], 'next_offset' => 0 ];
+        }
+
+        $size = filesize( $path );
+        if ( $size === 0 || $byte_offset >= $size ) {
+            return [ 'entries' => [], 'next_offset' => (int) $size ];
+        }
+
+        $fh = fopen( $path, 'rb' );
+        if ( ! $fh ) {
+            return [ 'entries' => [], 'next_offset' => (int) $size ];
+        }
+
+        fseek( $fh, $byte_offset );
+        $chunk = fread( $fh, $size - $byte_offset );
+        fclose( $fh );
+
+        $entries = [];
+        foreach ( array_filter( explode( "\n", (string) $chunk ) ) as $line ) {
+            $decoded = json_decode( $line, true );
+            if ( is_array( $decoded ) ) {
+                $entries[] = $decoded;
+            }
+        }
+
+        return [ 'entries' => $entries, 'next_offset' => (int) $size ];
+    }
+
+    public function clear_migration_terminal(): void {
+        $path = $this->log_dir . '/migration-terminal.jsonl';
+        if ( file_exists( $path ) ) {
+            @unlink( $path );
+        }
+    }
+
+    // =========================================================================
+    // Validate terminal log — same file-based streaming pattern as validate.
     // terminal UI. Written by cron via file_put_contents (append), read by
     // the AJAX endpoint from a given byte offset so the JS gets only new lines.
     // =========================================================================

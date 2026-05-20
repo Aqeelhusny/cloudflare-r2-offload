@@ -44,6 +44,8 @@ class Migration {
             // Feature: Restore & desync — restore from R2, verify, delete from R2.
             'r2_offload_start_desync',
             'r2_offload_desync_status',
+            // Migration terminal log (read-only streaming endpoint).
+            'r2_offload_migration_log',
             // Feature: Background offload queue stats and logs.
             'r2_offload_background_queue_status',
             'r2_offload_background_queue_logs',
@@ -63,6 +65,7 @@ class Migration {
     }
 
     private const READ_ONLY_ACTIONS = [
+        'r2_offload_migration_log',
         'r2_offload_migration_status',
         'r2_offload_restore_status',
         'r2_offload_local_delete_status',
@@ -167,6 +170,11 @@ class Migration {
         ] );
     }
 
+    private function ajax_migration_log(): void {
+        $offset = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
+        wp_send_json_success( $this->logger->read_migration_terminal( $offset ) );
+    }
+
     private function ajax_start_migration(): void {
         global $wpdb;
 
@@ -188,9 +196,10 @@ class Migration {
             }
         }
 
-        // Clear any existing queue.
+        // Clear any existing queue and migration terminal.
         $wpdb->query( "TRUNCATE TABLE `{$table}`" );
         delete_option( 'r2_offload_migration_paused' );
+        $this->logger->clear_migration_terminal();
 
         $now = current_time( 'mysql', true );
 

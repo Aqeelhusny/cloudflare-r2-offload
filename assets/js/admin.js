@@ -464,7 +464,103 @@
             .addClass('notice notice-' + (type || 'info')).text(msg).show();
     }
 
+    // =========================================================================
+    // Validate mini terminal
+    // =========================================================================
+
+    var valTermOffset   = 0;  // byte offset into validate-terminal.jsonl
+    var valTermInterval = null;
+
+    function termLine(entry) {
+        var color, icon, detail;
+        var file = entry.file ? entry.file.replace(/^.*\/([^/]+)$/, '$1') : ('#' + entry.id);
+
+        switch (entry.status) {
+            case 'found':
+                color  = '#4ec94e';
+                icon   = '✓';
+                detail = escHtml(file) + '  <span style="color:#888;">(' + entry.keys + ' key' + (entry.keys === 1 ? '' : 's') + ' verified)</span>';
+                break;
+            case 'missing':
+                color  = '#ff6b6b';
+                icon   = '✗';
+                detail = escHtml(file) + '  <span style="color:#ff9999;">' + entry.miss + ' of ' + entry.total + ' key' + (entry.total === 1 ? '' : 's') + ' missing — will upload via migration</span>';
+                break;
+            case 'skip':
+                color  = '#666';
+                icon   = '–';
+                detail = (entry.file ? escHtml(file) + '  ' : '') + '<span style="color:#555;">' + escHtml(entry.reason || 'skipped') + '</span>';
+                break;
+            case 'error':
+                color  = '#ffaa44';
+                icon   = '⚠';
+                detail = escHtml(file) + '  <span style="color:#ffcc88;">' + escHtml(entry.reason || 'API error') + '</span>';
+                break;
+            default:
+                color  = '#999';
+                icon   = '?';
+                detail = escHtml(JSON.stringify(entry));
+        }
+
+        return '<div style="color:' + color + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+               '<span style="user-select:none;opacity:.6;">' + icon + '</span>&nbsp;' +
+               '<span style="color:#888;font-size:11px;">#' + entry.id + '</span>&nbsp;&nbsp;' +
+               detail +
+               '</div>';
+    }
+
+    function appendTermLines(entries) {
+        var $lines  = $('#r2-val-terminal-lines');
+        var $term   = $('#r2-val-terminal');
+        var $cursor = $('#r2-val-terminal-cursor');
+        var atBottom = $term[0].scrollHeight - $term.scrollTop() - $term.outerHeight() < 40;
+
+        var html = '';
+        for (var i = 0; i < entries.length; i++) {
+            html += termLine(entries[i]);
+        }
+        $cursor.before(html);
+
+        if (atBottom) {
+            $term.scrollTop($term[0].scrollHeight);
+        }
+    }
+
+    function startValTerminal() {
+        valTermOffset = 0;
+        $('#r2-val-terminal-lines').empty();
+        $('#r2-val-terminal').scrollTop(0);
+        $('#r2-val-terminal-cursor').show();
+        $('#r2-val-terminal-status').text('Running…');
+        $('#r2-val-terminal-wrap').show();
+
+        if (valTermInterval) clearInterval(valTermInterval);
+        valTermInterval = setInterval(pollValTerminal, 2000);
+    }
+
+    function stopValTerminal(msg) {
+        if (valTermInterval) { clearInterval(valTermInterval); valTermInterval = null; }
+        pollValTerminal(); // final flush
+        $('#r2-val-terminal-cursor').hide();
+        $('#r2-val-terminal-status').text(msg || 'Done');
+    }
+
+    function pollValTerminal() {
+        $.post(R2Offload.ajaxUrl, {
+            action: 'r2_offload_validate_log',
+            nonce:  R2Offload.nonce,
+            offset: valTermOffset
+        }, function (res) {
+            if (!res.success) return;
+            if (res.data.entries && res.data.entries.length) {
+                appendTermLines(res.data.entries);
+            }
+            valTermOffset = res.data.next_offset || valTermOffset;
+        });
+    }
+
     function startValPolling(total) {
+        startValTerminal();
         if (valPollInterval) return;
         valPollInterval = setInterval(function () {
             $.post(R2Offload.ajaxUrl, {
@@ -486,6 +582,7 @@
                     valPollInterval = null;
                     updateValProgress(total, total, d.failed || 0);
                     showValMessage('Validation complete. Check "Claimed from R2" and "Not Found in R2" counts above.', 'success');
+                    stopValTerminal('Complete');
                     $('#r2-btn-validate').prop('disabled', false);
                     $('#r2-btn-validate-cancel').hide();
                     // Refresh the main synced stat.
@@ -543,6 +640,7 @@
         if (!confirm('Cancel validation? Progress so far will be kept — already claimed attachments stay synced.')) return;
         clearInterval(valPollInterval);
         valPollInterval = null;
+        stopValTerminal('Cancelled');
 
         $.post(R2Offload.ajaxUrl, {
             action: 'r2_offload_cancel_validate',

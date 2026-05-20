@@ -52,6 +52,8 @@ class Migration {
             'r2_offload_start_validate',
             'r2_offload_validate_status',
             'r2_offload_cancel_validate',
+            // Streaming terminal output for the validate mini-terminal UI.
+            'r2_offload_validate_log',
             // Feature: Path diagnostic — shows expected R2 keys vs what actually exists.
             'r2_offload_validate_diagnose',
         ];
@@ -68,6 +70,7 @@ class Migration {
         'r2_offload_background_queue_status',
         'r2_offload_background_queue_logs',
         'r2_offload_validate_status',
+        'r2_offload_validate_log',
         'r2_offload_validate_diagnose',
     ];
 
@@ -874,6 +877,7 @@ class Migration {
         $wpdb->delete( $table, [ 'job_type' => 'validate' ], [ '%s' ] );
         delete_option( 'r2_offload_validate_paused' );
         delete_option( 'r2_offload_validate_claimed' );
+        $this->logger->clear_validate_terminal();
 
         $now = current_time( 'mysql', true );
 
@@ -941,6 +945,16 @@ class Migration {
         wp_clear_scheduled_hook( BatchProcessor::VALIDATE_HOOK );
         $this->logger->info( 'Pre-upload validation cancelled.' );
         wp_send_json_success( [ 'message' => __( 'Validation cancelled.', 'cloudflare-r2-offload' ) ] );
+    }
+
+    /**
+     * Return new validate terminal entries from a given byte offset.
+     * The JS polls this every 2 seconds and appends new lines to the terminal.
+     */
+    private function ajax_validate_log(): void {
+        $offset = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
+        $result = $this->logger->read_validate_terminal( $offset );
+        wp_send_json_success( $result );
     }
 
     // =========================================================================

@@ -216,6 +216,72 @@ class ErrorLogger {
         }
     }
 
+    // =========================================================================
+    // Validate terminal log — streamed per-attachment output for the mini
+    // terminal UI. Written by cron via file_put_contents (append), read by
+    // the AJAX endpoint from a given byte offset so the JS gets only new lines.
+    // =========================================================================
+
+    /**
+     * Append one entry to the validate terminal log (called per attachment during cron).
+     */
+    public function write_validate_terminal( array $entry ): void {
+        if ( ! is_dir( $this->log_dir ) ) {
+            wp_mkdir_p( $this->log_dir );
+        }
+        file_put_contents(
+            $this->log_dir . '/validate-terminal.jsonl',
+            wp_json_encode( $entry ) . "\n",
+            FILE_APPEND | LOCK_EX
+        );
+    }
+
+    /**
+     * Read validate terminal entries from a given byte offset.
+     * Returns new entries plus the next offset so the caller can page forward.
+     */
+    public function read_validate_terminal( int $byte_offset = 0 ): array {
+        $path = $this->log_dir . '/validate-terminal.jsonl';
+
+        if ( ! file_exists( $path ) ) {
+            return [ 'entries' => [], 'next_offset' => 0 ];
+        }
+
+        $size = filesize( $path );
+        if ( $size === 0 || $byte_offset >= $size ) {
+            return [ 'entries' => [], 'next_offset' => (int) $size ];
+        }
+
+        $fh = fopen( $path, 'rb' );
+        if ( ! $fh ) {
+            return [ 'entries' => [], 'next_offset' => (int) $size ];
+        }
+
+        fseek( $fh, $byte_offset );
+        $chunk = fread( $fh, $size - $byte_offset );
+        fclose( $fh );
+
+        $entries = [];
+        foreach ( array_filter( explode( "\n", (string) $chunk ) ) as $line ) {
+            $decoded = json_decode( $line, true );
+            if ( is_array( $decoded ) ) {
+                $entries[] = $decoded;
+            }
+        }
+
+        return [ 'entries' => $entries, 'next_offset' => (int) $size ];
+    }
+
+    /**
+     * Delete the validate terminal log file (called when a new validation run starts).
+     */
+    public function clear_validate_terminal(): void {
+        $path = $this->log_dir . '/validate-terminal.jsonl';
+        if ( file_exists( $path ) ) {
+            @unlink( $path );
+        }
+    }
+
     /**
      * Initialise and return the WP_Filesystem instance.
      */

@@ -257,6 +257,23 @@ class MigrationPage {
                     <?php esc_html_e( 'Before running validation, click "Check Path" to confirm your manual upload path matches what the plugin expects. Attachments with missing files in R2 are marked "Not Found in R2" — migration will upload those normally.', 'cloudflare-r2-offload' ); ?>
                 </p>
             </div>
+
+            <!-- Validate mini terminal -->
+            <div id="r2-val-terminal-wrap" style="display:none;margin-top:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.05em;">Validation Output</span>
+                    <span id="r2-val-terminal-status" style="font-size:11px;color:#888;"></span>
+                </div>
+                <div id="r2-val-terminal"
+                     style="background:#1a1a2e;color:#e0e0e0;font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.65;padding:12px 14px;border-radius:6px;height:280px;overflow-y:auto;border:1px solid #2d2d4e;">
+                    <div id="r2-val-terminal-lines"></div>
+                    <span id="r2-val-terminal-cursor" style="display:inline-block;width:8px;height:13px;background:#7c7cff;vertical-align:middle;animation:r2blink 1s step-end infinite;"></span>
+                </div>
+            </div>
+            <style>
+            @keyframes r2blink { 0%,100%{opacity:1} 50%{opacity:0} }
+            </style>
+
             <div id="r2-diagnose-result" style="display:none;margin-top:12px;padding:12px;background:#f6f7f7;border:1px solid #ddd;border-radius:4px;font-family:monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-all;"></div>
 
             <hr style="margin:32px 0 24px;">

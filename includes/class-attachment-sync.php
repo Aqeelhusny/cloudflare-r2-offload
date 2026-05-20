@@ -339,12 +339,14 @@ class AttachmentSync {
         if ( get_post_meta( $attachment_id, '_r2_offload_synced', true ) === '1' ) {
             $result['skipped']++;
             $this->logger->debug( 'Validate: skipped — already synced.', [ 'attachment_id' => $attachment_id ] );
+            $this->logger->write_validate_terminal( [ 'id' => $attachment_id, 'status' => 'skip', 'reason' => 'Already synced' ] );
             return $result;
         }
 
         if ( ! $this->settings->is_configured() ) {
             $result['skipped']++;
             $this->logger->warning( 'Validate: skipped — plugin not configured.', [ 'attachment_id' => $attachment_id ] );
+            $this->logger->write_validate_terminal( [ 'id' => $attachment_id, 'status' => 'skip', 'reason' => 'Plugin not configured' ] );
             return $result;
         }
 
@@ -352,6 +354,7 @@ class AttachmentSync {
         if ( ! $attached ) {
             $result['skipped']++;
             $this->logger->warning( 'Validate: skipped — _wp_attached_file meta missing.', [ 'attachment_id' => $attachment_id ] );
+            $this->logger->write_validate_terminal( [ 'id' => $attachment_id, 'status' => 'skip', 'reason' => 'No file meta' ] );
             return $result;
         }
 
@@ -359,6 +362,7 @@ class AttachmentSync {
         if ( $mime && in_array( $mime, $this->settings->get_excluded_mime_types(), true ) ) {
             $result['skipped']++;
             $this->logger->debug( 'Validate: skipped — excluded MIME type.', [ 'attachment_id' => $attachment_id, 'mime' => $mime ] );
+            $this->logger->write_validate_terminal( [ 'id' => $attachment_id, 'file' => $attached, 'status' => 'skip', 'reason' => 'Excluded MIME: ' . $mime ] );
             return $result;
         }
 
@@ -402,6 +406,13 @@ class AttachmentSync {
                 'attachment_id' => $attachment_id,
                 'missing'       => $missing_keys,
             ] );
+            $this->logger->write_validate_terminal( [
+                'id'     => $attachment_id,
+                'file'   => $attached,
+                'status' => 'missing',
+                'total'  => count( $r2_keys ),
+                'miss'   => count( $missing_keys ),
+            ] );
             if ( ! empty( $error_keys ) ) {
                 $this->logger->error( 'Validate: some keys could not be checked due to API errors.', [
                     'attachment_id' => $attachment_id,
@@ -418,6 +429,12 @@ class AttachmentSync {
             $this->logger->error( 'Validate: skipped claim — one or more keys could not be verified due to API errors.', [
                 'attachment_id' => $attachment_id,
                 'error_keys'    => $error_keys,
+            ] );
+            $this->logger->write_validate_terminal( [
+                'id'     => $attachment_id,
+                'file'   => $attached,
+                'status' => 'error',
+                'reason' => 'API error checking ' . count( $error_keys ) . ' key(s)',
             ] );
             return $result;
         }
@@ -437,6 +454,12 @@ class AttachmentSync {
             'attachment_id' => $attachment_id,
             'file'          => $attached,
             'keys'          => count( $r2_keys ),
+        ] );
+        $this->logger->write_validate_terminal( [
+            'id'     => $attachment_id,
+            'file'   => $attached,
+            'status' => 'found',
+            'keys'   => count( $r2_keys ),
         ] );
 
         $result['claimed']++;

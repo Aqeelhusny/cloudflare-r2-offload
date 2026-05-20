@@ -18,6 +18,9 @@ class UrlRewriter {
 
     private Settings $settings;
 
+    /** Per-request cache: full URL → attachment ID (avoids repeated DB queries). */
+    private array $url_id_cache = [];
+
     public function __construct( Settings $settings ) {
         $this->settings = $settings;
     }
@@ -94,6 +97,9 @@ class UrlRewriter {
     /**
      * Rewrite any remaining upload URLs in post content / product descriptions.
      * Runs at priority 20 — after WooCommerce's own content filters (priority 10).
+     *
+     * Uses a per-URL sync check so only attachments confirmed on R2 are rewritten.
+     * A global str_replace would redirect 404s for files not yet migrated.
      */
     public function rewrite_content( string $content ): string {
         $local = $this->get_local_base();
@@ -103,7 +109,18 @@ class UrlRewriter {
             return $content;
         }
 
-        return str_replace( $local, $cdn, $content );
+        return preg_replace_callback(
+            '/' . preg_quote( $local, '/' ) . '(\/[^\s\'"<>?#]+)/i',
+            function ( $matches ) use ( $local, $cdn ) {
+                $full_url = $local . $matches[1];
+                $id       = $this->url_to_attachment_id( $full_url );
+                if ( $id && $this->is_synced( $id ) ) {
+                    return $cdn . $matches[1];
+                }
+                return $matches[0]; // Not on R2 — leave the local URL intact.
+            },
+            $content
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -147,7 +164,10 @@ class UrlRewriter {
 
         // Variations may nest under 'image'.
         if ( ! empty( $data['image'] ) && is_array( $data['image'] ) ) {
-            $data['image'] = $this->rewrite_rest_image_item( $data['image'], $local, $cdn );
+            $attachment_id = isset( $data['image']['id'] ) ? (int) $data['image']['id'] : 0;
+            if ( $attachment_id && $this->is_synced( $attachment_id ) ) {
+                $data['image'] = $this->rewrite_rest_image_item( $data['image'], $local, $cdn );
+            }
         }
 
         $response->set_data( $data );
@@ -163,8 +183,7 @@ class UrlRewriter {
      * Called on the switch_blog action.
      */
     public function flush_url_cache(): void {
-        // No instance properties to clear — we compute on demand (see get_local_base/get_cdn_base).
-        // This method exists as a hook target so subclasses or future caching can hook in.
+        $this->url_id_cache = [];
     }
 
     // -------------------------------------------------------------------------
@@ -173,6 +192,18 @@ class UrlRewriter {
 
     private function is_synced( int $attachment_id ): bool {
         return get_post_meta( $attachment_id, '_r2_offload_synced', true ) === '1';
+    }
+
+    /**
+     * Resolve a full upload URL to an attachment ID with per-request caching.
+     * attachment_url_to_postid() performs a DB query; caching avoids repeating it
+     * for the same URL appearing multiple times in content / srcset.
+     */
+    private function url_to_attachment_id( string $url ): int {
+        if ( ! array_key_exists( $url, $this->url_id_cache ) ) {
+            $this->url_id_cache[ $url ] = (int) attachment_url_to_postid( $url );
+        }
+        return $this->url_id_cache[ $url ];
     }
 
     private function replace( string $url ): string {
@@ -208,7 +239,10 @@ class UrlRewriter {
      */
     private function rewrite_rest_image_array( array $images, string $local, string $cdn ): array {
         foreach ( $images as &$image ) {
-            $image = $this->rewrite_rest_image_item( $image, $local, $cdn );
+            $attachment_id = isset( $image['id'] ) ? (int) $image['id'] : 0;
+            if ( $attachment_id && $this->is_synced( $attachment_id ) ) {
+                $image = $this->rewrite_rest_image_item( $image, $local, $cdn );
+            }
         }
         return $images;
     }

@@ -1,13 +1,8 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws;
+namespace Aws;
 
-use R2Offload\Vendor\Aws\Api\Service;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use Aws\Api\Service;
+use Psr\Http\Message\RequestInterface;
 use Psr\Log\InvalidArgumentException;
 
 /**
@@ -81,7 +76,7 @@ class EndpointParameterMiddleware
 
             $uri = $request->getUri();
             $host = $prefix . $uri->getHost();
-            if (!\R2Offload\Vendor\Aws\is_valid_hostname($host)) {
+            if (!\Aws\is_valid_hostname($host)) {
                 throw new \InvalidArgumentException(
                     "The supplied parameters result in an invalid hostname: '{$host}'."
                 );

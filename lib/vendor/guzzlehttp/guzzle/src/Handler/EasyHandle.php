@@ -1,17 +1,12 @@
 <?php
-/**
- * @license MIT
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\GuzzleHttp\Handler;
+namespace GuzzleHttp\Handler;
 
-use R2Offload\Vendor\GuzzleHttp\Psr7\Response;
-use R2Offload\Vendor\GuzzleHttp\Utils;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
-use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
-use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Utils;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Represents a cURL easy handle and the data it populates.

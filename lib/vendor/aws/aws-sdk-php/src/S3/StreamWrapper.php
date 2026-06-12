@@ -1,19 +1,14 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\S3;
+namespace Aws\S3;
 
-use R2Offload\Vendor\Aws\CacheInterface;
-use R2Offload\Vendor\Aws\LruArrayCache;
-use R2Offload\Vendor\Aws\Result;
-use R2Offload\Vendor\Aws\S3\Exception\S3Exception;
-use R2Offload\Vendor\GuzzleHttp\Psr7;
-use R2Offload\Vendor\GuzzleHttp\Psr7\Stream;
-use R2Offload\Vendor\GuzzleHttp\Psr7\CachingStream;
-use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
+use Aws\CacheInterface;
+use Aws\LruArrayCache;
+use Aws\Result;
+use Aws\S3\Exception\S3Exception;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Psr7\Stream;
+use GuzzleHttp\Psr7\CachingStream;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Amazon S3 stream wrapper to use "s3://<bucket>/<key>" files with PHP
@@ -439,7 +434,7 @@ class StreamWrapper
 
         // Filter our "/" keys added by the console as directories, and ensure
         // that if a filter function is provided that it passes the filter.
-        $this->objectIterator = \R2Offload\Vendor\Aws\flatmap(
+        $this->objectIterator = \Aws\flatmap(
             $this->getClient()->getPaginator('ListObjects', $op),
             function (Result $result) use ($filterFn) {
                 $contentsAndPrefixes = $result->search('[Contents[], CommonPrefixes[]][]');

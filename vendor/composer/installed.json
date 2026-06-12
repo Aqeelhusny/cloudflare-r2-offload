@@ -440,7 +440,6 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -2507,7 +2506,6 @@
             "time": "2019-03-08T08:55:37+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"

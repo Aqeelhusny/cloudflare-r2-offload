@@ -1,12 +1,7 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Token;
+namespace Aws\Token;
 
-use R2Offload\Vendor\Aws\Identity\BearerTokenIdentity;
+use Aws\Identity\BearerTokenIdentity;
 
 /**
  * Basic implementation of the AWS Token interface that allows callers to

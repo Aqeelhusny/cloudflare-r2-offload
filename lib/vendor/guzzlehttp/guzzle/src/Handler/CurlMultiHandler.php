@@ -1,18 +1,13 @@
 <?php
-/**
- * @license MIT
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\GuzzleHttp\Handler;
+namespace GuzzleHttp\Handler;
 
 use Closure;
-use R2Offload\Vendor\GuzzleHttp\Promise as P;
-use R2Offload\Vendor\GuzzleHttp\Promise\Promise;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
-use R2Offload\Vendor\GuzzleHttp\Utils;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use GuzzleHttp\Promise as P;
+use GuzzleHttp\Promise\Promise;
+use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Utils;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * Returns an asynchronous response using curl_multi_* functions.

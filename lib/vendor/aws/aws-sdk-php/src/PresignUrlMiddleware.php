@@ -1,15 +1,10 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws;
+namespace Aws;
 
-use R2Offload\Vendor\Aws\Signature\SignatureV4;
-use R2Offload\Vendor\Aws\Endpoint\EndpointProvider;
-use R2Offload\Vendor\GuzzleHttp\Psr7\Uri;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use Aws\Signature\SignatureV4;
+use Aws\Endpoint\EndpointProvider;
+use GuzzleHttp\Psr7\Uri;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * @internal Adds computed values to service operations that need presigned url.
@@ -92,9 +87,9 @@ class PresignUrlMiddleware
         $newCmd['__skip' . $cmdName] = true;
 
         // Serialize a request for the operation.
-        $request = \R2Offload\Vendor\Aws\serialize($newCmd);
+        $request = \Aws\serialize($newCmd);
         // Create the new endpoint for the target endpoint.
-        if ($this->endpointProvider instanceof \R2Offload\Vendor\Aws\EndpointV2\EndpointProviderV2) {
+        if ($this->endpointProvider instanceof \Aws\EndpointV2\EndpointProviderV2) {
             $providerArgs = array_merge(
                 $this->client->getEndpointProviderArgs(),
                 ['Region' => $cmd['SourceRegion']]

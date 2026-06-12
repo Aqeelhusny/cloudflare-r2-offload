@@ -1,10 +1,5 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Exception;
+namespace Aws\Exception;
 
 /**
  * This class represents exceptions related to logic surrounding client-side

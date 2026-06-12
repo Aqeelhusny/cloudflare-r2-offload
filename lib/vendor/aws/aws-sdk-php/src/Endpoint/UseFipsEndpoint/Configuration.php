@@ -1,13 +1,8 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Endpoint\UseFipsEndpoint;
+namespace Aws\Endpoint\UseFipsEndpoint;
 
-use R2Offload\Vendor\Aws;
-use R2Offload\Vendor\Aws\Endpoint\UseFipsEndpoint\Exception\ConfigurationException;
+use Aws;
+use Aws\Endpoint\UseFipsEndpoint\Exception\ConfigurationException;
 
 class Configuration implements ConfigurationInterface
 {
@@ -15,7 +10,7 @@ class Configuration implements ConfigurationInterface
 
     public function __construct($useFipsEndpoint)
     {
-        $this->useFipsEndpoint = \R2Offload\Vendor\Aws\boolean_value($useFipsEndpoint);
+        $this->useFipsEndpoint = Aws\boolean_value($useFipsEndpoint);
         if (is_null($this->useFipsEndpoint)) {
             throw new ConfigurationException("'use_fips_endpoint' config option"
                 . " must be a boolean value.");

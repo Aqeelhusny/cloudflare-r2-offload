@@ -1,13 +1,8 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\S3;
+namespace Aws\S3;
 
-use R2Offload\Vendor\Aws\Credentials\CredentialsInterface;
-use R2Offload\Vendor\GuzzleHttp\Psr7\Uri;
+use Aws\Credentials\CredentialsInterface;
+use GuzzleHttp\Psr7\Uri;
 
 /**
  * @deprecated

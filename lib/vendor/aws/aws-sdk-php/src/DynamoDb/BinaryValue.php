@@ -1,12 +1,7 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\DynamoDb;
+namespace Aws\DynamoDb;
 
-use R2Offload\Vendor\GuzzleHttp\Psr7;
+use GuzzleHttp\Psr7;
 
 /**
  * Special object to represent a DynamoDB binary (B) value.
@@ -19,7 +14,7 @@ class BinaryValue implements \JsonSerializable
     /**
      * @param mixed $value A binary value compatible with Guzzle streams.
      *
-     * @see R2Offload\Vendor\GuzzleHttp\Stream\Stream::factory
+     * @see GuzzleHttp\Stream\Stream::factory
      */
     public function __construct($value)
     {

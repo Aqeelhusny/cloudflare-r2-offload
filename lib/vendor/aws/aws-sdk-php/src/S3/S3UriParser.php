@@ -1,16 +1,11 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\S3;
+namespace Aws\S3;
 
-use R2Offload\Vendor\Aws\Arn\Exception\InvalidArnException;
-use R2Offload\Vendor\Aws\Arn\S3\AccessPointArn;
-use R2Offload\Vendor\Aws\Arn\ArnParser;
-use R2Offload\Vendor\GuzzleHttp\Psr7;
-use R2Offload\Vendor\Psr\Http\Message\UriInterface;
+use Aws\Arn\Exception\InvalidArnException;
+use Aws\Arn\S3\AccessPointArn;
+use Aws\Arn\ArnParser;
+use GuzzleHttp\Psr7;
+use Psr\Http\Message\UriInterface;
 
 /**
  * Extracts a region, bucket, key, and and if a URI is in path-style

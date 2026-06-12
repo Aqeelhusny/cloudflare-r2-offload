@@ -1,24 +1,19 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\S3\Crypto;
+namespace Aws\S3\Crypto;
 
-use R2Offload\Vendor\Aws\Crypto\DecryptionTrait;
-use R2Offload\Vendor\Aws\HashingStream;
-use R2Offload\Vendor\Aws\MetricsBuilder;
-use R2Offload\Vendor\Aws\PhpHash;
-use R2Offload\Vendor\Aws\Crypto\AbstractCryptoClient;
-use R2Offload\Vendor\Aws\Crypto\EncryptionTrait;
-use R2Offload\Vendor\Aws\Crypto\MetadataEnvelope;
-use R2Offload\Vendor\Aws\Crypto\MaterialsProvider;
-use R2Offload\Vendor\Aws\Crypto\Cipher\CipherBuilderTrait;
-use R2Offload\Vendor\Aws\S3\S3Client;
-use R2Offload\Vendor\GuzzleHttp\Promise;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
-use R2Offload\Vendor\GuzzleHttp\Psr7;
+use Aws\Crypto\DecryptionTrait;
+use Aws\HashingStream;
+use Aws\MetricsBuilder;
+use Aws\PhpHash;
+use Aws\Crypto\AbstractCryptoClient;
+use Aws\Crypto\EncryptionTrait;
+use Aws\Crypto\MetadataEnvelope;
+use Aws\Crypto\MaterialsProvider;
+use Aws\Crypto\Cipher\CipherBuilderTrait;
+use Aws\S3\S3Client;
+use GuzzleHttp\Promise;
+use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7;
 
 /**
  * Provides a wrapper for an S3Client that supplies functionality to encrypt
@@ -208,7 +203,7 @@ class S3EncryptionClient extends AbstractCryptoClient
      *   instruction file if an using an InstructionFileMetadataHandler was
      *   determined.
      *
-     * @return \R2Offload\Vendor\Aws\Result PutObject call result with the details of uploading
+     * @return \Aws\Result PutObject call result with the details of uploading
      *                     the encrypted file.
      *
      * @throws \InvalidArgumentException Thrown when arguments above are not
@@ -343,7 +338,7 @@ class S3EncryptionClient extends AbstractCryptoClient
      *            passed directly to OpenSSL when using gcm. It is ignored when
      *            using cbc.
      *
-     * @return \R2Offload\Vendor\Aws\Result GetObject call result with the 'Body' field
+     * @return \Aws\Result GetObject call result with the 'Body' field
      *                     wrapped in a decryption stream with its metadata
      *                     information.
      *

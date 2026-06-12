@@ -1,13 +1,8 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Token;
+namespace Aws\Token;
 
 use InvalidArgumentException;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * Interface used to provide interchangeable strategies for adding authorization

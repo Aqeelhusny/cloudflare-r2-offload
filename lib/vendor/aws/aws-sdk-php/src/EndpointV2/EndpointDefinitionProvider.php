@@ -1,11 +1,6 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\Aws\EndpointV2;
+namespace Aws\EndpointV2;
 
 /**
  * Provides Endpoint-related artifacts used for endpoint resolution
@@ -70,7 +65,7 @@ class EndpointDefinitionProvider
 
     private static function getLatest($service)
     {
-        $manifest = \R2Offload\Vendor\Aws\manifest();
+        $manifest = \Aws\manifest();
         return $manifest[$service]['versions']['latest'];
     }
 }

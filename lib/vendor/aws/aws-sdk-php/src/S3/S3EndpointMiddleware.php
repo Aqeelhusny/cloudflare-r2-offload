@@ -1,20 +1,15 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\S3;
+namespace Aws\S3;
 
-use R2Offload\Vendor\Aws\Arn\ArnParser;
-use R2Offload\Vendor\Aws\Arn\ObjectLambdaAccessPointArn;
-use R2Offload\Vendor\Aws\ClientResolver;
-use R2Offload\Vendor\Aws\CommandInterface;
-use R2Offload\Vendor\Aws\Endpoint\EndpointProvider;
-use R2Offload\Vendor\Aws\Endpoint\PartitionEndpointProvider;
-use R2Offload\Vendor\GuzzleHttp\Exception\InvalidArgumentException;
-use R2Offload\Vendor\GuzzleHttp\Psr7\Uri;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use Aws\Arn\ArnParser;
+use Aws\Arn\ObjectLambdaAccessPointArn;
+use Aws\ClientResolver;
+use Aws\CommandInterface;
+use Aws\Endpoint\EndpointProvider;
+use Aws\Endpoint\PartitionEndpointProvider;
+use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Psr7\Uri;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * Used to update the URL used for S3 requests to support:
@@ -220,8 +215,8 @@ class S3EndpointMiddleware
             $dnsSuffix = $this->endpointProvider
                 ->getPartition($this->region, 's3')
                 ->getDnsSuffix();
-            $fips = \R2Offload\Vendor\Aws\is_fips_pseudo_region($this->region) ? "-fips" : "";
-            $region = \R2Offload\Vendor\Aws\strip_fips_pseudo_regions($this->region);
+            $fips = \Aws\is_fips_pseudo_region($this->region) ? "-fips" : "";
+            $region = \Aws\strip_fips_pseudo_regions($this->region);
             $host =
                 "{$command['RequestRoute']}.s3-object-lambda{$fips}.{$region}.{$dnsSuffix}";
 

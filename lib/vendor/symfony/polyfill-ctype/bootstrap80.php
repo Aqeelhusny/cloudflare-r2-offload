@@ -7,11 +7,9 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
-use R2Offload\Vendor\Symfony\Polyfill\Ctype as p;
+use Symfony\Polyfill\Ctype as p;
 
 if (!function_exists('ctype_alnum')) {
     function ctype_alnum(mixed $text): bool { return p\Ctype::ctype_alnum($text); }

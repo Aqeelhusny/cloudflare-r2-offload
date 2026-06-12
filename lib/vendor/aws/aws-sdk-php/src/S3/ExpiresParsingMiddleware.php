@@ -1,14 +1,9 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\S3;
+namespace Aws\S3;
 
-use R2Offload\Vendor\Aws\CommandInterface;
-use R2Offload\Vendor\Aws\ResultInterface;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use Aws\CommandInterface;
+use Aws\ResultInterface;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * Logs a warning when the `expires` header

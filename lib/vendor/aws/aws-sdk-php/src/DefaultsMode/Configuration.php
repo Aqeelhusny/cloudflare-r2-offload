@@ -1,12 +1,7 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\DefaultsMode;
+namespace Aws\DefaultsMode;
 
-use R2Offload\Vendor\Aws\DefaultsMode\Exception\ConfigurationException;
+use Aws\DefaultsMode\Exception\ConfigurationException;
 
 class Configuration implements ConfigurationInterface
 {
@@ -39,7 +34,7 @@ class Configuration implements ConfigurationInterface
             return;
         }
 
-        $data = \R2Offload\Vendor\Aws\load_compiled_json(
+        $data = \Aws\load_compiled_json(
             __DIR__ . '/../data/sdk-default-configuration.json'
         );
 

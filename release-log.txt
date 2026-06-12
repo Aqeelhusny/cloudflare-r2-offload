@@ -1,0 +1,1018 @@
+Installing dependencies from lock file (including require-dev)
+Verifying lock file contents can be installed on current platform.
+Nothing to install, update or remove
+Generating optimized autoload files
+34 packages you are using are looking for funding.
+Use the `composer fund` command to find out more!
+
+--- FIX 1: sync_attachment() + delete_local setting ---
+
+Test 1.1: sync with delete_local=true sets _r2_offload_local_deleted
+  PASS  1.1a: one file uploaded
+  PASS  1.1b: no failures
+  PASS  1.1c: marked synced
+  PASS  1.1d: marked local_deleted
+
+Test 1.2: sync with delete_local=false does NOT set _r2_offload_local_deleted
+  PASS  1.2a: one file uploaded
+  PASS  1.2b: marked synced
+  PASS  1.2c: local_deleted NOT set
+
+Test 1.3: sync with delete_local=true + multiple image sizes
+  PASS  1.3a: three files uploaded
+  PASS  1.3b: local_deleted set for multi-size
+
+Test 1.4: upload failure does NOT set local_deleted
+  PASS  1.4a: one failure
+  PASS  1.4b: local_deleted NOT set on failure
+  PASS  1.4c: NOT marked synced
+
+Test 1.5: re-sync skips all files, does not set local_deleted
+  PASS  1.5a: nothing new uploaded
+  PASS  1.5b: one skipped (already on R2)
+  PASS  1.5c: local_deleted not set (no upload)
+
+--- FIX 2: delete_local_for_attachment() with already-deleted files ---
+
+Test 2.1: files exist, get deleted, flag set
+  PASS  2.1a: one file deleted
+  PASS  2.1b: none skipped
+  PASS  2.1c: flag set
+
+Test 2.2: files already gone (migration deleted them), flag STILL set
+  PASS  2.2a: nothing to delete
+  PASS  2.2b: one skipped (already gone)
+  PASS  2.2c: flag SET despite files already gone
+
+Test 2.3: mixed — some files exist, some gone
+  PASS  2.3a: one file deleted
+  PASS  2.3b: one skipped
+  PASS  2.3c: flag set
+
+Test 2.4: attachment NOT synced — refuses to delete
+  PASS  2.4a: nothing deleted
+  PASS  2.4b: skipped (not synced)
+  PASS  2.4c: flag NOT set
+
+Test 2.5: no _wp_attached_file meta — skipped
+  PASS  2.5a: nothing deleted
+  PASS  2.5b: skipped
+  PASS  2.5c: flag NOT set
+
+Test 2.6: multiple sizes ALL already gone — flag set
+  PASS  2.6a: nothing deleted
+  PASS  2.6b: all three skipped
+  PASS  2.6c: flag SET (all gone = R2-only)
+
+--- END-TO-END: User's exact scenario ---
+
+Test 3.1: migration+delete_local → bulk delete_local_for_attachment → flag set
+  PASS  3.1a: flag set after migration
+  PASS  3.1b: flag still set after bulk delete
+
+Test 3.2: migration (no auto-delete) → bulk delete → flag set
+  PASS  3.2a: synced
+  PASS  3.2b: no local_deleted yet
+  PASS  3.2c: file deleted
+  PASS  3.2d: flag set
+
+Test 3.3: bulk 25 attachments — migration deletes, bulk delete sets flags
+  PASS  3.3a: all 25 have local_deleted flag after migration
+  PASS  3.3b: all 25 still flagged after bulk delete
+
+--- RESTORE: restore_from_r2 clears _r2_offload_local_deleted ---
+
+Test 4.1: restore clears the flag
+  PASS  4.1a: one file restored
+  PASS  4.1b: no failures
+  PASS  4.1c: flag cleared after restore
+
+Test 4.2: restore failure keeps the flag
+  PASS  4.2a: one failure
+  PASS  4.2b: flag preserved on failure
+
+Test 4.3: restore skips existing local files
+  PASS  4.3a: nothing restored (already exists)
+  PASS  4.3b: one skipped
+  PASS  4.3c: flag stays (nothing was restored)
+
+Test 4.4: restore with no R2 keys — skipped
+  PASS  4.4a: skipped (no keys)
+  PASS  4.4b: flag unchanged
+
+Test 4.5: restore when plugin not configured
+  PASS  4.5a: skipped
+  PASS  4.5b: flag unchanged
+
+--- DESYNC: restore_and_desync_attachment ---
+
+Test 5.1: desync clears all meta including local_deleted
+  PASS  5.1a: desynced successfully
+  PASS  5.1b: synced cleared
+  PASS  5.1c: keys cleared
+  PASS  5.1d: local_deleted cleared
+
+Test 5.2: desync aborts if restore fails
+  PASS  5.2a: NOT desynced
+  PASS  5.2b: still synced
+  PASS  5.2c: flag preserved
+
+--- EDGE CASES ---
+
+Test 6.1: plugin not configured — sync skips
+  PASS  6.1a: skipped
+  PASS  6.1b: no flag set
+
+Test 6.2: excluded mime type — sync skips
+  PASS  6.2a: skipped
+  PASS  6.2b: no flag
+
+Test 6.3: missing _wp_attached_file — sync fails
+  PASS  6.3a: one failure
+  PASS  6.3b: no flag
+
+Test 6.4: logger records already_gone=true when all files missing
+  PASS  6.4a: info log was recorded
+  PASS  6.4b: already_gone=true in context
+
+Test 6.5: full lifecycle — sync → auto-delete → restore → verify
+  PASS  6.5a: flagged after sync
+  PASS  6.5b: flag persists
+  PASS  6.5c: file restored
+  PASS  6.5d: flag cleared after restore
+  PASS  6.5e: file physically exists after restore
+
+Test 6.6: WooCommerce extra sizes added after initial sync
+  PASS  6.6a: original uploaded
+  PASS  6.6b: flagged
+  PASS  6.6c: new size uploaded
+  PASS  6.6d: original skipped (already on R2)
+  PASS  6.6e: flag still set after re-sync
+
+============================================================
+Results: 78/78 passed, 0 failed
+============================================================
+
+--- SECTION 1: Settings Sanitizers ---
+
+Test 1.1: account ID sanitizer — valid hex
+  PASS  1.1a: lowercased and trimmed
+
+Test 1.2: account ID sanitizer — invalid chars
+  PASS  1.2a: settings error added for invalid account ID
+
+Test 1.3: bucket name sanitizer — valid
+  PASS  1.3a: valid bucket passes through
+
+Test 1.4: bucket name sanitizer — invalid
+  PASS  1.4a: error for invalid bucket name
+
+Test 1.5: domain sanitizer — strips scheme
+  PASS  1.5a: scheme and trailing slash stripped
+
+Test 1.6: scheme sanitizer
+  PASS  1.6a: https valid
+  PASS  1.6b: http valid
+  PASS  1.6c: invalid defaults to https
+
+Test 1.7: path prefix sanitizer
+  PASS  1.7a: slashes trimmed
+
+Test 1.8: batch size sanitizer — range clamping
+  PASS  1.8a: floor at 1
+  PASS  1.8b: cap at 50
+  PASS  1.8c: 25 passes through
+
+Test 1.9: concurrency sanitizer — range clamping
+  PASS  1.9a: floor at 1
+  PASS  1.9b: cap at 10
+  PASS  1.9c: 5 passes through
+
+Test 1.10: multipart threshold sanitizer
+  PASS  1.10a: floor at 5MB
+  PASS  1.10b: 10MB converts
+
+Test 1.11: MIME type sanitizer
+  PASS  1.11a: string split into array
+  PASS  1.11b: array sanitized
+
+--- SECTION 2: Settings Encryption ---
+
+Test 2.1: encrypt then decrypt secret key
+  PASS  2.1a: encrypted value has r2enc: prefix
+  PASS  2.1b: not stored in plaintext
+  PASS  2.1c: decrypts back to original
+
+Test 2.2: already-encrypted value not re-encrypted
+  PASS  2.2a: r2enc: value passes through unchanged
+
+Test 2.3: empty secret preserves existing
+  PASS  2.3a: empty input keeps existing encrypted value
+
+Test 2.4: __R2_SECRET_UNCHANGED__ preserves existing
+  PASS  2.4a: placeholder keeps existing value
+
+--- SECTION 3: Settings — is_configured and typed getters ---
+
+Test 3.1: is_configured — missing credentials
+  PASS  3.1a: empty options = not configured
+
+Test 3.2: is_configured — all credentials present
+  PASS  3.2a: all credentials = configured
+
+Test 3.3: typed getters — defaults
+  PASS  3.3a: default path prefix
+  PASS  3.3b: default scheme
+  PASS  3.3c: delete_local default false
+  PASS  3.3d: serve_from_r2 default false
+  PASS  3.3e: batch_size default 10
+
+Test 3.4: settings cache flush
+  PASS  3.4a: reads initial value
+  PASS  3.4b: cached value unchanged
+  PASS  3.4c: fresh value after flush
+
+Test 3.5: CDN base URL
+  PASS  3.5a: full CDN URL
+
+Test 3.6: CDN base URL — no domain
+  PASS  3.6a: empty when no domain
+
+Test 3.7: CDN base URL — no path prefix
+  PASS  3.7a: URL without prefix
+
+--- SECTION 4: Settings — set_defaults ---
+
+Test 4.1: set_defaults sets all expected defaults
+  PASS  4.1a: url_scheme default
+  PASS  4.1b: path_prefix default
+  PASS  4.1c: serve_from_r2 default 0
+  PASS  4.1d: delete_local default 0
+  PASS  4.1e: upload_on_save default 1
+  PASS  4.1f: batch_size default 10
+  PASS  4.1g: multipart threshold 5MB
+  PASS  4.1h: concurrency default 3
+  PASS  4.1i: excluded mimes empty
+
+Test 4.2: set_defaults respects existing options
+  PASS  4.2a: existing value preserved
+
+--- SECTION 5: Connection Test Flow ---
+
+Test 5.1: connection test — plugin not configured
+  PASS  5.1a: sync skipped when not configured
+  PASS  5.1b: nothing uploaded
+
+Test 5.2: connection test — upload succeeds
+  PASS  5.2a: one file uploaded
+  PASS  5.2b: marked synced
+
+Test 5.3: connection test — upload fails
+  PASS  5.3a: upload failed
+  PASS  5.3b: NOT marked synced
+  PASS  5.3c: error logged
+
+Test 5.4: retry count incremented on failure
+  PASS  5.4a: retry count = 1 after first failure
+  PASS  5.4b: retry count = 2 after second failure
+
+Test 5.5: success clears retry count and error
+  PASS  5.5a: retry count cleared
+  PASS  5.5b: error cleared
+
+--- SECTION 6: Migration Queue State Transitions ---
+
+Test 6.1: pause flag prevents sync during batch
+  PASS  6.1a: pause flag is set
+  PASS  6.1b: no uploads when paused
+
+Test 6.2: resume clears pause flag
+  PASS  6.2a: pause flag cleared
+
+Test 6.3: cancel clears state
+  PASS  6.3a: migration paused cleared on cancel
+
+Test 6.4: transient lock prevents overlapping runs
+  PASS  6.4a: lock is active
+  PASS  6.4b: lock cleared after delete
+
+Test 6.5: separate locks for each job type
+  PASS  6.5a: migration lock
+  PASS  6.5b: restore lock
+  PASS  6.5c: local_del lock
+  PASS  6.5d: desync lock
+
+--- SECTION 7: Batch Success/Failure Logic ---
+
+Test 7.1: batch success — failed=0, uploaded>0
+  PASS  7.1a: success when uploaded>0 and no failures
+
+Test 7.2: batch success — failed=0, skipped>0 (re-sync)
+  PASS  7.2a: success when all skipped (already on R2)
+
+Test 7.3: batch failure — upload fails
+  PASS  7.3a: failure when failed > 0
+
+Test 7.4: nothing scenario — not configured
+  PASS  7.4a: not-configured returns skipped=1 which is still "success" for queue
+
+Test 7.5: retry count simulation — 3 retries = failed status
+  PASS  7.5a: retry 3 = failed
+  PASS  7.5b: retry 2 = still pending
+
+--- SECTION 8: Deactivation Lifecycle ---
+
+Test 8.1: deactivation clears cron hooks and transient locks
+  PASS  8.1a: all 4 cron hooks cleared
+  PASS  8.1b: batch lock cleared
+  PASS  8.1c: restore lock cleared
+  PASS  8.1d: local_del lock cleared
+  PASS  8.1e: desync lock cleared
+
+--- SECTION 9: End-to-End User Scenarios ---
+
+Test 9.1: full happy-path — save → test → migrate → complete
+  PASS  9.1a: credentials saved and configured
+  PASS  9.1b: all 5 files uploaded
+  PASS  9.1c: all 5 marked synced
+
+Test 9.2: enable delete_local mid-migration
+  PASS  9.2a-1: old file NOT marked local_deleted
+  PASS  9.2a-2: old file NOT marked local_deleted
+  PASS  9.2a-3: old file NOT marked local_deleted
+  PASS  9.2b: new file 1 marked local_deleted
+  PASS  9.2c: new file 2 marked local_deleted
+
+Test 9.3: bulk local-delete for previously-synced files
+  PASS  9.3a-1: file deleted
+  PASS  9.3b-1: flag set
+  PASS  9.3a-2: file deleted
+  PASS  9.3b-2: flag set
+  PASS  9.3a-3: file deleted
+  PASS  9.3b-3: flag set
+
+Test 9.4: restore then re-sync (user changed mind)
+  PASS  9.4a: file restored
+  PASS  9.4b: flag cleared
+  PASS  9.4c: still synced
+  PASS  9.4d: already on R2, skipped
+  PASS  9.4e: nothing new uploaded
+
+Test 9.5: partial failure → retry succeeds
+  PASS  9.5a: both files failed
+  PASS  9.5b: NOT synced
+  PASS  9.5c: NOT local_deleted
+  PASS  9.5d: retry count = 1
+  PASS  9.5e: both files uploaded on retry
+  PASS  9.5f: now synced
+  PASS  9.5g: local_deleted set
+  PASS  9.5h: retry count cleared
+
+Test 9.6: full desync lifecycle
+  PASS  9.6a: desynced successfully
+  PASS  9.6b: both files restored
+  PASS  9.6c: synced cleared
+  PASS  9.6d: keys cleared
+  PASS  9.6e: local_deleted cleared
+  PASS  9.6f: synced_at cleared
+  PASS  9.6g: 2 keys deleted from R2
+
+Test 9.7: desync aborts on download failure
+  PASS  9.7a: NOT desynced
+  PASS  9.7b: still synced
+  PASS  9.7c: flag preserved
+  PASS  9.7d: nothing deleted from R2
+
+Test 9.8: new upload during migration — no conflict
+  PASS  9.8a: user upload succeeded
+  PASS  9.8b: user upload synced
+  PASS  9.8c: user upload local_deleted
+  PASS  9.8d: all migration items synced
+
+Test 9.9: upload stats recorded
+  PASS  9.9a: stats option exists
+  PASS  9.9b: uploads count = 1
+  PASS  9.9c: bytes > 0
+
+Test 9.10: custom path prefix in R2 keys
+  PASS  9.10a: custom prefix applied to R2 key
+  PASS  9.10b: R2 upload used custom prefix
+
+--- SECTION 10: Edge Cases ---
+
+Test 10.1: file vanishes between exists check and upload (race condition)
+  PASS  10.1a: missing file skipped
+  PASS  10.1b: warning logged for missing file
+
+Test 10.2: multiple syncs are idempotent
+  PASS  10.2a: first sync uploads once
+  PASS  10.2b: second sync uploads nothing new
+  PASS  10.2c: keys not duplicated
+
+Test 10.3: excluded MIME type blocks upload
+  PASS  10.3a: video skipped
+  PASS  10.3b: nothing uploaded
+  PASS  10.3c: R2 client never called
+
+Test 10.4: restore creates directories
+  PASS  10.4a: file restored
+  PASS  10.4b: nested dir created
+
+Test 10.5: delete_local refuses for non-synced attachment
+  PASS  10.5a: nothing deleted
+  PASS  10.5b: skipped (safety guard)
+  PASS  10.5c: file still exists
+
+Test 10.6: WooCommerce lazy regeneration — new sizes picked up on re-sync
+  PASS  10.6a: original uploaded
+  PASS  10.6b: 2 new sizes uploaded
+  PASS  10.6c: original skipped (already on R2)
+  PASS  10.6d: total 3 uploads across both syncs
+  PASS  10.6e: 3 keys tracked
+
+============================================================
+Results: 145/145 passed, 0 failed
+============================================================
+
+--- SECTION 1: collect_files() mapping ---
+
+Test 1.1: original file only — default prefix
+  PASS  1.1a: exactly one entry
+  PASS  1.1b: correct local→key mapping
+
+Test 1.2: original + two sizes
+  PASS  1.2a: original + 2 sizes = 3 entries
+  PASS  1.2b: original present
+  PASS  1.2c: thumbnail present
+  PASS  1.2d: medium present
+  PASS  1.2e: thumbnail R2 key correct
+
+Test 1.3: null metadata → only original
+  PASS  1.3a: null metadata = original only
+
+Test 1.4: empty sizes array → only original
+  PASS  1.4a: empty sizes = original only
+
+Test 1.5: empty path prefix → no prefix in R2 keys
+  PASS  1.5a: key = relative path only
+
+Test 1.6: custom path prefix
+  PASS  1.6a: custom prefix applied
+
+Test 1.7: root-level file (no year/month subdir)
+  PASS  1.7a: root file key correct
+
+Test 1.8: root-level file + sizes
+  PASS  1.8a: root file + 1 size = 2 entries
+  PASS  1.8b: root size key correct
+
+Test 1.9: WooCommerce sizes in metadata
+  PASS  1.9a: original + 4 WC sizes = 5 entries
+  PASS  1.9b: wc_thumbnail present
+  PASS  1.9c: wc_single present
+
+Test 1.10: size entry with no file key is ignored
+  PASS  1.10a: malformed size skipped, original + medium = 2
+
+--- SECTION 2: Upload — sync_attachment() ---
+
+Test 2.1: fresh upload — single file
+  PASS  2.1a: 1 file uploaded
+  PASS  2.1b: no failures
+  PASS  2.1c: nothing skipped
+  PASS  2.1d: marked synced
+  PASS  2.1e: R2 received exactly 1 upload call
+  PASS  2.1f: correct R2 key
+
+Test 2.2: fresh upload — original + 3 sizes
+  PASS  2.2a: 4 files uploaded
+  PASS  2.2b: no failures
+  PASS  2.2c: R2 received 4 upload calls
+
+Test 2.3: re-upload — all already on R2 → all skipped
+  PASS  2.3a: nothing uploaded
+  PASS  2.3b: 1 skipped (already on R2)
+  PASS  2.3c: R2 upload never called
+  PASS  2.3d: still synced
+
+Test 2.4: WooCommerce re-sync — only new size uploaded
+  PASS  2.4a: 1 new size uploaded
+  PASS  2.4b: original skipped (already on R2)
+  PASS  2.4c: WC size key correct
+  PASS  2.4d: 2 keys tracked after re-sync
+
+Test 2.5: upload fails → not synced, retry_count = 1
+  PASS  2.5a: 1 failure
+  PASS  2.5b: nothing uploaded
+  PASS  2.5c: NOT marked synced
+  PASS  2.5d: retry_count = 1
+  PASS  2.5e: error meta set
+
+Test 2.6: partial failure — some uploaded, some failed → not synced
+  PASS  2.6a: both failed
+  PASS  2.6b: NOT synced when any failed
+  PASS  2.6c: local_deleted NOT set
+
+Test 2.7: not configured → skipped
+  PASS  2.7a: skipped
+  PASS  2.7b: nothing uploaded
+  PASS  2.7c: R2 never called
+
+Test 2.8: excluded MIME type → skipped
+  PASS  2.8a: skipped
+  PASS  2.8b: R2 never called
+
+Test 2.9: missing _wp_attached_file → failed
+  PASS  2.9a: failed
+  PASS  2.9b: nothing uploaded
+  PASS  2.9c: error logged
+
+Test 2.10: file missing on disk → skipped gracefully
+  PASS  2.10a: skipped
+  PASS  2.10b: not counted as failure
+  PASS  2.10c: warning logged for missing file
+
+Test 2.11: delete_local=true → files deleted and local_deleted flag set
+  PASS  2.11a: 2 uploaded
+  PASS  2.11b: local_deleted flag set
+  PASS  2.11c: original file deleted
+  PASS  2.11d: thumbnail file deleted
+
+Test 2.12: delete_local=true + upload failure → files NOT deleted
+  PASS  2.12a: file NOT deleted on failure
+  PASS  2.12b: local_deleted NOT set
+
+Test 2.13: R2 keys tracked correctly
+  PASS  2.13a: 2 keys tracked
+  PASS  2.13b: original key tracked
+  PASS  2.13c: thumbnail key tracked
+
+Test 2.14: retry_count increments with each failure
+  PASS  2.14a: count=1 after 1st fail
+  PASS  2.14b: count=2 after 2nd fail
+  PASS  2.14c: count=3 after 3rd fail
+
+Test 2.15: success clears retry_count and error
+  PASS  2.15a: retry_count cleared
+  PASS  2.15b: error cleared
+
+Test 2.16: upload stats recorded in wp_options
+  PASS  2.16a: stats option exists
+  PASS  2.16b: uploads count = 1
+  PASS  2.16c: bytes >= 1024
+
+Test 2.17: wp_get_attachment_metadata returns false → treated as null
+  PASS  2.17a: uploaded without fatal error
+  PASS  2.17b: no failure from false metadata
+  PASS  2.17c: R2 received the upload
+
+Test 2.18: migration terminal entry written
+  PASS  2.18a: 1 terminal entry written
+  PASS  2.18b: correct attachment ID
+  PASS  2.18c: full relative path in entry
+  PASS  2.18d: up=1
+  PASS  2.18e: fail=0
+
+Test 2.19: custom path prefix in R2 keys
+  PASS  2.19a: custom prefix in uploaded key
+  PASS  2.19b: custom prefix tracked in meta
+
+Test 2.20: empty path prefix → files at bucket root
+  PASS  2.20a: no prefix in key
+
+--- SECTION 3: Delete local — delete_local_for_attachment() ---
+
+Test 3.1: files exist → deleted, flag set
+  PASS  3.1a: 2 deleted
+  PASS  3.1b: none skipped
+  PASS  3.1c: flag set
+  PASS  3.1d: original file gone
+  PASS  3.1e: thumbnail file gone
+
+Test 3.2: files already gone → flag still set
+  PASS  3.2a: nothing to delete
+  PASS  3.2b: 2 skipped (already gone)
+  PASS  3.2c: flag SET despite files gone
+
+Test 3.3: mixed — orig exists, thumb gone → flag set
+  PASS  3.3a: 1 deleted
+  PASS  3.3b: 1 skipped (already gone)
+  PASS  3.3c: flag set
+
+Test 3.4: not synced → safety guard
+  PASS  3.4a: nothing deleted
+  PASS  3.4b: skipped (not synced)
+  PASS  3.4c: file still exists locally
+  PASS  3.4d: flag NOT set
+
+Test 3.5: no _wp_attached_file → skipped
+  PASS  3.5a: nothing deleted
+  PASS  3.5b: skipped
+  PASS  3.5c: flag NOT set
+
+Test 3.6: many sizes — all deleted
+  PASS  3.6a: all 4 files deleted
+  PASS  3.6b: flag set
+
+Test 3.7: false metadata in delete_local handled safely
+  PASS  3.7a: file deleted despite false metadata
+  PASS  3.7b: flag set
+
+Test 3.8: multiple delete calls — idempotent
+  PASS  3.8a: flag remains set
+
+--- SECTION 4: Desync — desync_attachment() ---
+
+Test 4.1: normal desync clears all meta and calls delete_files
+  PASS  4.1a: both keys sent to delete_files
+  PASS  4.1b: synced cleared
+  PASS  4.1c: keys cleared
+  PASS  4.1d: synced_at cleared
+  PASS  4.1e: local_deleted cleared
+  PASS  4.1f: retry_count cleared
+  PASS  4.1g: error cleared
+
+Test 4.2: desync with no R2 keys — delete_files not called
+  PASS  4.2a: delete_files not called
+  PASS  4.2b: synced cleared anyway
+
+Test 4.3: desync always returns true
+  PASS  4.3a: desync returns true
+
+Test 4.4: restore_and_desync — success
+  PASS  4.4a: desynced successfully
+  PASS  4.4b: 2 files restored
+  PASS  4.4c: synced cleared
+  PASS  4.4d: R2 keys deleted
+
+Test 4.5: restore_and_desync — download fails → aborts
+  PASS  4.5a: NOT desynced
+  PASS  4.5b: synced still set
+  PASS  4.5c: local_deleted preserved
+  PASS  4.5d: nothing deleted from R2
+
+Test 4.6: desync with many R2 keys
+  PASS  4.6a: all 10 keys sent to delete_files
+
+--- SECTION 5: Check — validate_pre_uploaded() ---
+
+Test 5.1: already synced → skip
+  PASS  5.1a: skipped
+  PASS  5.1b: not claimed
+  PASS  5.1c: check_key never called
+  PASS  5.1d: skip written to terminal
+  PASS  5.1e: reason = Already synced
+
+Test 5.2: not configured → skip
+  PASS  5.2a: skipped
+  PASS  5.2b: check_key never called
+  PASS  5.2c: reason in terminal
+
+Test 5.3: no _wp_attached_file → skip
+  PASS  5.3a: skipped
+  PASS  5.3b: reason in terminal
+
+Test 5.4: excluded MIME → skip
+  PASS  5.4a: skipped
+  PASS  5.4b: check_key never called
+  PASS  5.4c: skip in terminal
+  PASS  5.4d: MIME exclusion in reason
+
+Test 5.5: all keys found → claimed
+  PASS  5.5a: claimed
+  PASS  5.5b: no missing
+  PASS  5.5c: check_key called for both files
+  PASS  5.5d: marked synced
+  PASS  5.5e: 2 keys stored
+  PASS  5.5f: synced_at set
+  PASS  5.5g: found in terminal
+
+Test 5.6: all keys missing → not claimed
+  PASS  5.6a: not claimed
+  PASS  5.6b: missing count = 1
+  PASS  5.6c: missing_keys correct
+  PASS  5.6d: NOT marked synced
+  PASS  5.6e: missing in terminal
+
+Test 5.7: some found, some missing → not claimed
+  PASS  5.7a: not claimed (has missing)
+  PASS  5.7b: 1 missing
+  PASS  5.7c: correct missing key
+  PASS  5.7d: NOT synced
+
+Test 5.8: all keys error → skipped
+  PASS  5.8a: skipped on API error
+  PASS  5.8b: not claimed
+  PASS  5.8c: NOT synced
+  PASS  5.8d: error in terminal
+  PASS  5.8e: error logged
+
+Test 5.9: error on some, missing on others → missing takes priority
+  PASS  5.9a: not claimed
+  PASS  5.9b: missing count (missing > error priority)
+
+Test 5.10: validate_claimed option incremented
+  PASS  5.10a: claimed counter incremented to 6
+
+Test 5.11: check_key called with exact R2 keys
+  PASS  5.11a: check_key called twice
+  PASS  5.11b: original key checked
+  PASS  5.11c: thumbnail key checked
+
+Test 5.12: false metadata in validate handled safely
+  PASS  5.12a: claimed despite false metadata (only original checked)
+  PASS  5.12b: only 1 key checked (no sizes from false)
+
+Test 5.13: custom path prefix in checked keys
+  PASS  5.13a: custom prefix in checked key
+
+--- SECTION 6: End-to-end upload → check → delete ---
+
+Test 6.1: upload → validate → delete local
+  PASS  6.1a: 2 uploaded
+  PASS  6.1b: synced
+  PASS  6.1c: claimed by validate
+  PASS  6.1d: synced after validate
+  PASS  6.1e: 2 files deleted locally
+  PASS  6.1f: local_deleted set
+  PASS  6.1g: original gone
+  PASS  6.1h: thumbnail gone
+
+Test 6.2: upload fails → validate missing → retry succeeds
+  PASS  6.2a: not synced after failure
+  PASS  6.2b: validate finds missing
+  PASS  6.2c: not claimed
+  PASS  6.2d: retry upload succeeds
+  PASS  6.2e: synced after retry
+  PASS  6.2f: retry_count cleared
+
+Test 6.3: upload+delete → validate → desync
+  PASS  6.3a: deleted locally
+  PASS  6.3b: 2 keys sent to R2 delete_files
+  PASS  6.3c: synced cleared
+  PASS  6.3d: local_deleted cleared
+
+Test 6.4: 50-attachment batch — all upload then validate
+  PASS  6.4a: all 50 uploaded
+  PASS  6.4b: R2 received 50 upload calls
+  PASS  6.4c: all 50 claimed by validate
+  PASS  6.4d: 50 check_key calls
+
+Test 6.5: upload → restore → re-upload
+  PASS  6.5a: synced
+  PASS  6.5b: file restored from R2 after local delete
+  PASS  6.5c: nothing re-uploaded (already on R2)
+  PASS  6.5d: skipped (already on R2)
+
+============================================================
+Results: 194/194 passed, 0 failed
+============================================================
+
+------------------------------------------------------------
+1. rewrite_url()
+------------------------------------------------------------
+  PASS  1.1 Synced: URL rewritten to CDN
+  PASS  1.2 Not synced: URL unchanged
+  PASS  1.3 Synced: full path preserved
+  PASS  1.4 Synced thumbnail: rewritten
+  PASS  1.5 Synced but external URL: unchanged
+  PASS  1.6 attachment_id=0: URL unchanged
+  PASS  1.7 HTTP-scheme CDN: rewritten correctly
+
+------------------------------------------------------------
+2. rewrite_image_src()
+------------------------------------------------------------
+  PASS  2.1 false input: returns false unchanged
+  PASS  2.2 Not synced: image array unchanged
+  PASS  2.3 Synced: img[0] rewritten
+  PASS  2.3 Synced: width unchanged
+  PASS  2.3 Synced: height unchanged
+  PASS  2.3 Synced: is_intermediate unchanged
+  PASS  2.4 Synced thumbnail: img[0] rewritten
+  PASS  2.5 Empty array: returned unchanged (falsy guard)
+  PASS  2.6 Synced external URL: img[0] unchanged
+
+------------------------------------------------------------
+3. rewrite_srcset()
+------------------------------------------------------------
+  PASS  3.1 Not synced: sources unchanged
+  PASS  3.2 Synced: 300w URL rewritten
+  PASS  3.2 Synced: 600w URL rewritten
+  PASS  3.2 Synced: 1200w URL rewritten
+  PASS  3.3 Source without url key: no url added
+  PASS  3.3 Source with url: rewritten
+  PASS  3.4 Empty sources: returns []
+  PASS  3.5 Synced external URL in srcset: unchanged
+
+------------------------------------------------------------
+4. rewrite_content()
+------------------------------------------------------------
+  PASS  4.1 No local URLs: content unchanged
+  PASS  4.2 Synced image: URL rewritten
+  PASS  4.3 Non-synced image: URL unchanged
+  PASS  4.4 Mixed: only synced URL rewritten
+  PASS  4.5 Duplicate synced URL: both rewritten
+  PASS  4.6 Synced URL in href: rewritten
+  PASS  4.7 URL with query string: path rewritten, ?query preserved
+  PASS  4.8 URL with fragment: path rewritten, #fragment preserved
+  PASS  4.9 URL in CSS url(): rewritten
+  PASS  4.10 URL at end of string: rewritten
+  PASS  4.11 Empty content: returns empty string
+  PASS  4.12 No CDN domain: content unchanged
+  PASS  4.13 Three images across years: synced rewritten, non-synced intact
+  PASS  4.14 URL in text: correct space boundary
+  PASS  4.15 Unknown attachment (id=0): URL not rewritten
+  PASS  4.16 srcset attribute: all synced sizes rewritten
+
+------------------------------------------------------------
+5. rewrite_html_blob()
+------------------------------------------------------------
+  PASS  5.1 WC gallery HTML: synced image rewritten
+  PASS  5.2 WC gallery HTML: non-synced image unchanged
+  PASS  5.3 Mixed HTML blob: only synced rewritten
+  PASS  5.4 WC gallery thumbnail blob: href and src both rewritten
+
+------------------------------------------------------------
+6. rewrite_rest_response()
+------------------------------------------------------------
+  PASS  6.1 String input: returned as-is
+  PASS  6.1b null input: returned as-is
+  PASS  6.2 No images key: data unchanged
+  PASS  6.3 Empty images array: unchanged
+  PASS  6.4 Synced product: src rewritten
+  PASS  6.4 Synced product: thumbnail rewritten
+  PASS  6.5 Non-synced product image: src unchanged
+  PASS  6.6 Mixed: synced image rewritten
+  PASS  6.6 Mixed: non-synced image unchanged
+  PASS  6.7 Synced image: src rewritten to CDN
+  PASS  6.7 Synced image: thumbnail rewritten to CDN
+  PASS  6.7 Synced image: medium rewritten to CDN
+  PASS  6.7 Synced image: medium_large rewritten to CDN
+  PASS  6.7 Synced image: large rewritten to CDN
+  PASS  6.7 Synced image: full rewritten to CDN
+  PASS  6.8 Image without id: src unchanged
+  PASS  6.9 Synced variation: rewritten
+  PASS  6.10 Non-synced variation: unchanged
+  PASS  6.11 Variation without id: unchanged
+  PASS  6.12 Both present: images[0] rewritten
+  PASS  6.12 Both present: image rewritten
+  PASS  6.13 No CDN domain: REST response unchanged
+  PASS  6.14 No URL fields: alt text intact
+  PASS  6.14 No src key added when absent
+  PASS  6.15 Multi-product: img A (synced) rewritten
+  PASS  6.15 Multi-product: img B (not synced) unchanged
+  PASS  6.15 Multi-product: img C (synced) rewritten
+
+------------------------------------------------------------
+7. url_to_attachment_id() cache + flush_url_cache()
+------------------------------------------------------------
+  PASS  7.1 Duplicate URL: attachment_url_to_postid called exactly once (cache hit)
+  PASS  7.2 URL A: queried exactly once
+  PASS  7.2 URL B: queried exactly once
+  PASS  7.3 After flush_url_cache: URL re-queried on next rewrite_content
+  PASS  7.4 Unknown URL (id=0): queried once, 0 result cached
+  PASS  7.5 Two instances: each queries independently
+
+------------------------------------------------------------
+8. register_hooks()
+------------------------------------------------------------
+  PASS  8.1 serve_from_r2=false: no hooks registered
+  PASS  8.2 serve_from_r2=true, no domain: no hooks registered
+  PASS  8.3 Both enabled: hooks registered
+  PASS  8.4 Hook registered: wp_get_attachment_url
+  PASS  8.4 Hook registered: wp_get_attachment_image_src
+  PASS  8.4 Hook registered: wp_calculate_image_srcset
+  PASS  8.4 Hook registered: the_content
+  PASS  8.4 Hook registered: woocommerce_single_product_image_thumbnail_html
+  PASS  8.4 Hook registered: woocommerce_rest_prepare_product_object
+  PASS  8.4 Hook registered: woocommerce_rest_prepare_product_variation_object
+  PASS  8.4 Hook registered: switch_blog
+
+============================================================
+Results: 88/88 passed, 0 failed
+============================================================
+
+--- SECTION 1: kick() ---
+
+Test 1.1: kick schedules due-now and spawns cron
+  PASS  1.1a: one event scheduled
+  PASS  1.1b: correct hook
+  PASS  1.1c: scheduled due-now, not in the future
+  PASS  1.1d: spawn_cron called
+
+Test 1.2: kick does not double-schedule but still spawns
+  PASS  1.2a: no duplicate event
+  PASS  1.2b: spawn_cron still called
+
+--- SECTION 2: time_budget() ---
+
+Test 2.1: unlimited environment (CLI) gets the 240s cap
+  PASS  2.1a: budget capped at 240 (< LOCK_TTL 300)
+  PASS  2.1b: budget below stale-recovery cutoff
+
+--- SECTION 3: claim_batch() ---
+
+Test 3.1: claims pending rows up to limit, sets processing + token
+  PASS  3.1a: claimed exactly 3 rows
+  PASS  3.1b: lowest ids first
+  PASS  3.1c: token set
+  PASS  3.1d: status=processing
+  PASS  3.1e: 2 rows remain pending
+
+Test 3.2: two workers claim disjoint sets
+  PASS  3.2a: second worker gets the remaining 2
+  PASS  3.2b: no overlap between workers
+  PASS  3.2c: distinct tokens
+
+Test 3.3: empty queue claims nothing
+  PASS  3.3a: nothing left to claim
+
+Test 3.4: bulk queue claim filters by job_type
+  PASS  3.4a: only restore rows claimed
+  PASS  3.4b: correct attachments
+  PASS  3.4c: desync row untouched
+
+--- SECTION 4: recover_stale_rows() ---
+
+Test 4.1: stale processing rows reset to pending, fresh ones kept
+  PASS  4.1a: stale row reset to pending
+  PASS  4.1b: stale row claim token cleared
+  PASS  4.1c: fresh processing row untouched
+  PASS  4.1d: complete row untouched
+
+--- SECTION 5: drain_migration_queue() ---
+
+Test 5.1: happy path — drains everything, cleans up, fires action
+  PASS  5.1a: 12 successful
+  PASS  5.1b: no failures
+  PASS  5.1c: no failed rows
+  PASS  5.1d: on_item callback fired per item
+  PASS  5.1e: sync called once per attachment
+  PASS  5.1f: table truncated after full success
+  PASS  5.1g: complete action fired
+
+Test 5.2: transient failure retries within the drain, then succeeds
+  PASS  5.2a: eventually succeeded
+  PASS  5.2b: one failed attempt counted
+  PASS  5.2c: no permanently failed rows
+  PASS  5.2d: sync attempted twice
+  PASS  5.2e: table cleaned up
+
+Test 5.3: permanent failure — 3 attempts, failed row preserved for retry
+  PASS  5.3a: healthy attachment completed
+  PASS  5.3b: 3 failed attempts (max retries)
+  PASS  5.3c: 1 permanently failed row reported
+  PASS  5.3d: only the failed row survives cleanup
+  PASS  5.3e: status=failed
+  PASS  5.3f: retry_count=3
+  PASS  5.3g: error_message recorded
+  PASS  5.3h: complete action still fired
+
+Test 5.4: 'nothing happened' (not configured) treated as failure, not success
+  PASS  5.4a: not counted as success
+  PASS  5.4b: row ends up failed
+  PASS  5.4c: error message explains why
+
+Test 5.5: pause flag stops the drain immediately
+  PASS  5.5a: nothing processed while paused
+  PASS  5.5b: sync never called
+  PASS  5.5c: row still pending
+  PASS  5.5d: complete action NOT fired
+
+Test 5.6: drain recovers stale rows from a dead worker first
+  PASS  5.6a: stale row recovered and processed
+  PASS  5.6b: correct attachment synced
+
+--- SECTION 6: process_batch() lock + end-to-end cron run ---
+
+Test 6.1: transient lock prevents overlapping cron runs
+  PASS  6.1a: locked run processes nothing
+  PASS  6.1b: row untouched
+
+Test 6.2: unlocked cron run drains the queue and releases the lock
+  PASS  6.2a: attachment processed
+  PASS  6.2b: queue drained and cleaned
+  PASS  6.2c: lock released after run
+  PASS  6.2d: complete action fired
+
+============================================================
+Results: 59/59 passed, 0 failed
+============================================================
+=== Running Strauss...
+[info] Loading package...
+
+Deprecated: BrianHenryIE\Strauss\Composer\ComposerPackage::fromFile(): Implicitly marking parameter $overrideAutoload as nullable is deprecated, the explicit nullable type must be used instead in C:\Users\Aqeel\Documents\Personal\Cloudflare-r2-wp\cloudflare-r2-offload\vendor\brianhenryie\strauss\src\Composer\ComposerPackage.php on line 76
+
+Deprecated: BrianHenryIE\Strauss\Composer\ComposerPackage::fromComposerJsonArray(): Implicitly marking parameter $overrideAutoload as nullable is deprecated, the explicit nullable type must be used instead in C:\Users\Aqeel\Documents\Personal\Cloudflare-r2-wp\cloudflare-r2-offload\vendor\brianhenryie\strauss\src\Composer\ComposerPackage.php on line 93
+
+Deprecated: BrianHenryIE\Strauss\Composer\ComposerPackage::__construct(): Implicitly marking parameter $overrideAutoload as nullable is deprecated, the explicit nullable type must be used instead in C:\Users\Aqeel\Documents\Personal\Cloudflare-r2-wp\cloudflare-r2-offload\vendor\brianhenryie\strauss\src\Composer\ComposerPackage.php on line 108
+PHP Deprecated:  BrianHenryIE\Strauss\Composer\ComposerPackage::fromFile(): Implicitly marking parameter $overrideAutoload as nullable is deprecated, the explicit nullable type must be used instead in C:\Users\Aqeel\Documents\Personal\Cloudflare-r2-wp\cloudflare-r2-offload\vendor\brianhenryie\strauss\src\Composer\ComposerPackage.php on line 76
+PHP Deprecated:  BrianHenryIE\Strauss\Composer\ComposerPackage::fromComposerJsonArray(): Implicitly marking parameter $overrideAutoload as nullable is deprecated, the explicit nullable type must be used instead in C:\Users\Aqeel\Documents\Personal\Cloudflare-r2-wp\cloudflare-r2-offload\vendor\brianhenryie\strauss\src\Composer\ComposerPackage.php on line 93
+PHP Deprecated:  BrianHenryIE\Strauss\Composer\ComposerPackage::__construct(): Implicitly marking parameter $overrideAutoload as nullable is deprecated, the explicit nullable type must be used instead in C:\Users\Aqeel\Documents\Personal\Cloudflare-r2-wp\cloudflare-r2-offload\vendor\brianhenryie\strauss\src\Composer\ComposerPackage.php on line 108
+[info] Loading composer.json config...
+[info] Loading cli config...
+[info] Building dependency list...
+[info] Enumerating files...
+[info] Copying files...
+[info] Determining changes...
+[info] Performing replacements...

@@ -1,13 +1,8 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Signature;
+namespace Aws\Signature;
 
-use R2Offload\Vendor\Aws\Credentials\CredentialsInterface;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use Aws\Credentials\CredentialsInterface;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * Interface used to provide interchangeable strategies for signing requests

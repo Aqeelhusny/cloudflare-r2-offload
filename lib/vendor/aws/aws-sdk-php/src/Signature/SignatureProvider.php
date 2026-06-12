@@ -1,13 +1,8 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Signature;
+namespace Aws\Signature;
 
-use R2Offload\Vendor\Aws\Exception\UnresolvedSignatureException;
-use R2Offload\Vendor\Aws\Token\BearerTokenAuthorization;
+use Aws\Exception\UnresolvedSignatureException;
+use Aws\Token\BearerTokenAuthorization;
 
 /**
  * Signature providers.
@@ -21,7 +16,7 @@ use R2Offload\Vendor\Aws\Token\BearerTokenAuthorization;
  * is created. If a signature object is not created, then the resolve()
  * function will throw a {@see Aws\Exception\UnresolvedSignatureException}.
  *
- *     use R2Offload\Vendor\Aws\Signature\SignatureProvider;
+ *     use Aws\Signature\SignatureProvider;
  *     $provider = SignatureProvider::defaultProvider();
  *     // Returns a SignatureInterface or NULL.
  *     $signer = $provider('v4', 's3', 'us-west-2');
@@ -39,7 +34,7 @@ use R2Offload\Vendor\Aws\Token\BearerTokenAuthorization;
  *             return new MyFooSignature();
  *         }
  *     };
- *     $c = \R2Offload\Vendor\Aws\or_chain($a, $b);
+ *     $c = \Aws\or_chain($a, $b);
  *     $signer = $c('v4', 'abc', '123');     // $a handles this.
  *     $signer = $c('foo', 'abc', '123');    // $b handles this.
  *     $nullValue = $c('???', 'abc', '123'); // Neither can handle this.

@@ -1,16 +1,11 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\Aws\EndpointV2;
+namespace Aws\EndpointV2;
 
-use R2Offload\Vendor\Aws\EndpointV2\Ruleset\Ruleset;
-use R2Offload\Vendor\Aws\EndpointV2\Ruleset\RulesetEndpoint;
-use R2Offload\Vendor\Aws\Exception\UnresolvedEndpointException;
-use R2Offload\Vendor\Aws\LruArrayCache;
+use Aws\EndpointV2\Ruleset\Ruleset;
+use Aws\EndpointV2\Ruleset\RulesetEndpoint;
+use Aws\Exception\UnresolvedEndpointException;
+use Aws\LruArrayCache;
 
 /**
  * Given a service's Ruleset and client-provided input parameters, provides

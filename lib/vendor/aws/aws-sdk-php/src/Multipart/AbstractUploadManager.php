@@ -1,22 +1,17 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Multipart;
+namespace Aws\Multipart;
 
-use R2Offload\Vendor\Aws\AwsClientInterface as Client;
-use R2Offload\Vendor\Aws\CommandInterface;
-use R2Offload\Vendor\Aws\CommandPool;
-use R2Offload\Vendor\Aws\Exception\AwsException;
-use R2Offload\Vendor\Aws\Exception\MultipartUploadException;
-use R2Offload\Vendor\Aws\Result;
-use R2Offload\Vendor\Aws\ResultInterface;
-use R2Offload\Vendor\GuzzleHttp\Promise;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use Aws\AwsClientInterface as Client;
+use Aws\CommandInterface;
+use Aws\CommandPool;
+use Aws\Exception\AwsException;
+use Aws\Exception\MultipartUploadException;
+use Aws\Result;
+use Aws\ResultInterface;
+use GuzzleHttp\Promise;
+use GuzzleHttp\Promise\PromiseInterface;
 use InvalidArgumentException as IAE;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * Encapsulates the execution of a multipart upload to S3 or Glacier.

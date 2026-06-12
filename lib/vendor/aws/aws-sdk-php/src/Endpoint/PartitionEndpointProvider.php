@@ -1,12 +1,7 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Endpoint;
+namespace Aws\Endpoint;
 
-use R2Offload\Vendor\JmesPath\Env;
+use JmesPath\Env;
 
 class PartitionEndpointProvider
 {
@@ -99,8 +94,8 @@ class PartitionEndpointProvider
      */
     public static function defaultProvider($options = [])
     {
-        $data = \R2Offload\Vendor\Aws\load_compiled_json(__DIR__ . '/../data/endpoints.json');
-        $prefixData = \R2Offload\Vendor\Aws\load_compiled_json(__DIR__ . '/../data/endpoints_prefix_history.json');
+        $data = \Aws\load_compiled_json(__DIR__ . '/../data/endpoints.json');
+        $prefixData = \Aws\load_compiled_json(__DIR__ . '/../data/endpoints_prefix_history.json');
         $mergedData = self::mergePrefixData($data, $prefixData);
 
         return new self($mergedData['partitions'], 'aws', $options);

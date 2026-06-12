@@ -1,29 +1,24 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\S3\S3Transfer;
+namespace Aws\S3\S3Transfer;
 
-use R2Offload\Vendor\Aws\CommandInterface;
-use R2Offload\Vendor\Aws\ResultInterface;
-use R2Offload\Vendor\Aws\S3\S3ClientInterface;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Exception\S3TransferException;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\DownloadResult;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\ResumableDownload;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\S3TransferManagerConfig;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\AbstractTransferListener;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\TransferListenerNotifier;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\TransferProgressSnapshot;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Utils\ResumableDownloadHandlerInterface;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Utils\AbstractDownloadHandler;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Utils\StreamDownloadHandler;
-use R2Offload\Vendor\GuzzleHttp\Promise\Coroutine;
-use R2Offload\Vendor\GuzzleHttp\Promise\Create;
-use R2Offload\Vendor\GuzzleHttp\Promise\Each;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromisorInterface;
+use Aws\CommandInterface;
+use Aws\ResultInterface;
+use Aws\S3\S3ClientInterface;
+use Aws\S3\S3Transfer\Exception\S3TransferException;
+use Aws\S3\S3Transfer\Models\DownloadResult;
+use Aws\S3\S3Transfer\Models\ResumableDownload;
+use Aws\S3\S3Transfer\Models\S3TransferManagerConfig;
+use Aws\S3\S3Transfer\Progress\AbstractTransferListener;
+use Aws\S3\S3Transfer\Progress\TransferListenerNotifier;
+use Aws\S3\S3Transfer\Progress\TransferProgressSnapshot;
+use Aws\S3\S3Transfer\Utils\ResumableDownloadHandlerInterface;
+use Aws\S3\S3Transfer\Utils\AbstractDownloadHandler;
+use Aws\S3\S3Transfer\Utils\StreamDownloadHandler;
+use GuzzleHttp\Promise\Coroutine;
+use GuzzleHttp\Promise\Create;
+use GuzzleHttp\Promise\Each;
+use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Promise\PromisorInterface;
 use Throwable;
 
 abstract class AbstractMultipartDownloader implements PromisorInterface

@@ -1,14 +1,9 @@
 <?php
-/**
- * @license MIT
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\GuzzleHttp\Exception;
+namespace GuzzleHttp\Exception;
 
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
-use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Exception when an HTTP error occurs (4xx or 5xx error)

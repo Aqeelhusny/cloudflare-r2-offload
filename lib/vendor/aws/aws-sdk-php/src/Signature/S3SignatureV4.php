@@ -1,16 +1,11 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Signature;
+namespace Aws\Signature;
 
-use R2Offload\Vendor\Aws\Credentials\CredentialsInterface;
-use R2Offload\Vendor\AWS\CRT\Auth\SignatureType;
-use R2Offload\Vendor\AWS\CRT\Auth\SigningAlgorithm;
-use R2Offload\Vendor\AWS\CRT\Auth\SigningConfigAWS;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use Aws\Credentials\CredentialsInterface;
+use AWS\CRT\Auth\SignatureType;
+use AWS\CRT\Auth\SigningAlgorithm;
+use AWS\CRT\Auth\SigningConfigAWS;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * Amazon S3 signature version 4 support.

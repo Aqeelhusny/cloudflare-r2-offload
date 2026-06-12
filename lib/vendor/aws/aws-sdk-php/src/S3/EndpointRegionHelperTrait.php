@@ -1,16 +1,11 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\S3;
+namespace Aws\S3;
 
-use R2Offload\Vendor\Aws\Api\Service;
-use R2Offload\Vendor\Aws\Arn\ArnInterface;
-use R2Offload\Vendor\Aws\Arn\S3\OutpostsArnInterface;
-use R2Offload\Vendor\Aws\Endpoint\PartitionEndpointProvider;
-use R2Offload\Vendor\Aws\Exception\InvalidRegionException;
+use Aws\Api\Service;
+use Aws\Arn\ArnInterface;
+use Aws\Arn\S3\OutpostsArnInterface;
+use Aws\Endpoint\PartitionEndpointProvider;
+use Aws\Exception\InvalidRegionException;
 
 /**
  * @internal
@@ -59,7 +54,7 @@ trait EndpointRegionHelperTrait
         $service,
         PartitionEndpointProvider $provider
     ) {
-        $arnRegion = \R2Offload\Vendor\Aws\strip_fips_pseudo_regions(strtolower($arnRegion));
+        $arnRegion = \Aws\strip_fips_pseudo_regions(strtolower($arnRegion));
         $clientRegion = strtolower($clientRegion);
         if ($arnRegion === $clientRegion) {
             return true;
@@ -81,7 +76,7 @@ trait EndpointRegionHelperTrait
             } else {
                 $region = $arn->getRegion();
             }
-            if (\R2Offload\Vendor\Aws\is_fips_pseudo_region($region)) {
+            if (\Aws\is_fips_pseudo_region($region)) {
                 throw new InvalidRegionException(
                     'Fips is currently not supported with S3 Outposts access'
                     . ' points. Please provide a non-fips region or do not supply an'

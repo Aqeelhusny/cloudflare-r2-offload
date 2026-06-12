@@ -1,13 +1,8 @@
 <?php
-/**
- * @license MIT
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\GuzzleHttp\Handler;
+namespace GuzzleHttp\Handler;
 
-use R2Offload\Vendor\GuzzleHttp\Utils;
+use GuzzleHttp\Utils;
 
 /**
  * @internal

@@ -8,7 +8,10 @@
 
 echo "=== Running Strauss...\n";
 $strauss_exit = 0;
-passthru('php vendor/bin/strauss', $strauss_exit);
+// run-strauss.php registers a fallback autoloader for the Composer\ namespace —
+// composer/composer's rules are sometimes missing from the project autoloader
+// (stripped installed.json metadata), which would fatal Strauss otherwise.
+passthru('php run-strauss.php', $strauss_exit);
 if ($strauss_exit !== 0) {
     echo "Strauss failed with exit code {$strauss_exit}\n";
     exit(1);

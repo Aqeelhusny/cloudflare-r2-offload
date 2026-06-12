@@ -1,18 +1,13 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Rds;
+namespace Aws\Rds;
 
-use R2Offload\Vendor\Aws\Credentials\CredentialsInterface;
-use R2Offload\Vendor\Aws\Credentials\Credentials;
-use R2Offload\Vendor\Aws\Signature\SignatureV4;
-use R2Offload\Vendor\GuzzleHttp\Psr7\Request;
-use R2Offload\Vendor\GuzzleHttp\Psr7\Uri;
-use R2Offload\Vendor\GuzzleHttp\Promise;
-use R2Offload\Vendor\Aws;
+use Aws\Credentials\CredentialsInterface;
+use Aws\Credentials\Credentials;
+use Aws\Signature\SignatureV4;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Promise;
+use Aws;
 
 /**
  * Generates RDS auth tokens for use with IAM authentication.
@@ -30,7 +25,7 @@ class AuthTokenGenerator
     {
         if ($creds instanceof CredentialsInterface) {
             $promise = new Promise\FulfilledPromise($creds);
-            $this->credentialProvider = \R2Offload\Vendor\Aws\constantly($promise);
+            $this->credentialProvider = Aws\constantly($promise);
         } else {
             $this->credentialProvider = $creds;
         }

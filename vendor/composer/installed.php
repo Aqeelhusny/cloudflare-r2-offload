@@ -3,7 +3,7 @@
         'name' => 'aqeelhusny/cloudflare-r2-offload',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '1f3954f5bdb928746e331ce7478405d64e308ca6',
+        'reference' => 'f5484fea751e11c2244d86dc87dbf2ed462c296b',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'aqeelhusny/cloudflare-r2-offload' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '1f3954f5bdb928746e331ce7478405d64e308ca6',
+            'reference' => 'f5484fea751e11c2244d86dc87dbf2ed462c296b',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

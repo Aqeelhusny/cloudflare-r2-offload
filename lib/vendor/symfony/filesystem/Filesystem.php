@@ -7,15 +7,13 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
-namespace R2Offload\Vendor\Symfony\Component\Filesystem;
+namespace Symfony\Component\Filesystem;
 
-use R2Offload\Vendor\Symfony\Component\Filesystem\Exception\FileNotFoundException;
-use R2Offload\Vendor\Symfony\Component\Filesystem\Exception\InvalidArgumentException;
-use R2Offload\Vendor\Symfony\Component\Filesystem\Exception\IOException;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
+use Symfony\Component\Filesystem\Exception\InvalidArgumentException;
+use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
  * Provides basic utility to manipulate the file system.

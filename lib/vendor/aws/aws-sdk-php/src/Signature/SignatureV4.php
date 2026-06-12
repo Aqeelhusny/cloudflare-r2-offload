@@ -1,24 +1,19 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Signature;
+namespace Aws\Signature;
 
-use R2Offload\Vendor\Aws\Credentials\CredentialsInterface;
-use R2Offload\Vendor\AWS\CRT\Auth\Signable;
-use R2Offload\Vendor\AWS\CRT\Auth\SignatureType;
-use R2Offload\Vendor\AWS\CRT\Auth\SignedBodyHeaderType;
-use R2Offload\Vendor\AWS\CRT\Auth\Signing;
-use R2Offload\Vendor\AWS\CRT\Auth\SigningAlgorithm;
-use R2Offload\Vendor\AWS\CRT\Auth\SigningConfigAWS;
-use R2Offload\Vendor\AWS\CRT\Auth\StaticCredentialsProvider;
-use R2Offload\Vendor\AWS\CRT\HTTP\Request;
-use R2Offload\Vendor\Aws\Exception\CommonRuntimeException;
-use R2Offload\Vendor\Aws\Exception\CouldNotCreateChecksumException;
-use R2Offload\Vendor\GuzzleHttp\Psr7;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use Aws\Credentials\CredentialsInterface;
+use AWS\CRT\Auth\Signable;
+use AWS\CRT\Auth\SignatureType;
+use AWS\CRT\Auth\SignedBodyHeaderType;
+use AWS\CRT\Auth\Signing;
+use AWS\CRT\Auth\SigningAlgorithm;
+use AWS\CRT\Auth\SigningConfigAWS;
+use AWS\CRT\Auth\StaticCredentialsProvider;
+use AWS\CRT\HTTP\Request;
+use Aws\Exception\CommonRuntimeException;
+use Aws\Exception\CouldNotCreateChecksumException;
+use GuzzleHttp\Psr7;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * Signature Version 4

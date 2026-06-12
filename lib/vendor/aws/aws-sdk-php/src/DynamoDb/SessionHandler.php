@@ -1,10 +1,5 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\DynamoDb;
+namespace Aws\DynamoDb;
 
 /**
  * Provides an interface for using Amazon DynamoDB as a session store by hooking

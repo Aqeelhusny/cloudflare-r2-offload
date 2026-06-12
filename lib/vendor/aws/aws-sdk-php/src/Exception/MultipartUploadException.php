@@ -1,14 +1,9 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Exception;
+namespace Aws\Exception;
 
-use R2Offload\Vendor\Aws\HasMonitoringEventsTrait;
-use R2Offload\Vendor\Aws\MonitoringEventsInterface;
-use R2Offload\Vendor\Aws\Multipart\UploadState;
+use Aws\HasMonitoringEventsTrait;
+use Aws\MonitoringEventsInterface;
+use Aws\Multipart\UploadState;
 
 class MultipartUploadException extends \RuntimeException implements
     MonitoringEventsInterface

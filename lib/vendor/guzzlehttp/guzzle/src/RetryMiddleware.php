@@ -1,16 +1,11 @@
 <?php
-/**
- * @license MIT
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\GuzzleHttp;
+namespace GuzzleHttp;
 
-use R2Offload\Vendor\GuzzleHttp\Promise as P;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
-use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
+use GuzzleHttp\Promise as P;
+use GuzzleHttp\Promise\PromiseInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Middleware that retries requests based on the boolean result of

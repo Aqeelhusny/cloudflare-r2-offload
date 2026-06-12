@@ -1,17 +1,12 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Retry;
+namespace Aws\Retry;
 
-use R2Offload\Vendor\Aws\AbstractConfigurationProvider;
-use R2Offload\Vendor\Aws\CacheInterface;
-use R2Offload\Vendor\Aws\ConfigurationProviderInterface;
-use R2Offload\Vendor\Aws\Retry\Exception\ConfigurationException;
-use R2Offload\Vendor\GuzzleHttp\Promise;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use Aws\AbstractConfigurationProvider;
+use Aws\CacheInterface;
+use Aws\ConfigurationProviderInterface;
+use Aws\Retry\Exception\ConfigurationException;
+use GuzzleHttp\Promise;
+use GuzzleHttp\Promise\PromiseInterface;
 
 /**
  * A configuration provider is a function that returns a promise that is
@@ -19,7 +14,7 @@ use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
  * or rejected with an {@see \Aws\Retry\Exception\ConfigurationException}.
  *
  * <code>
- * use R2Offload\Vendor\Aws\Sts\RegionalEndpoints\ConfigurationProvider;
+ * use Aws\Sts\RegionalEndpoints\ConfigurationProvider;
  * $provider = ConfigurationProvider::defaultProvider();
  * // Returns a ConfigurationInterface or throws.
  * $config = $provider()->wait();
@@ -163,7 +158,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider
             if (!@is_readable($filename)) {
                 return self::reject("Cannot read configuration from $filename");
             }
-            $data = \R2Offload\Vendor\Aws\parse_ini_file($filename, true);
+            $data = \Aws\parse_ini_file($filename, true);
             if ($data === false) {
                 return self::reject("Invalid config file: $filename");
             }

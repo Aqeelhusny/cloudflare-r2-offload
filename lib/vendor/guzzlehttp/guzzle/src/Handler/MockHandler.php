@@ -1,21 +1,16 @@
 <?php
-/**
- * @license MIT
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\GuzzleHttp\Handler;
+namespace GuzzleHttp\Handler;
 
-use R2Offload\Vendor\GuzzleHttp\Exception\RequestException;
-use R2Offload\Vendor\GuzzleHttp\HandlerStack;
-use R2Offload\Vendor\GuzzleHttp\Promise as P;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
-use R2Offload\Vendor\GuzzleHttp\TransferStats;
-use R2Offload\Vendor\GuzzleHttp\Utils;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
-use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
-use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Promise as P;
+use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\TransferStats;
+use GuzzleHttp\Utils;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Handler that returns responses or throw exceptions from a queue.

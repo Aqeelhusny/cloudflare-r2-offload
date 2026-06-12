@@ -1,38 +1,33 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\Aws\S3\S3Transfer;
+namespace Aws\S3\S3Transfer;
 
-use R2Offload\Vendor\Aws\MetricsBuilder;
-use R2Offload\Vendor\Aws\ResultInterface;
-use R2Offload\Vendor\Aws\S3\S3Client;
-use R2Offload\Vendor\Aws\S3\S3ClientInterface;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Exception\S3TransferException;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\DownloadDirectoryRequest;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\DownloadFileRequest;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\DownloadRequest;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\ResumableDownload;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\AbstractResumableTransfer;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\ResumableUpload;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\ResumeDownloadRequest;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\ResumeUploadRequest;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\S3TransferManagerConfig;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\UploadDirectoryRequest;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\UploadRequest;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\UploadResult;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\SingleProgressTracker;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\AbstractTransferListener;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\TransferListenerNotifier;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\TransferProgressSnapshot;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Utils\AbstractDownloadHandler;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Utils\FileDownloadHandler;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use Aws\MetricsBuilder;
+use Aws\ResultInterface;
+use Aws\S3\S3Client;
+use Aws\S3\S3ClientInterface;
+use Aws\S3\S3Transfer\Exception\S3TransferException;
+use Aws\S3\S3Transfer\Models\DownloadDirectoryRequest;
+use Aws\S3\S3Transfer\Models\DownloadFileRequest;
+use Aws\S3\S3Transfer\Models\DownloadRequest;
+use Aws\S3\S3Transfer\Models\ResumableDownload;
+use Aws\S3\S3Transfer\Models\AbstractResumableTransfer;
+use Aws\S3\S3Transfer\Models\ResumableUpload;
+use Aws\S3\S3Transfer\Models\ResumeDownloadRequest;
+use Aws\S3\S3Transfer\Models\ResumeUploadRequest;
+use Aws\S3\S3Transfer\Models\S3TransferManagerConfig;
+use Aws\S3\S3Transfer\Models\UploadDirectoryRequest;
+use Aws\S3\S3Transfer\Models\UploadRequest;
+use Aws\S3\S3Transfer\Models\UploadResult;
+use Aws\S3\S3Transfer\Progress\SingleProgressTracker;
+use Aws\S3\S3Transfer\Progress\AbstractTransferListener;
+use Aws\S3\S3Transfer\Progress\TransferListenerNotifier;
+use Aws\S3\S3Transfer\Progress\TransferProgressSnapshot;
+use Aws\S3\S3Transfer\Utils\AbstractDownloadHandler;
+use Aws\S3\S3Transfer\Utils\FileDownloadHandler;
+use GuzzleHttp\Promise\PromiseInterface;
 use InvalidArgumentException;
-use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\StreamInterface;
 use Throwable;
 
 final class S3TransferManager

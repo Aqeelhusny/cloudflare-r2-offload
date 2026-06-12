@@ -1,16 +1,11 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\S3;
+namespace Aws\S3;
 
-use R2Offload\Vendor\Aws\Credentials\CredentialsInterface;
-use R2Offload\Vendor\GuzzleHttp\Psr7\Uri;
-use R2Offload\Vendor\Aws\Signature\SignatureTrait;
-use R2Offload\Vendor\Aws\Signature\SignatureV4 as SignatureV4;
-use R2Offload\Vendor\Aws\Api\TimestampShape as TimestampShape;
+use Aws\Credentials\CredentialsInterface;
+use GuzzleHttp\Psr7\Uri;
+use Aws\Signature\SignatureTrait;
+use Aws\Signature\SignatureV4 as SignatureV4;
+use Aws\Api\TimestampShape as TimestampShape;
 
 /**
  * Encapsulates the logic for getting the data for an S3 object POST upload form

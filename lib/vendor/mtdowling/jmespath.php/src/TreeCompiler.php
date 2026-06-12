@@ -1,10 +1,5 @@
 <?php
-/**
- * @license MIT
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\JmesPath;
+namespace JmesPath;
 
 /**
  * Tree visitor used to compile JMESPath expressions into native PHP code.
@@ -27,9 +22,9 @@ class TreeCompiler
         $this->vars = [];
         $this->source = $this->indentation = '';
         $this->write("<?php\n")
-            ->write('use R2Offload\\Vendor\\JmesPath\\TreeInterpreter as Ti;')
-            ->write('use R2Offload\\Vendor\\JmesPath\\FnDispatcher as Fd;')
-            ->write('use R2Offload\\Vendor\\JmesPath\\Utils;')
+            ->write('use JmesPath\\TreeInterpreter as Ti;')
+            ->write('use JmesPath\\FnDispatcher as Fd;')
+            ->write('use JmesPath\\Utils;')
             ->write('')
             ->write('function %s(Ti $interpreter, $value) {', $fnName)
             ->indent()

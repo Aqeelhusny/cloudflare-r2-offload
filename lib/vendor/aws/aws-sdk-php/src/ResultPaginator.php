@@ -1,12 +1,7 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws;
+namespace Aws;
 
-use R2Offload\Vendor\GuzzleHttp\Promise;
+use GuzzleHttp\Promise;
 
 /**
  * Iterator that yields each page of results of a pageable operation.
@@ -59,7 +54,7 @@ class ResultPaginator implements \Iterator
     /**
      * Runs a paginator asynchronously and uses a callback to handle results.
      *
-     * The callback should have the signature: function (R2Offload\Vendor\Aws\Result $result).
+     * The callback should have the signature: function (Aws\Result $result).
      * A non-null return value from the callback will be yielded by the
      * promise. This means that you can return promises from the callback that
      * will need to be resolved before continuing iteration over the remaining

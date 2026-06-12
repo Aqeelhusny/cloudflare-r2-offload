@@ -1,12 +1,7 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Retry;
+namespace Aws\Retry;
 
-use R2Offload\Vendor\Aws\Retry\Exception\ConfigurationException;
+use Aws\Retry\Exception\ConfigurationException;
 
 class Configuration implements ConfigurationInterface
 {

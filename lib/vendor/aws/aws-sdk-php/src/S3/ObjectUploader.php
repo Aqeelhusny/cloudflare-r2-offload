@@ -1,15 +1,10 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\S3;
+namespace Aws\S3;
 
-use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromisorInterface;
-use R2Offload\Vendor\GuzzleHttp\Psr7;
-use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
+use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Promise\PromisorInterface;
+use GuzzleHttp\Psr7;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Uploads an object to S3, using a PutObject command or a multipart upload as

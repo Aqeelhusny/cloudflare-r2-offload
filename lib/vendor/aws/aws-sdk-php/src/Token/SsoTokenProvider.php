@@ -1,14 +1,9 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Token;
+namespace Aws\Token;
 
-use R2Offload\Vendor\Aws\Exception\TokenException;
-use R2Offload\Vendor\Aws\SSOOIDC\SSOOIDCClient;
-use R2Offload\Vendor\GuzzleHttp\Promise;
+use Aws\Exception\TokenException;
+use Aws\SSOOIDC\SSOOIDCClient;
+use GuzzleHttp\Promise;
 
 /**
  * Token that comes from the SSO provider

@@ -1,13 +1,8 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\S3\Crypto;
+namespace Aws\S3\Crypto;
 
-use \R2Offload\Vendor\Aws\Crypto\MetadataStrategyInterface;
-use \R2Offload\Vendor\Aws\Crypto\MetadataEnvelope;
+use \Aws\Crypto\MetadataStrategyInterface;
+use \Aws\Crypto\MetadataEnvelope;
 
 class HeadersMetadataStrategy implements MetadataStrategyInterface
 {

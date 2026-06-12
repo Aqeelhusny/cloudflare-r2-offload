@@ -1,12 +1,7 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\DynamoDb;
+namespace Aws\DynamoDb;
 
-use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Marshals and unmarshals JSON documents and PHP arrays into DynamoDB items.
@@ -50,7 +45,7 @@ class Marshaler
      * @param mixed $value A binary value compatible with Guzzle streams.
      *
      * @return BinaryValue
-     * @see R2Offload\Vendor\GuzzleHttp\Stream\Stream::factory
+     * @see GuzzleHttp\Stream\Stream::factory
      */
     public function binary($value)
     {

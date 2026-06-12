@@ -1,25 +1,20 @@
 <?php
-/**
- * @license MIT
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\GuzzleHttp;
+namespace GuzzleHttp;
 
-use R2Offload\Vendor\GuzzleHttp\Cookie\CookieJar;
-use R2Offload\Vendor\GuzzleHttp\Exception\GuzzleException;
-use R2Offload\Vendor\GuzzleHttp\Exception\InvalidArgumentException;
-use R2Offload\Vendor\GuzzleHttp\Promise as P;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
-use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
-use R2Offload\Vendor\Psr\Http\Message\UriInterface;
+use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Promise as P;
+use GuzzleHttp\Promise\PromiseInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * @final
  */
-class Client implements ClientInterface, \R2Offload\Vendor\Psr\Http\Client\ClientInterface
+class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 {
     use ClientTrait;
 

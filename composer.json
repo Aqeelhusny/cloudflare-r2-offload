@@ -44,7 +44,25 @@
             "@composer install",
             "@strauss",
             "@composer dump-autoload --optimize"
+        ],
+        "test": [
+            "php tests/test-attachment-sync.php",
+            "php tests/test-connection-migration.php",
+            "php tests/test-upload-delete-check.php",
+            "php tests/test-url-rewriter.php",
+            "php tests/test-batch-processor.php"
+        ],
+        "release": [
+            "Composer\\Config::disableProcessTimeout",
+            "@composer install",
+            "@test",
+            "php build.php",
+            "php package.php"
         ]
+    },
+    "scripts-descriptions": {
+        "test": "Run all unit test suites",
+        "release": "Full production build: install deps, run tests, build (Strauss + no-dev autoloader), package dist zip"
     },
     "config": {
         "optimize-autoloader": true,

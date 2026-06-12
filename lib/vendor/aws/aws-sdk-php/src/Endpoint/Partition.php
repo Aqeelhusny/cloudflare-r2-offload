@@ -1,15 +1,10 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Endpoint;
+namespace Aws\Endpoint;
 
 use ArrayAccess;
-use R2Offload\Vendor\Aws\HasDataTrait;
-use R2Offload\Vendor\Aws\Sts\RegionalEndpoints\ConfigurationProvider;
-use R2Offload\Vendor\Aws\S3\RegionalEndpoint\ConfigurationProvider as S3ConfigurationProvider;
+use Aws\HasDataTrait;
+use Aws\Sts\RegionalEndpoints\ConfigurationProvider;
+use Aws\S3\RegionalEndpoint\ConfigurationProvider as S3ConfigurationProvider;
 use InvalidArgumentException as Iae;
 
 /**

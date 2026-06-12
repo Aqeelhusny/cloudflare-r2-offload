@@ -1,16 +1,11 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\Aws\S3\S3Transfer\Progress;
+namespace Aws\S3\S3Transfer\Progress;
 
-use R2Offload\Vendor\Aws\S3\S3Transfer\Exception\ProgressTrackerException;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\ConsoleProgressBar;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\DirectoryTransferProgressSnapshot;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\ProgressBarInterface;
+use Aws\S3\S3Transfer\Exception\ProgressTrackerException;
+use Aws\S3\S3Transfer\Progress\ConsoleProgressBar;
+use Aws\S3\S3Transfer\Progress\DirectoryTransferProgressSnapshot;
+use Aws\S3\S3Transfer\Progress\ProgressBarInterface;
 
 /**
  * Progress tracker for directory-level transfers using directory snapshots.

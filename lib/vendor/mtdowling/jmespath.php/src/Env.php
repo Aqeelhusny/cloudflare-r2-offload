@@ -1,10 +1,5 @@
 <?php
-/**
- * @license MIT
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\JmesPath;
+namespace JmesPath;
 
 /**
  * Provides a simple environment based search.

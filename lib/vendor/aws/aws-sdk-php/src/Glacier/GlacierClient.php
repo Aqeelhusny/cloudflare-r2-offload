@@ -1,91 +1,86 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Glacier;
+namespace Aws\Glacier;
 
-use R2Offload\Vendor\Aws\Api\ApiProvider;
-use R2Offload\Vendor\Aws\Api\DocModel;
-use R2Offload\Vendor\Aws\Api\Service;
-use R2Offload\Vendor\Aws\AwsClient;
-use R2Offload\Vendor\Aws\CommandInterface;
-use R2Offload\Vendor\Aws\Exception\CouldNotCreateChecksumException;
-use R2Offload\Vendor\Aws\HashingStream;
-use R2Offload\Vendor\Aws\Middleware;
-use R2Offload\Vendor\Aws\PhpHash;
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use Aws\Api\ApiProvider;
+use Aws\Api\DocModel;
+use Aws\Api\Service;
+use Aws\AwsClient;
+use Aws\CommandInterface;
+use Aws\Exception\CouldNotCreateChecksumException;
+use Aws\HashingStream;
+use Aws\Middleware;
+use Aws\PhpHash;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * This client is used to interact with the **Amazon Glacier** service.
  *
- * @method \R2Offload\Vendor\Aws\Result abortMultipartUpload(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise abortMultipartUploadAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result abortVaultLock(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise abortVaultLockAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result addTagsToVault(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise addTagsToVaultAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result completeMultipartUpload(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise completeMultipartUploadAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result completeVaultLock(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise completeVaultLockAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result createVault(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createVaultAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result deleteArchive(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteArchiveAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result deleteVault(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteVaultAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result deleteVaultAccessPolicy(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteVaultAccessPolicyAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result deleteVaultNotifications(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteVaultNotificationsAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result describeJob(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeJobAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result describeVault(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeVaultAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result getDataRetrievalPolicy(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDataRetrievalPolicyAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result getJobOutput(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getJobOutputAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result getVaultAccessPolicy(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getVaultAccessPolicyAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result getVaultLock(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getVaultLockAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result getVaultNotifications(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getVaultNotificationsAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result initiateJob(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise initiateJobAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result initiateMultipartUpload(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise initiateMultipartUploadAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result initiateVaultLock(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise initiateVaultLockAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result listJobs(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listJobsAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result listMultipartUploads(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listMultipartUploadsAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result listParts(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listPartsAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result listProvisionedCapacity(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listProvisionedCapacityAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result listTagsForVault(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listTagsForVaultAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result listVaults(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listVaultsAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result purchaseProvisionedCapacity(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise purchaseProvisionedCapacityAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result removeTagsFromVault(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise removeTagsFromVaultAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result setDataRetrievalPolicy(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise setDataRetrievalPolicyAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result setVaultAccessPolicy(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise setVaultAccessPolicyAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result setVaultNotifications(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise setVaultNotificationsAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result uploadArchive(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise uploadArchiveAsync(array $args = [])
- * @method \R2Offload\Vendor\Aws\Result uploadMultipartPart(array $args = [])
- * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise uploadMultipartPartAsync(array $args = [])
+ * @method \Aws\Result abortMultipartUpload(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise abortMultipartUploadAsync(array $args = [])
+ * @method \Aws\Result abortVaultLock(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise abortVaultLockAsync(array $args = [])
+ * @method \Aws\Result addTagsToVault(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise addTagsToVaultAsync(array $args = [])
+ * @method \Aws\Result completeMultipartUpload(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise completeMultipartUploadAsync(array $args = [])
+ * @method \Aws\Result completeVaultLock(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise completeVaultLockAsync(array $args = [])
+ * @method \Aws\Result createVault(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise createVaultAsync(array $args = [])
+ * @method \Aws\Result deleteArchive(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise deleteArchiveAsync(array $args = [])
+ * @method \Aws\Result deleteVault(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise deleteVaultAsync(array $args = [])
+ * @method \Aws\Result deleteVaultAccessPolicy(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise deleteVaultAccessPolicyAsync(array $args = [])
+ * @method \Aws\Result deleteVaultNotifications(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise deleteVaultNotificationsAsync(array $args = [])
+ * @method \Aws\Result describeJob(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise describeJobAsync(array $args = [])
+ * @method \Aws\Result describeVault(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise describeVaultAsync(array $args = [])
+ * @method \Aws\Result getDataRetrievalPolicy(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise getDataRetrievalPolicyAsync(array $args = [])
+ * @method \Aws\Result getJobOutput(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise getJobOutputAsync(array $args = [])
+ * @method \Aws\Result getVaultAccessPolicy(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise getVaultAccessPolicyAsync(array $args = [])
+ * @method \Aws\Result getVaultLock(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise getVaultLockAsync(array $args = [])
+ * @method \Aws\Result getVaultNotifications(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise getVaultNotificationsAsync(array $args = [])
+ * @method \Aws\Result initiateJob(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise initiateJobAsync(array $args = [])
+ * @method \Aws\Result initiateMultipartUpload(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise initiateMultipartUploadAsync(array $args = [])
+ * @method \Aws\Result initiateVaultLock(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise initiateVaultLockAsync(array $args = [])
+ * @method \Aws\Result listJobs(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise listJobsAsync(array $args = [])
+ * @method \Aws\Result listMultipartUploads(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise listMultipartUploadsAsync(array $args = [])
+ * @method \Aws\Result listParts(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise listPartsAsync(array $args = [])
+ * @method \Aws\Result listProvisionedCapacity(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise listProvisionedCapacityAsync(array $args = [])
+ * @method \Aws\Result listTagsForVault(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise listTagsForVaultAsync(array $args = [])
+ * @method \Aws\Result listVaults(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise listVaultsAsync(array $args = [])
+ * @method \Aws\Result purchaseProvisionedCapacity(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise purchaseProvisionedCapacityAsync(array $args = [])
+ * @method \Aws\Result removeTagsFromVault(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise removeTagsFromVaultAsync(array $args = [])
+ * @method \Aws\Result setDataRetrievalPolicy(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise setDataRetrievalPolicyAsync(array $args = [])
+ * @method \Aws\Result setVaultAccessPolicy(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise setVaultAccessPolicyAsync(array $args = [])
+ * @method \Aws\Result setVaultNotifications(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise setVaultNotificationsAsync(array $args = [])
+ * @method \Aws\Result uploadArchive(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise uploadArchiveAsync(array $args = [])
+ * @method \Aws\Result uploadMultipartPart(array $args = [])
+ * @method \GuzzleHttp\Promise\Promise uploadMultipartPartAsync(array $args = [])
  */
 class GlacierClient extends AwsClient
 {

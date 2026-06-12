@@ -1,16 +1,11 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\Multipart;
+namespace Aws\Multipart;
 
-use R2Offload\Vendor\Aws\AwsClientInterface as Client;
-use R2Offload\Vendor\Aws\Exception\AwsException;
-use R2Offload\Vendor\GuzzleHttp\Psr7;
+use Aws\AwsClientInterface as Client;
+use Aws\Exception\AwsException;
+use GuzzleHttp\Psr7;
 use InvalidArgumentException as IAE;
-use R2Offload\Vendor\Psr\Http\Message\StreamInterface as Stream;
+use Psr\Http\Message\StreamInterface as Stream;
 
 abstract class AbstractUploader extends AbstractUploadManager
 {

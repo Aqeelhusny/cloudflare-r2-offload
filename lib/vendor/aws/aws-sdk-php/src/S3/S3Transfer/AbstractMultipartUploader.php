@@ -1,23 +1,18 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\Aws\S3\S3Transfer;
+namespace Aws\S3\S3Transfer;
 
-use R2Offload\Vendor\Aws\CommandInterface;
-use R2Offload\Vendor\Aws\CommandPool;
-use R2Offload\Vendor\Aws\ResultInterface;
-use R2Offload\Vendor\Aws\S3\S3ClientInterface;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Models\S3TransferManagerConfig;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\AbstractTransferListener;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\TransferListenerNotifier;
-use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\TransferProgressSnapshot;
-use R2Offload\Vendor\GuzzleHttp\Promise\Coroutine;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
-use R2Offload\Vendor\GuzzleHttp\Promise\PromisorInterface;
+use Aws\CommandInterface;
+use Aws\CommandPool;
+use Aws\ResultInterface;
+use Aws\S3\S3ClientInterface;
+use Aws\S3\S3Transfer\Models\S3TransferManagerConfig;
+use Aws\S3\S3Transfer\Progress\AbstractTransferListener;
+use Aws\S3\S3Transfer\Progress\TransferListenerNotifier;
+use Aws\S3\S3Transfer\Progress\TransferProgressSnapshot;
+use GuzzleHttp\Promise\Coroutine;
+use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Promise\PromisorInterface;
 use Throwable;
 
 /**

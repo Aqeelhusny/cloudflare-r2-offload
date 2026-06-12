@@ -1,10 +1,5 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\S3\RegionalEndpoint;
+namespace Aws\S3\RegionalEndpoint;
 
 class Configuration implements ConfigurationInterface
 {

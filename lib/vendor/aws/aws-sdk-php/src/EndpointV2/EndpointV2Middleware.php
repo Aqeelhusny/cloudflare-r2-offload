@@ -1,20 +1,15 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
-namespace R2Offload\Vendor\Aws\EndpointV2;
+namespace Aws\EndpointV2;
 
-use R2Offload\Vendor\Aws\Api\Operation;
-use R2Offload\Vendor\Aws\Api\Service;
-use R2Offload\Vendor\Aws\Auth\Exception\UnresolvedAuthSchemeException;
-use R2Offload\Vendor\Aws\CommandInterface;
-use R2Offload\Vendor\Aws\MetricsBuilder;
+use Aws\Api\Operation;
+use Aws\Api\Service;
+use Aws\Auth\Exception\UnresolvedAuthSchemeException;
+use Aws\CommandInterface;
+use Aws\MetricsBuilder;
 use Closure;
-use R2Offload\Vendor\GuzzleHttp\Promise\Promise;
-use R2Offload\Vendor\Aws\EndpointV2\Ruleset\RulesetEndpoint;
-use function R2Offload\Vendor\JmesPath\search;
+use GuzzleHttp\Promise\Promise;
+use Aws\EndpointV2\Ruleset\RulesetEndpoint;
+use function JmesPath\search;
 
 /**
  * Handles endpoint rule evaluation and endpoint resolution.

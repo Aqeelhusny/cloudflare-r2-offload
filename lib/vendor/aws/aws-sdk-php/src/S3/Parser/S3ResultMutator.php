@@ -1,15 +1,10 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\Aws\S3\Parser;
+namespace Aws\S3\Parser;
 
-use R2Offload\Vendor\Aws\CommandInterface;
-use R2Offload\Vendor\Aws\ResultInterface;
-use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
+use Aws\CommandInterface;
+use Aws\ResultInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Interface for S3 result mutator implementations.

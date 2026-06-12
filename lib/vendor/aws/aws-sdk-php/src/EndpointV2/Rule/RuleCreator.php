@@ -1,13 +1,8 @@
 <?php
-/**
- * @license Apache-2.0
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\Aws\EndpointV2\Rule;
+namespace Aws\EndpointV2\Rule;
 
-use R2Offload\Vendor\Aws\Exception\UnresolvedEndpointException;
+use Aws\Exception\UnresolvedEndpointException;
 
 class RuleCreator
 {

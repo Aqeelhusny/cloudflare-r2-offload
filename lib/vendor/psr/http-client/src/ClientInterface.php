@@ -1,14 +1,9 @@
 <?php
-/**
- * @license MIT
- *
- * Modified by aqeelhusny on 01-May-2026 using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
-namespace R2Offload\Vendor\Psr\Http\Client;
+namespace Psr\Http\Client;
 
-use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
-use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 interface ClientInterface
 {
@@ -19,7 +14,7 @@ interface ClientInterface
      *
      * @return ResponseInterface
      *
-     * @throws \R2Offload\Vendor\Psr\Http\Client\ClientExceptionInterface If an error happens while processing the request.
+     * @throws \Psr\Http\Client\ClientExceptionInterface If an error happens while processing the request.
      */
     public function sendRequest(RequestInterface $request): ResponseInterface;
 }

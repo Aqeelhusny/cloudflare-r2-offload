@@ -31,6 +31,11 @@ class BatchProcessor {
         $this->logger   = $logger;
     }
 
+    /** Swap in a fresh AttachmentSync (after credentials change) without re-registering hooks. */
+    public function set_sync( AttachmentSync $sync ): void {
+        $this->sync = $sync;
+    }
+
     public function register_hooks(): void {
         add_action( self::CRON_HOOK,      [ $this, 'process_batch' ] );
         add_action( self::RESTORE_HOOK,   [ $this, 'process_restore_batch' ] );

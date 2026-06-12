@@ -386,13 +386,17 @@ class R2Client {
         $part_size   = (int) apply_filters( 'r2_offload_multipart_part_size', 5 * 1024 * 1024 );
         $concurrency = $this->settings->get_multipart_concurrency();
 
-        $uploader_args = array_merge( [
+        // MultipartUploader does not accept top-level object args like ContentType —
+        // unknown config keys are silently ignored and the object would be stored as
+        // application/octet-stream. Object-level args must go through 'params',
+        // which the uploader applies to CreateMultipartUpload.
+        $uploader_args = [
             'bucket'      => $this->settings->get_bucket(),
             'key'         => $r2_key,
-            'ContentType' => $mime_type,
             'part_size'   => $part_size,
             'concurrency' => $concurrency,
-        ], $extra_args );
+            'params'      => array_merge( [ 'ContentType' => $mime_type ], $extra_args ),
+        ];
 
         $attempts = 0;
         $max      = 3;

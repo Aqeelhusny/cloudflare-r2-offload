@@ -157,8 +157,11 @@ class ErrorLogger {
             $this->rotate_file( $fs, $file );
         }
 
-        $current = $fs->exists( $file ) ? $fs->get_contents( $file ) : '';
-        $fs->put_contents( $file, $current . $entry . "\n", FS_CHMOD_FILE );
+        // Append with a lock — WP_Filesystem has no append API, and reading the
+        // whole file back to rewrite it is O(file size) per entry and loses lines
+        // when the inline upload path and a cron batch log concurrently. Direct
+        // append matches the terminal writers below.
+        file_put_contents( $file, $entry . "\n", FILE_APPEND | LOCK_EX );
 
         // Prune old log files periodically (roughly once per day, keyed by transient).
         if ( false === get_transient( 'r2_offload_log_pruned' ) ) {

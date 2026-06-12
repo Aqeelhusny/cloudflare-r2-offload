@@ -35,10 +35,10 @@ class AttachmentSync {
      * On re-sync (WooCommerce size regeneration) only genuinely new files are uploaded.
      *
      * @param int $attachment_id
-     * @return array{ uploaded: int, failed: int, skipped: int }
+     * @return array{ uploaded: int, failed: int, skipped: int, missing: int }
      */
     public function sync_attachment( int $attachment_id ): array {
-        $result = [ 'uploaded' => 0, 'failed' => 0, 'skipped' => 0 ];
+        $result = [ 'uploaded' => 0, 'failed' => 0, 'skipped' => 0, 'missing' => 0 ];
 
         if ( ! $this->settings->is_configured() ) {
             $this->logger->warning( 'Sync skipped: plugin not configured.', [ 'attachment_id' => $attachment_id ] );
@@ -78,7 +78,8 @@ class AttachmentSync {
 
         $uploaded_keys = $existing_keys; // Carry forward what was already uploaded.
         $bytes_uploaded = 0;
-        $claimed = 0; // Files found on R2 via HeadObject and claimed without re-upload.
+        $claimed = 0;      // Files found on R2 via HeadObject and claimed without re-upload.
+        $missing_keys = []; // Files confirmed absent BOTH locally and in R2 — unservable.
 
         foreach ( $all_files as $local_path => $r2_key ) {
             // Skip files already confirmed in R2 by WordPress meta.
@@ -89,7 +90,8 @@ class AttachmentSync {
 
             // Check R2 directly so manually pre-uploaded files are claimed without
             // re-uploading. A HeadObject is much cheaper than a redundant PutObject.
-            if ( $this->r2->check_key( $r2_key ) === 'found' ) {
+            $key_status = $this->r2->check_key( $r2_key );
+            if ( $key_status === 'found' ) {
                 $uploaded_keys[] = $r2_key;
                 $claimed++;
                 $result['skipped']++;
@@ -99,7 +101,14 @@ class AttachmentSync {
             if ( ! file_exists( $local_path ) ) {
                 // File may have been deleted by a previous "delete local" run or simply
                 // not generated (e.g. WooCommerce lazy generation not triggered yet).
-                $this->logger->warning( 'File missing locally, skipping.', [ 'path' => $local_path ] );
+                // When the key is also confirmed absent in R2 ('missing', not an API
+                // 'error'), the size is unservable from either location — track it so
+                // the synced claim below can surface the gap instead of hiding it.
+                if ( $key_status === 'missing' ) {
+                    $missing_keys[] = $r2_key;
+                    $result['missing']++;
+                }
+                $this->logger->warning( 'File missing locally, skipping.', [ 'path' => $local_path, 'in_r2' => $key_status ] );
                 $result['skipped']++;
                 continue;
             }
@@ -128,8 +137,19 @@ class AttachmentSync {
             update_post_meta( $attachment_id, '_r2_offload_synced',    '1' );
             update_post_meta( $attachment_id, '_r2_offload_keys',      wp_json_encode( array_values( array_unique( $uploaded_keys ) ) ) );
             update_post_meta( $attachment_id, '_r2_offload_synced_at', time() );
-            delete_post_meta( $attachment_id, '_r2_offload_error' );
             delete_post_meta( $attachment_id, '_r2_offload_retry_count' );
+
+            if ( $result['missing'] > 0 ) {
+                // Synced claim stands (the missing sizes were already unservable
+                // locally), but keep the gap visible to admins and queries.
+                update_post_meta( $attachment_id, '_r2_offload_error', sprintf(
+                    '%d file(s) missing both locally and in R2: %s',
+                    $result['missing'],
+                    implode( ', ', $missing_keys )
+                ) );
+            } else {
+                delete_post_meta( $attachment_id, '_r2_offload_error' );
+            }
 
             // Track stats only for bytes actually transferred in this call.
             if ( $result['uploaded'] > 0 ) {
@@ -154,6 +174,7 @@ class AttachmentSync {
             'up'      => $result['uploaded'],
             'skip'    => $result['skipped'],
             'fail'    => $result['failed'],
+            'miss'    => $result['missing'],
             'claimed' => $claimed,
         ] );
 
@@ -197,8 +218,16 @@ class AttachmentSync {
 
         foreach ( $r2_keys as $r2_key ) {
             // Derive local path from R2 key by stripping the path prefix.
-            $relative   = $prefix_strip ? ltrim( substr( $r2_key, strlen( $prefix_strip ) ), '/' ) : ltrim( $r2_key, '/' );
-            $local_path = $base_dir . $relative;
+            $local_path = $this->key_to_local_path( $r2_key, $base_dir, $prefix_strip );
+            if ( $local_path === null ) {
+                $result['failed']++;
+                $this->logger->error( 'Restore: R2 key is outside the configured path prefix — cannot derive a local path. Was the prefix changed after sync?', [
+                    'attachment_id' => $attachment_id,
+                    'key'           => $r2_key,
+                    'prefix'        => $prefix_strip,
+                ] );
+                continue;
+            }
 
             // If the file already exists locally, skip — nothing to restore.
             if ( file_exists( $local_path ) ) {
@@ -266,9 +295,8 @@ class AttachmentSync {
             $prefix_strip = $path_prefix ? trailingslashit( $path_prefix ) : '';
 
             foreach ( $r2_keys as $r2_key ) {
-                $relative   = $prefix_strip ? ltrim( substr( $r2_key, strlen( $prefix_strip ) ), '/' ) : ltrim( $r2_key, '/' );
-                $local_path = $base_dir . $relative;
-                if ( ! file_exists( $local_path ) ) {
+                $local_path = $this->key_to_local_path( $r2_key, $base_dir, $prefix_strip );
+                if ( $local_path === null || ! file_exists( $local_path ) ) {
                     $this->logger->error( 'Restore & desync aborted: local file missing after restore.', [
                         'attachment_id' => $attachment_id,
                         'expected'      => $local_path,
@@ -279,8 +307,12 @@ class AttachmentSync {
             }
         }
 
-        $this->desync_attachment( $attachment_id );
-        $result['desynced'] = true;
+        $result['desynced'] = $this->desync_attachment( $attachment_id );
+
+        if ( ! $result['desynced'] ) {
+            $result['failed']++;
+            return $result;
+        }
 
         $this->logger->info( 'Attachment restored and desynced from R2.', [
             'attachment_id' => $attachment_id,
@@ -494,7 +526,15 @@ class AttachmentSync {
         if ( $keys_json ) {
             $keys = json_decode( $keys_json, true );
             if ( is_array( $keys ) && $keys ) {
-                $this->r2->delete_files( $keys );
+                if ( ! $this->r2->delete_files( $keys ) ) {
+                    // Keep the sync meta — wiping it after a failed delete would
+                    // orphan the objects in R2 with nothing left pointing at them.
+                    $this->logger->error( 'Desync aborted: R2 delete failed; sync meta preserved for retry.', [
+                        'attachment_id' => $attachment_id,
+                        'keys'          => count( $keys ),
+                    ] );
+                    return false;
+                }
             }
         }
         delete_post_meta( $attachment_id, '_r2_offload_synced' );
@@ -553,6 +593,26 @@ class AttachmentSync {
         }
 
         return $files;
+    }
+
+    /**
+     * Map an R2 object key back to its absolute local path.
+     *
+     * Returns null when the key does not live under the configured path prefix
+     * (e.g. the prefix setting was changed after the attachment was synced) —
+     * blindly stripping strlen($prefix) characters would mangle the path and
+     * write the file to a wrong location under uploads/.
+     */
+    private function key_to_local_path( string $r2_key, string $base_dir, string $prefix_strip ): ?string {
+        if ( $prefix_strip !== '' ) {
+            if ( strpos( $r2_key, $prefix_strip ) !== 0 ) {
+                return null;
+            }
+            $relative = ltrim( substr( $r2_key, strlen( $prefix_strip ) ), '/' );
+        } else {
+            $relative = ltrim( $r2_key, '/' );
+        }
+        return $base_dir . $relative;
     }
 
     /**

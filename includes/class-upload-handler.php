@@ -28,6 +28,11 @@ class UploadHandler {
         $this->logger   = $logger;
     }
 
+    /** Swap in a fresh AttachmentSync (after credentials change) without re-registering hooks. */
+    public function set_sync( AttachmentSync $sync ): void {
+        $this->sync = $sync;
+    }
+
     public function register_hooks(): void {
         // Primary hook: fires after WordPress AND WooCommerce have generated all image sizes.
         // Priority 20 ensures third-party sizes (woocommerce_thumbnail, etc.) already exist.
@@ -155,7 +160,10 @@ class UploadHandler {
         if ( get_post_meta( $attachment_id, '_r2_offload_synced', true ) !== '1' ) {
             return;
         }
-        $this->sync->desync_attachment( $attachment_id );
-        $this->logger->info( 'Attachment deleted from R2.', [ 'attachment_id' => $attachment_id ] );
+        if ( $this->sync->desync_attachment( $attachment_id ) ) {
+            $this->logger->info( 'Attachment deleted from R2.', [ 'attachment_id' => $attachment_id ] );
+        }
+        // On failure desync_attachment() already logged; the post is being
+        // deleted regardless, so there is nothing further to roll back here.
     }
 }

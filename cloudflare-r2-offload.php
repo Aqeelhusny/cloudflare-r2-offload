@@ -31,7 +31,7 @@ define( 'R2_OFFLOAD_VERSION',    '1.4.0' );
 define( 'R2_OFFLOAD_PATH',       plugin_dir_path( __FILE__ ) );
 define( 'R2_OFFLOAD_URL',        plugin_dir_url( __FILE__ ) );
 define( 'R2_OFFLOAD_BASENAME',   plugin_basename( __FILE__ ) );
-define( 'R2_OFFLOAD_DB_VERSION', '1.2.0' );
+define( 'R2_OFFLOAD_DB_VERSION', '1.2.1' );
 
 // Autoloader — scoped vendor (AWS SDK via Strauss) + plugin classes.
 $autoload = R2_OFFLOAD_PATH . 'vendor/autoload.php';

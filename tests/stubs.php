@@ -31,8 +31,11 @@ class R2Client {
         return $this->download_returns;
     }
 
-    public function delete_files( array $keys ): void {
+    public bool $delete_returns = true;
+
+    public function delete_files( array $keys ): bool {
         $this->deleted_keys = array_merge( $this->deleted_keys, $keys );
+        return $this->delete_returns;
     }
 
     public function check_key( string $key ): string {

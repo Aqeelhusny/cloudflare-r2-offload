@@ -201,7 +201,20 @@ class UrlRewriter {
      */
     private function url_to_attachment_id( string $url ): int {
         if ( ! array_key_exists( $url, $this->url_id_cache ) ) {
-            $this->url_id_cache[ $url ] = (int) attachment_url_to_postid( $url );
+            $id = (int) attachment_url_to_postid( $url );
+
+            // attachment_url_to_postid() only matches the original file
+            // (_wp_attached_file). Content almost always embeds sized variants
+            // (photo-300x200.jpg) — strip the dimension suffix and retry so
+            // those resolve too instead of silently staying local.
+            if ( ! $id ) {
+                $original = preg_replace( '/-\d+x\d+(\.\w+)$/', '$1', $url );
+                if ( $original !== $url ) {
+                    $id = (int) attachment_url_to_postid( $original );
+                }
+            }
+
+            $this->url_id_cache[ $url ] = $id;
         }
         return $this->url_id_cache[ $url ];
     }

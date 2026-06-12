@@ -19,6 +19,11 @@ class Migration {
         $this->logger   = $logger;
     }
 
+    /** Swap in a fresh AttachmentSync (after credentials change) without re-registering hooks. */
+    public function set_sync( AttachmentSync $sync ): void {
+        $this->sync = $sync;
+    }
+
     public function register_hooks(): void {
         $actions = [
             'r2_offload_save_credentials',

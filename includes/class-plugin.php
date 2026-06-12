@@ -69,7 +69,9 @@ class Plugin {
             // form plugins), the wp_generate_attachment_metadata filter still needs to
             // work. Register a lazy hook that boots the full stack on demand.
             add_filter( 'wp_generate_attachment_metadata', function ( $metadata, $id ) {
-                if ( ! $this->logger ) {
+                // isset() is the only safe probe here — reading an uninitialized
+                // typed property directly throws an Error on PHP 7.4+.
+                if ( ! isset( $this->logger ) ) {
                     $this->boot_full();
                 }
                 return $this->upload_handler->on_generate_metadata( $metadata, $id );
@@ -133,9 +135,18 @@ class Plugin {
         $this->r2   = new R2Client( $this->settings, $this->logger );
         $this->sync = new AttachmentSync( $this->r2, $this->settings, $this->logger );
 
-        // Rebuild dependent services that hold references to the old r2/sync.
-        $this->batch_processor = new BatchProcessor( $this->sync, $this->settings, $this->logger );
-        $this->batch_processor->register_hooks();
+        // Re-point the already-hooked services at the fresh sync instance.
+        // Creating new instances and calling register_hooks() again would leave
+        // the old objects hooked too, firing every cron callback twice.
+        if ( isset( $this->batch_processor ) ) {
+            $this->batch_processor->set_sync( $this->sync );
+        }
+        if ( isset( $this->upload_handler ) ) {
+            $this->upload_handler->set_sync( $this->sync );
+        }
+        if ( isset( $this->migration ) ) {
+            $this->migration->set_sync( $this->sync );
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -157,7 +168,23 @@ class Plugin {
             global $wpdb;
             $bulk_table = $wpdb->prefix . 'r2_offload_bulk_queue';
             $wpdb->query( "ALTER TABLE `{$bulk_table}` MODIFY COLUMN job_type ENUM('restore','local_delete','desync','validate') NOT NULL" );
-            $wpdb->query( "ALTER TABLE `{$bulk_table}` ADD COLUMN IF NOT EXISTS error_message TEXT NULL AFTER status" );
+        }
+
+        // 1.2.1: re-run the error_message column add for sites already stamped 1.2.0.
+        // The 1.2.0 upgrade used 'ADD COLUMN IF NOT EXISTS', which is MariaDB-only —
+        // on MySQL the statement errored silently, the column was never created, and
+        // every bulk-queue UPDATE that includes error_message failed. The db_version
+        // was stamped regardless, so those sites never retried. This probe is
+        // idempotent and safe on both engines.
+        if ( version_compare( $installed_version, '1.2.1', '<' ) ) {
+            global $wpdb;
+            $bulk_table = $wpdb->prefix . 'r2_offload_bulk_queue';
+            $has_error_column = $wpdb->get_var(
+                $wpdb->prepare( "SHOW COLUMNS FROM `{$bulk_table}` LIKE %s", 'error_message' )
+            );
+            if ( ! $has_error_column ) {
+                $wpdb->query( "ALTER TABLE `{$bulk_table}` ADD COLUMN error_message TEXT NULL AFTER status" );
+            }
         }
 
         update_option( 'r2_offload_db_version', R2_OFFLOAD_DB_VERSION );

@@ -1,7 +1,9 @@
 <?php
 namespace R2Offload;
 
+use R2Offload\Vendor\Aws\CommandPool;
 use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\Exception\MultipartUploadException;
 use R2Offload\Vendor\Aws\S3\MultipartUploader;
 use R2Offload\Vendor\Aws\S3\S3Client;
 
@@ -47,6 +49,92 @@ class R2Client {
         return $file_size >= $threshold
             ? $this->multipart_upload( $local_path, $r2_key, $mime_type, $extra_args )
             : $this->single_upload( $local_path, $r2_key, $mime_type, $extra_args );
+    }
+
+    /**
+     * Upload many files concurrently.
+     *
+     * Small files are dispatched as a CommandPool of PutObject commands so they
+     * upload in parallel — wall time is roughly ceil(N / concurrency) round trips
+     * instead of N sequential ones. Files at or above the multipart threshold
+     * fall back to MultipartUploader one at a time (it parallelises its own parts).
+     *
+     * @param array<int, array{path: string, key: string, mime: string}> $jobs
+     * @return array<string, bool> Map of r2_key => success.
+     */
+    public function upload_files( array $jobs ): array {
+        $results = [];
+        if ( empty( $jobs ) ) {
+            return $results;
+        }
+
+        $client = $this->get_client();
+        if ( ! $client ) {
+            foreach ( $jobs as $job ) {
+                $results[ $job['key'] ] = false;
+            }
+            return $results;
+        }
+
+        $threshold = $this->settings->get_multipart_threshold();
+        $bucket    = $this->settings->get_bucket();
+        $small     = [];
+        $large     = [];
+
+        foreach ( $jobs as $job ) {
+            if ( ! file_exists( $job['path'] ) ) {
+                $this->logger->error( 'Upload failed: local file not found.', [ 'path' => $job['path'], 'key' => $job['key'] ] );
+                $results[ $job['key'] ] = false;
+                continue;
+            }
+            if ( filesize( $job['path'] ) >= $threshold ) {
+                $large[] = $job;
+            } else {
+                $small[] = $job;
+            }
+        }
+
+        if ( $small ) {
+            $started     = microtime( true );
+            $concurrency = max( 1, (int) apply_filters( 'r2_offload_upload_concurrency', 6 ) );
+
+            $commands = [];
+            foreach ( $small as $job ) {
+                $commands[] = $client->getCommand( 'PutObject', [
+                    'Bucket'      => $bucket,
+                    'Key'         => $job['key'],
+                    'SourceFile'  => $job['path'],
+                    'ContentType' => $job['mime'],
+                ] );
+            }
+
+            $pool = new CommandPool( $client, $commands, [
+                'concurrency' => $concurrency,
+                'fulfilled'   => function ( $result, $index ) use ( $small, &$results ) {
+                    $results[ $small[ $index ]['key'] ] = true;
+                },
+                'rejected'    => function ( $reason, $index ) use ( $small, &$results ) {
+                    $results[ $small[ $index ]['key'] ] = false;
+                    $this->logger->error( 'Pooled upload failed.', [
+                        'key'     => $small[ $index ]['key'],
+                        'message' => $reason instanceof \Throwable ? $reason->getMessage() : (string) $reason,
+                    ] );
+                },
+            ] );
+            $pool->promise()->wait();
+
+            $this->logger->debug( 'Pooled upload finished.', [
+                'files'       => count( $small ),
+                'concurrency' => $concurrency,
+                'ms'          => (int) round( ( microtime( true ) - $started ) * 1000 ),
+            ] );
+        }
+
+        foreach ( $large as $job ) {
+            $results[ $job['key'] ] = $this->multipart_upload( $job['path'], $job['key'], $job['mime'], [] );
+        }
+
+        return $results;
     }
 
     /**
@@ -159,10 +247,15 @@ class R2Client {
         if ( ! $client ) {
             return 'error';
         }
+        $started = microtime( true );
         try {
             $client->headObject( [
                 'Bucket' => $this->settings->get_bucket(),
                 'Key'    => $r2_key,
+            ] );
+            $this->logger->debug( 'check_key: found.', [
+                'key' => $r2_key,
+                'ms'  => (int) round( ( microtime( true ) - $started ) * 1000 ),
             ] );
             return 'found';
         } catch ( AwsException $e ) {
@@ -353,28 +446,25 @@ class R2Client {
             'ContentType' => $mime_type,
         ], $extra_args );
 
-        $attempts = 0;
-        $max      = 3;
-
-        while ( $attempts < $max ) {
-            $attempts++;
-            try {
-                $client->putObject( $args );
-                $this->logger->debug( 'Single upload successful.', [ 'key' => $r2_key ] );
-                return true;
-            } catch ( AwsException $e ) {
-                $this->logger->warning( "Single upload attempt {$attempts} failed.", [
-                    'key'  => $r2_key,
-                    'code' => $e->getAwsErrorCode(),
-                ] );
-                if ( $attempts < $max ) {
-                    sleep( $attempts ); // exponential-ish backoff: 1s, 2s
-                }
-            }
+        // Transient failures are retried with backoff inside the SDK (see
+        // 'retries' in get_client()) — no blocking sleep() loop here, which
+        // used to stall the user's upload request for seconds.
+        $started = microtime( true );
+        try {
+            $client->putObject( $args );
+            $this->logger->debug( 'Single upload successful.', [
+                'key' => $r2_key,
+                'ms'  => (int) round( ( microtime( true ) - $started ) * 1000 ),
+            ] );
+            return true;
+        } catch ( AwsException $e ) {
+            $this->logger->error( 'Single upload failed.', [
+                'key'     => $r2_key,
+                'code'    => $e->getAwsErrorCode(),
+                'message' => $e->getMessage(),
+            ] );
+            return false;
         }
-
-        $this->logger->error( 'Single upload failed after max attempts.', [ 'key' => $r2_key ] );
-        return false;
     }
 
     private function multipart_upload( string $local_path, string $r2_key, string $mime_type, array $extra_args ): bool {
@@ -398,24 +488,38 @@ class R2Client {
             'params'      => array_merge( [ 'ContentType' => $mime_type ], $extra_args ),
         ];
 
+        $started  = microtime( true );
         $attempts = 0;
         $max      = 3;
+        $state    = null;
 
         while ( $attempts < $max ) {
             $attempts++;
             try {
-                $uploader = new MultipartUploader( $client, $local_path, $uploader_args );
+                // On retry, resume from the parts that already completed instead
+                // of restarting the whole upload. No blocking sleep between
+                // attempts — per-request backoff is the SDK retry middleware's job.
+                $args     = $state ? [ 'state' => $state, 'concurrency' => $concurrency ] : $uploader_args;
+                $uploader = new MultipartUploader( $client, $local_path, $args );
                 $uploader->upload();
-                $this->logger->debug( 'Multipart upload successful.', [ 'key' => $r2_key ] );
+                $this->logger->debug( 'Multipart upload successful.', [
+                    'key'      => $r2_key,
+                    'attempts' => $attempts,
+                    'ms'       => (int) round( ( microtime( true ) - $started ) * 1000 ),
+                ] );
                 return true;
+            } catch ( MultipartUploadException $e ) {
+                $state = $e->getState();
+                $this->logger->warning( "Multipart upload attempt {$attempts} failed — resuming from completed parts.", [
+                    'key'     => $r2_key,
+                    'message' => $e->getMessage(),
+                ] );
             } catch ( \Exception $e ) {
+                $state = null;
                 $this->logger->warning( "Multipart upload attempt {$attempts} failed.", [
                     'key'     => $r2_key,
                     'message' => $e->getMessage(),
                 ] );
-                if ( $attempts < $max ) {
-                    sleep( $attempts * 2 );
-                }
             }
         }
 
@@ -455,6 +559,10 @@ class R2Client {
                 'key'    => $key,
                 'secret' => $secret,
             ],
+            // Transient failures (throttling, 5xx, connection drops) are retried
+            // with backoff inside the SDK — replaces the old blocking sleep()
+            // retry loops that stalled the user's upload request for seconds.
+            'retries'                 => [ 'mode' => 'adaptive', 'max_attempts' => 3 ],
         ];
 
         // Allow a custom CA bundle via constant (wp-config.php) or AWS_CA_BUNDLE env var.

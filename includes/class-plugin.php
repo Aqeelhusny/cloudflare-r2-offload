@@ -60,9 +60,17 @@ class Plugin {
         $this->url_rewriter = new UrlRewriter( $this->settings );
         $this->url_rewriter->register_hooks();
 
-        // Everything below is only needed for admin, AJAX, cron, REST API, or upload hooks.
-        // On a pure frontend page view with no uploads, none of this runs.
-        if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || $this->is_rest_request() || $this->is_upload_request() ) {
+        // WP-CLI: register the `wp r2` command. The class file is required
+        // explicitly because the composer classmap may predate it.
+        if ( defined( 'WP_CLI' ) && WP_CLI ) {
+            require_once __DIR__ . '/class-cli.php';
+            \WP_CLI::add_command( 'r2', CLI::class );
+        }
+
+        // Everything below is only needed for admin, AJAX, cron, REST API, CLI,
+        // or upload hooks. On a pure frontend page view with no uploads, none
+        // of this runs.
+        if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || $this->is_rest_request() || $this->is_upload_request() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
             $this->boot_full();
         } else {
             // Deferred boot: if a new upload happens on the frontend (e.g. front-end
@@ -112,7 +120,31 @@ class Plugin {
 
             $admin = new Admin\Admin( $this->settings, $this->logger, $this->r2 );
             $admin->register();
+
+            // Background processing depends on cron firing. When WP-Cron is
+            // disabled, warn (on plugin pages only) so queued jobs don't sit idle.
+            if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
+                add_action( 'admin_notices', [ $this, 'notice_wp_cron_disabled' ] );
+            }
         }
+    }
+
+    /**
+     * Admin notice shown on plugin pages when DISABLE_WP_CRON is set.
+     * Queued background jobs only run if a system cron hits wp-cron.php,
+     * or via the `wp r2 migrate` CLI command.
+     */
+    public function notice_wp_cron_disabled(): void {
+        $page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+        if ( strpos( $page, 'r2-offload' ) !== 0 ) {
+            return;
+        }
+        echo '<div class="notice notice-warning"><p>';
+        echo wp_kses(
+            __( '<strong>Cloudflare R2 Offload:</strong> <code>DISABLE_WP_CRON</code> is set. Background offload and bulk jobs only run if a system cron triggers <code>wp-cron.php</code> (e.g. <code>wp cron event run --due-now</code> every minute), or run migrations directly with <code>wp r2 migrate</code>.', 'cloudflare-r2-offload' ),
+            [ 'strong' => [], 'code' => [] ]
+        );
+        echo '</p></div>';
     }
 
     private function is_rest_request(): bool {
@@ -299,13 +331,15 @@ class Plugin {
             attachment_id BIGINT(20) UNSIGNED NOT NULL,
             status        ENUM('pending','processing','complete','failed') NOT NULL DEFAULT 'pending',
             retry_count   TINYINT(3) UNSIGNED NOT NULL DEFAULT 0,
+            claimed_by    VARCHAR(64) NULL,
             error_message TEXT NULL,
             created_at    DATETIME NOT NULL,
             updated_at    DATETIME NOT NULL,
             PRIMARY KEY (id),
             UNIQUE KEY attachment_id (attachment_id),
             KEY status (status),
-            KEY status_retry (status, retry_count)
+            KEY status_retry (status, retry_count),
+            KEY claimed_by (claimed_by)
         ) {$charset_collate};";
 
         $bulk_table = $wpdb->prefix . 'r2_offload_bulk_queue';
@@ -314,12 +348,14 @@ class Plugin {
             attachment_id BIGINT(20) UNSIGNED NOT NULL,
             job_type      ENUM('restore','local_delete','desync','validate') NOT NULL,
             status        ENUM('pending','processing','complete','failed') NOT NULL DEFAULT 'pending',
+            claimed_by    VARCHAR(64) NULL,
             error_message TEXT NULL,
             created_at    DATETIME NOT NULL,
             updated_at    DATETIME NOT NULL,
             PRIMARY KEY (id),
             UNIQUE KEY job_attachment (job_type, attachment_id),
-            KEY job_status (job_type, status)
+            KEY job_status (job_type, status),
+            KEY claimed_by (claimed_by)
         ) {$charset_collate};";
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';

@@ -235,12 +235,10 @@ class Migration {
 
         $this->logger->info( 'Migration started.', [ 'total' => $total ] );
 
-        // Schedule with a 2-second delay so the DB write is fully committed and
-        // visible to the cron process before the batch tries to read from the queue.
-        // Log before scheduling so "Migration started" always appears before
-        // "Migration batch: cron fired" in the activity log.
-        wp_schedule_single_event( time() + 2, 'r2_offload_process_batch' );
-        spawn_cron();
+        // kick() schedules the event as due-now and spawns the cron runner —
+        // spawn_cron() ignores future-scheduled events, so the old +2s delay
+        // meant the batch waited for the next visitor instead of starting.
+        BatchProcessor::kick( BatchProcessor::CRON_HOOK );
 
         wp_send_json_success( [
             'message' => sprintf(
@@ -273,8 +271,7 @@ class Migration {
         );
 
         delete_option( 'r2_offload_migration_paused' );
-        wp_schedule_single_event( time(), 'r2_offload_process_batch' );
-        spawn_cron();
+        BatchProcessor::kick( BatchProcessor::CRON_HOOK );
         $this->logger->info( 'Migration resumed.' );
         wp_send_json_success( [ 'message' => __( 'Migration resumed.', 'cloudflare-r2-offload' ) ] );
     }
@@ -341,7 +338,7 @@ class Migration {
         );
 
         if ( $updated > 0 ) {
-            wp_schedule_single_event( time() + 2, 'r2_offload_process_batch' );
+            BatchProcessor::kick( BatchProcessor::CRON_HOOK );
         }
 
         wp_send_json_success( [
@@ -508,7 +505,7 @@ class Migration {
             wp_send_json_success( [ 'message' => __( 'No attachments need restoring.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
         }
 
-        wp_schedule_single_event( time() + 2, 'r2_offload_process_restore_batch' );
+        BatchProcessor::kick( BatchProcessor::RESTORE_HOOK );
 
         $this->logger->info( 'Bulk restore started.', [ 'total' => $total ] );
 
@@ -575,7 +572,7 @@ class Migration {
             wp_send_json_success( [ 'message' => __( 'No local files to delete — all synced attachments are already R2-only.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
         }
 
-        wp_schedule_single_event( time() + 2, 'r2_offload_process_local_delete_batch' );
+        BatchProcessor::kick( BatchProcessor::LOCAL_DEL_HOOK );
 
         $this->logger->info( 'Bulk local-delete started.', [ 'total' => $total ] );
 
@@ -660,7 +657,7 @@ class Migration {
             wp_send_json_success( [ 'message' => __( 'No synced attachments to desync.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
         }
 
-        wp_schedule_single_event( time() + 2, 'r2_offload_process_desync_batch' );
+        BatchProcessor::kick( BatchProcessor::DESYNC_HOOK );
 
         $this->logger->info( 'Bulk restore & desync started.', [ 'total' => $total ] );
 
@@ -918,7 +915,7 @@ class Migration {
             wp_send_json_success( [ 'message' => __( 'All attachments are already synced — nothing to validate.', 'cloudflare-r2-offload' ), 'total' => 0 ] );
         }
 
-        wp_schedule_single_event( time() + 2, BatchProcessor::VALIDATE_HOOK );
+        BatchProcessor::kick( BatchProcessor::VALIDATE_HOOK );
 
         $this->logger->info( 'Pre-upload validation started.', [ 'total' => $total ] );
 

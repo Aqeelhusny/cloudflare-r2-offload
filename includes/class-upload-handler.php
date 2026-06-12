@@ -111,10 +111,7 @@ class UploadHandler {
             )
         );
 
-        if ( ! wp_next_scheduled( 'r2_offload_process_batch' ) ) {
-            wp_schedule_single_event( time() + 5, 'r2_offload_process_batch' );
-            spawn_cron();
-        }
+        BatchProcessor::kick( BatchProcessor::CRON_HOOK );
 
         $this->logger->info( 'Attachment queued for background R2 offload.', [ 'attachment_id' => $attachment_id ] );
     }

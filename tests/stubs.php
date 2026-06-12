@@ -22,6 +22,14 @@ class R2Client {
         return $this->upload_returns;
     }
 
+    public function upload_files( array $jobs ): array {
+        $results = [];
+        foreach ( $jobs as $job ) {
+            $results[ $job['key'] ] = $this->upload_file( $job['path'], $job['key'], $job['mime'] );
+        }
+        return $results;
+    }
+
     public function download_file( string $r2_key, string $local_path ): bool {
         $this->downloaded[] = [ 'key' => $r2_key, 'path' => $local_path ];
         if ( $this->download_returns ) {

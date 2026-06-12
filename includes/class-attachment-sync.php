@@ -38,7 +38,8 @@ class AttachmentSync {
      * @return array{ uploaded: int, failed: int, skipped: int, missing: int }
      */
     public function sync_attachment( int $attachment_id ): array {
-        $result = [ 'uploaded' => 0, 'failed' => 0, 'skipped' => 0, 'missing' => 0 ];
+        $sync_started = microtime( true );
+        $result       = [ 'uploaded' => 0, 'failed' => 0, 'skipped' => 0, 'missing' => 0 ];
 
         if ( ! $this->settings->is_configured() ) {
             $this->logger->warning( 'Sync skipped: plugin not configured.', [ 'attachment_id' => $attachment_id ] );
@@ -80,7 +81,15 @@ class AttachmentSync {
         $bytes_uploaded = 0;
         $claimed = 0;      // Files found on R2 via HeadObject and claimed without re-upload.
         $missing_keys = []; // Files confirmed absent BOTH locally and in R2 — unservable.
+        $to_upload = [];
 
+        // The R2 probe (HeadObject) only runs on re-syncs: for a fresh upload
+        // (no prior _r2_offload_keys) the key cannot exist yet, and probing
+        // every file doubled the API calls on the hot path. Users who manually
+        // pre-uploaded files to R2 claim them via the Validate flow instead.
+        $has_prior_sync = ! empty( $existing_keys );
+
+        // Pass 1: decide what each file needs — skip, claim, missing, or upload.
         foreach ( $all_files as $local_path => $r2_key ) {
             // Skip files already confirmed in R2 by WordPress meta.
             if ( isset( $existing_keys_set[ $r2_key ] ) ) {
@@ -88,22 +97,26 @@ class AttachmentSync {
                 continue;
             }
 
-            // Check R2 directly so manually pre-uploaded files are claimed without
-            // re-uploading. A HeadObject is much cheaper than a redundant PutObject.
-            $key_status = $this->r2->check_key( $r2_key );
-            if ( $key_status === 'found' ) {
-                $uploaded_keys[] = $r2_key;
-                $claimed++;
-                $result['skipped']++;
-                continue;
+            // Assumed for fresh uploads — nothing can have uploaded the key yet.
+            $key_status = 'missing';
+            if ( $has_prior_sync ) {
+                // Re-sync: check R2 directly so files already uploaded (e.g. by a
+                // prior partial run) are claimed without a redundant PutObject.
+                $key_status = $this->r2->check_key( $r2_key );
+                if ( $key_status === 'found' ) {
+                    $uploaded_keys[] = $r2_key;
+                    $claimed++;
+                    $result['skipped']++;
+                    continue;
+                }
             }
 
             if ( ! file_exists( $local_path ) ) {
                 // File may have been deleted by a previous "delete local" run or simply
                 // not generated (e.g. WooCommerce lazy generation not triggered yet).
-                // When the key is also confirmed absent in R2 ('missing', not an API
-                // 'error'), the size is unservable from either location — track it so
-                // the synced claim below can surface the gap instead of hiding it.
+                // When the key is also absent in R2 ('missing', not an API 'error'),
+                // the size is unservable from either location — track it so the
+                // synced claim below can surface the gap instead of hiding it.
                 if ( $key_status === 'missing' ) {
                     $missing_keys[] = $r2_key;
                     $result['missing']++;
@@ -113,20 +126,30 @@ class AttachmentSync {
                 continue;
             }
 
-            $file_mime = mime_content_type( $local_path ) ?: ( $mime ?: 'application/octet-stream' );
-            $file_size = filesize( $local_path ); // safe: file_exists() checked above
+            $to_upload[] = [
+                'path' => $local_path,
+                'key'  => $r2_key,
+                'mime' => mime_content_type( $local_path ) ?: ( $mime ?: 'application/octet-stream' ),
+                'size' => (int) filesize( $local_path ), // safe: file_exists() checked above
+            ];
+        }
 
-            $ok = $this->r2->upload_file( $local_path, $r2_key, $file_mime );
-            if ( $ok ) {
-                $uploaded_keys[] = $r2_key;
-                $bytes_uploaded += (int) $file_size;
-                $result['uploaded']++;
-            } else {
-                $result['failed']++;
-                $this->logger->error( 'Upload failed for file.', [
-                    'attachment_id' => $attachment_id,
-                    'key'           => $r2_key,
-                ] );
+        // Pass 2: push everything that needs uploading in one concurrent batch
+        // (CommandPool inside R2Client) instead of one round trip per file.
+        if ( $to_upload ) {
+            $upload_results = $this->r2->upload_files( $to_upload );
+            foreach ( $to_upload as $job ) {
+                if ( ! empty( $upload_results[ $job['key'] ] ) ) {
+                    $uploaded_keys[] = $job['key'];
+                    $bytes_uploaded += $job['size'];
+                    $result['uploaded']++;
+                } else {
+                    $result['failed']++;
+                    $this->logger->error( 'Upload failed for file.', [
+                        'attachment_id' => $attachment_id,
+                        'key'           => $job['key'],
+                    ] );
+                }
             }
         }
 
@@ -176,6 +199,7 @@ class AttachmentSync {
             'fail'    => $result['failed'],
             'miss'    => $result['missing'],
             'claimed' => $claimed,
+            'ms'      => (int) round( ( microtime( true ) - $sync_started ) * 1000 ),
         ] );
 
         return $result;

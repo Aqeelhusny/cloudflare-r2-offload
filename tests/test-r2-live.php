@@ -142,9 +142,11 @@ class LiveTestRunner {
     }
 }
 
-function make_temp_file( string $name, string $content = '' ): string {
+function make_temp_file( string $name, ?string $content = null ): string {
     $path = sys_get_temp_dir() . '/r2-live-test-' . $name;
-    file_put_contents( $path, $content ?: "r2-live-test-content-{$name}-" . time() );
+    // '??' not '?:' — an intentionally empty string ('' = 0-byte test file)
+    // must be written as-is; only null falls back to generated content.
+    file_put_contents( $path, $content ?? "r2-live-test-content-{$name}-" . time() );
     return $path;
 }
 

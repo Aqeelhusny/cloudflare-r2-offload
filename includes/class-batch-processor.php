@@ -22,8 +22,7 @@ class BatchProcessor {
     const LOCAL_DEL_LOCK    = 'r2_offload_local_del_lock';
     const DESYNC_LOCK       = 'r2_offload_desync_lock';
     const VALIDATE_LOCK     = 'r2_offload_validate_lock';
-    const LOCK_TTL          = 300; // 5 minutes
-    const MAX_EXECUTION_SEC = 50;  // keep under PHP max_execution_time (usually 60s)
+    const LOCK_TTL          = 300; // 5 minutes — also the stale-row recovery cutoff
 
     public function __construct( AttachmentSync $sync, Settings $settings, ErrorLogger $logger ) {
         $this->sync     = $sync;
@@ -34,6 +33,35 @@ class BatchProcessor {
     /** Swap in a fresh AttachmentSync (after credentials change) without re-registering hooks. */
     public function set_sync( AttachmentSync $sync ): void {
         $this->sync = $sync;
+    }
+
+    /**
+     * Schedule a cron hook to run NOW and spawn the cron runner immediately.
+     *
+     * spawn_cron() only fires events that are already due — the old pattern of
+     * scheduling at time()+N then spawning was a no-op until the next visitor
+     * happened to hit the site. Scheduling at time() makes the event due, so
+     * the non-blocking loopback request actually starts the batch.
+     */
+    public static function kick( string $hook ): void {
+        if ( ! wp_next_scheduled( $hook ) ) {
+            wp_schedule_single_event( time(), $hook );
+        }
+        spawn_cron();
+    }
+
+    /**
+     * Seconds this run may spend before rescheduling.
+     *
+     * Derived from max_execution_time instead of a hard-coded 50s, and capped
+     * below LOCK_TTL so stale-row recovery can never steal rows from a worker
+     * that is still alive. Unlimited environments (CLI, max_execution_time=0)
+     * get the cap.
+     */
+    private function time_budget(): int {
+        $limit  = (int) ini_get( 'max_execution_time' );
+        $budget = $limit > 0 ? $limit - 10 : 240;
+        return max( 20, min( $budget, 240 ) );
     }
 
     public function register_hooks(): void {
@@ -79,36 +107,21 @@ class BatchProcessor {
         $table      = $wpdb->prefix . 'r2_offload_migration_queue';
         $batch_size = $this->settings->get_batch_size();
         $start_time = time();
+        $budget     = $this->time_budget();
         $processed  = 0;
 
         // Recover rows stuck in 'processing' from a previous run that died or was paused
         // mid-batch. Without this, resume after pause sees an empty pending queue and
         // incorrectly reports migration complete while those rows remain unprocessed.
-        $stale_cutoff = gmdate( 'Y-m-d H:i:s', time() - self::LOCK_TTL );
-        $recovered    = $wpdb->query(
-            $wpdb->prepare(
-                "UPDATE `{$table}` SET status = 'pending', updated_at = %s
-                 WHERE status = 'processing' AND updated_at < %s",
-                current_time( 'mysql', true ), $stale_cutoff
-            )
-        );
-        if ( $recovered ) {
-            $this->logger->info( 'Migration batch: recovered stale processing rows.', [ 'count' => $recovered ] );
-        }
+        $this->recover_stale_rows( $table, null );
 
-        while ( ( time() - $start_time ) < self::MAX_EXECUTION_SEC ) {
+        while ( ( time() - $start_time ) < $budget ) {
             // Check pause flag each iteration so pause takes effect mid-run.
             if ( get_option( 'r2_offload_migration_paused' ) ) {
                 break;
             }
 
-            $now   = current_time( 'mysql', true );
-            $items = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT id, attachment_id, retry_count FROM `{$table}` WHERE status = 'pending' ORDER BY id ASC LIMIT %d",
-                    $batch_size
-                )
-            );
+            $items = $this->claim_batch( $table, null, $batch_size );
 
             if ( empty( $items ) ) {
                 // Queue fully drained.
@@ -118,60 +131,21 @@ class BatchProcessor {
                 return;
             }
 
-            // Mark as processing.
-            $ids_int = array_map( fn( $item ) => (int) $item->id, $items );
-            $this->mark_as_processing( $ids_int, $table, $now );
-
             foreach ( $items as $item ) {
                 // Time guard inside the inner loop too.
-                if ( ( time() - $start_time ) >= self::MAX_EXECUTION_SEC ) {
+                if ( ( time() - $start_time ) >= $budget ) {
                     // Revert unprocessed items back to pending.
                     $wpdb->update(
                         $table,
-                        [ 'status' => 'pending', 'updated_at' => current_time( 'mysql', true ) ],
+                        [ 'status' => 'pending', 'claimed_by' => null, 'updated_at' => current_time( 'mysql', true ) ],
                         [ 'id' => (int) $item->id ],
-                        [ '%s', '%s' ],
+                        [ '%s', '%s', '%s' ],
                         [ '%d' ]
                     );
                     continue;
                 }
 
-                $attachment_id = (int) $item->attachment_id;
-                $result        = $this->sync->sync_attachment( $attachment_id );
-                $item_now      = current_time( 'mysql', true );
-
-                // Success: no failures and at least one file was uploaded or already on R2.
-                // "Nothing happened" (all zeros) means plugin not configured/credentials bad — treat as failure.
-                $is_success = $result['failed'] === 0 && ( $result['uploaded'] > 0 || $result['skipped'] > 0 );
-
-                if ( $is_success ) {
-                    $wpdb->update(
-                        $table,
-                        [ 'status' => 'complete', 'updated_at' => $item_now ],
-                        [ 'id' => (int) $item->id ],
-                        [ '%s', '%s' ],
-                        [ '%d' ]
-                    );
-                } else {
-                    $retry_count = (int) $item->retry_count + 1;
-                    $new_status  = $retry_count >= 3 ? 'failed' : 'pending';
-                    $error_msg   = ( $result['uploaded'] === 0 && $result['failed'] === 0 )
-                        ? 'Skipped: plugin not configured or credentials invalid.'
-                        : "Uploaded: {$result['uploaded']}, Failed: {$result['failed']}";
-
-                    $wpdb->update(
-                        $table,
-                        [
-                            'status'        => $new_status,
-                            'retry_count'   => $retry_count,
-                            'error_message' => $error_msg,
-                            'updated_at'    => $item_now,
-                        ],
-                        [ 'id' => (int) $item->id ],
-                        [ '%s', '%d', '%s', '%s' ],
-                        [ '%d' ]
-                    );
-                }
+                $this->process_migration_item( $item, $table );
 
                 // Flush object cache after processing to manage memory on large migrations.
                 if ( function_exists( 'wp_cache_flush_runtime' ) ) {
@@ -194,16 +168,132 @@ class BatchProcessor {
                 'processed_this_run' => $processed,
                 'remaining'          => $pending_count,
             ] );
-            // Schedule next batch with minimal gap. For large queues (1000+),
-            // schedule immediately to maximize throughput.
-            $delay = $pending_count > 1000 ? 1 : 3;
-            wp_schedule_single_event( time() + $delay, self::CRON_HOOK );
-            spawn_cron();
+            self::kick( self::CRON_HOOK );
         } else {
             $this->cleanup_migration_table( $table );
             do_action( 'r2_offload_migration_complete' );
             $this->logger->info( 'Migration complete.', [ 'processed_this_run' => $processed ] );
         }
+    }
+
+    /**
+     * Sync one claimed migration-queue row and write its terminal status.
+     *
+     * @return bool True when the attachment synced successfully.
+     */
+    private function process_migration_item( object $item, string $table ): bool {
+        global $wpdb;
+
+        $attachment_id = (int) $item->attachment_id;
+        $result        = $this->sync->sync_attachment( $attachment_id );
+        $item_now      = current_time( 'mysql', true );
+
+        // Success: no failures and at least one file was uploaded or already on R2.
+        // "Nothing happened" (all zeros) means plugin not configured/credentials bad — treat as failure.
+        $is_success = $result['failed'] === 0 && ( $result['uploaded'] > 0 || $result['skipped'] > 0 );
+
+        if ( $is_success ) {
+            $wpdb->update(
+                $table,
+                [ 'status' => 'complete', 'claimed_by' => null, 'updated_at' => $item_now ],
+                [ 'id' => (int) $item->id ],
+                [ '%s', '%s', '%s' ],
+                [ '%d' ]
+            );
+        } else {
+            $retry_count = (int) $item->retry_count + 1;
+            $new_status  = $retry_count >= 3 ? 'failed' : 'pending';
+            $error_msg   = ( $result['uploaded'] === 0 && $result['failed'] === 0 )
+                ? 'Skipped: plugin not configured or credentials invalid.'
+                : "Uploaded: {$result['uploaded']}, Failed: {$result['failed']}";
+
+            $wpdb->update(
+                $table,
+                [
+                    'status'        => $new_status,
+                    'claimed_by'    => null,
+                    'retry_count'   => $retry_count,
+                    'error_message' => $error_msg,
+                    'updated_at'    => $item_now,
+                ],
+                [ 'id' => (int) $item->id ],
+                [ '%s', '%s', '%d', '%s', '%s' ],
+                [ '%d' ]
+            );
+        }
+
+        return $is_success;
+    }
+
+    /**
+     * Drain the migration queue in the current process until it is empty,
+     * paused, or only terminally-failed rows remain. Used by the `wp r2
+     * migrate` CLI command — no time budget, no cron, no transient lock
+     * (atomic claiming makes concurrent workers safe).
+     *
+     * @param callable|null $on_item Called after each processed item:
+     *                               fn( object $row, bool $success ).
+     * @return array{ complete: int, failed: int, failed_rows: int }
+     *               complete/failed count processing attempts this run (a row
+     *               retried twice counts twice); failed_rows is the number of
+     *               rows that exhausted their retries, captured BEFORE cleanup
+     *               truncates the table.
+     */
+    public function drain_migration_queue( ?callable $on_item = null ): array {
+        global $wpdb;
+
+        $table      = $wpdb->prefix . 'r2_offload_migration_queue';
+        $batch_size = $this->settings->get_batch_size();
+        $stats      = [ 'complete' => 0, 'failed' => 0, 'failed_rows' => 0 ];
+
+        $this->recover_stale_rows( $table, null );
+
+        while ( true ) {
+            if ( get_option( 'r2_offload_migration_paused' ) ) {
+                break;
+            }
+
+            $items = $this->claim_batch( $table, null, $batch_size );
+            if ( empty( $items ) ) {
+                break;
+            }
+
+            foreach ( $items as $item ) {
+                $ok = $this->process_migration_item( $item, $table );
+                $stats[ $ok ? 'complete' : 'failed' ]++;
+
+                if ( $on_item ) {
+                    $on_item( $item, $ok );
+                }
+
+                if ( function_exists( 'wp_cache_flush_runtime' ) ) {
+                    wp_cache_flush_runtime();
+                } else {
+                    wp_cache_flush();
+                }
+            }
+        }
+
+        $pending = (int) $wpdb->get_var(
+            $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status IN (%s, %s)", 'pending', 'processing' )
+        );
+        // Capture before cleanup — when the queue is fully drained, cleanup
+        // truncates the table, which would erase the failed-row evidence.
+        $stats['failed_rows'] = (int) $wpdb->get_var(
+            $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status = %s", 'failed' )
+        );
+        if ( $pending === 0 ) {
+            if ( $stats['failed_rows'] > 0 ) {
+                // Keep failed rows so `wp r2 retry` (and the admin retry button)
+                // can re-queue them — only clear the completed ones.
+                $wpdb->query( $wpdb->prepare( "DELETE FROM `{$table}` WHERE status = %s", 'complete' ) );
+            } else {
+                $this->cleanup_migration_table( $table );
+            }
+            do_action( 'r2_offload_migration_complete' );
+        }
+
+        return $stats;
     }
 
     private function cleanup_migration_table( string $table ): void {
@@ -324,32 +414,20 @@ class BatchProcessor {
         $table      = $wpdb->prefix . 'r2_offload_bulk_queue';
         $batch_size = $this->settings->get_batch_size();
         $start_time = time();
+        $budget     = $this->time_budget();
         $processed  = 0;
 
         // Stale-processing recovery: rows stuck in 'processing' for longer than
         // LOCK_TTL mean a previous cron run died mid-batch. Reset them to 'pending'
         // so they are picked up by this run rather than blocking it forever.
-        $stale_cutoff = gmdate( 'Y-m-d H:i:s', time() - self::LOCK_TTL );
-        $wpdb->query(
-            $wpdb->prepare(
-                "UPDATE `{$table}` SET status = 'pending', updated_at = %s
-                 WHERE job_type = %s AND status = 'processing' AND updated_at < %s",
-                current_time( 'mysql', true ), $job_type, $stale_cutoff
-            )
-        );
+        $this->recover_stale_rows( $table, $job_type );
 
-        while ( ( time() - $start_time ) < self::MAX_EXECUTION_SEC ) {
+        while ( ( time() - $start_time ) < $budget ) {
             if ( get_option( $pause_option ) ) {
                 break;
             }
 
-            $now   = current_time( 'mysql', true );
-            $items = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT id, attachment_id FROM `{$table}` WHERE job_type = %s AND status = 'pending' ORDER BY id ASC LIMIT %d",
-                    $job_type, $batch_size
-                )
-            );
+            $items = $this->claim_batch( $table, $job_type, $batch_size );
 
             if ( empty( $items ) ) {
                 $this->cleanup_bulk_queue( $table, $job_type, $pause_option );
@@ -358,18 +436,13 @@ class BatchProcessor {
                 return;
             }
 
-            // Mark as processing.
-            $ids_int = array_map( fn( $item ) => (int) $item->id, $items );
-            $this->mark_as_processing( $ids_int, $table, $now );
-
-
             foreach ( $items as $item ) {
-                if ( ( time() - $start_time ) >= self::MAX_EXECUTION_SEC ) {
+                if ( ( time() - $start_time ) >= $budget ) {
                     $wpdb->update(
                         $table,
-                        [ 'status' => 'pending', 'updated_at' => current_time( 'mysql', true ) ],
+                        [ 'status' => 'pending', 'claimed_by' => null, 'updated_at' => current_time( 'mysql', true ) ],
                         [ 'id' => (int) $item->id ],
-                        [ '%s', '%s' ],
+                        [ '%s', '%s', '%s' ],
                         [ '%d' ]
                     );
                     continue;
@@ -424,8 +497,8 @@ class BatchProcessor {
                         break;
                 }
 
-                $row_data   = [ 'status' => $success ? 'complete' : 'failed', 'updated_at' => current_time( 'mysql', true ) ];
-                $row_format = [ '%s', '%s' ];
+                $row_data   = [ 'status' => $success ? 'complete' : 'failed', 'claimed_by' => null, 'updated_at' => current_time( 'mysql', true ) ];
+                $row_format = [ '%s', '%s', '%s' ];
                 if ( $error_message !== null ) {
                     $row_data['error_message'] = $error_message;
                     $row_format[]              = '%s';
@@ -453,9 +526,7 @@ class BatchProcessor {
                 'processed_this_run' => $processed,
                 'remaining'          => $pending_count,
             ] );
-            $delay = $pending_count > 1000 ? 1 : 3;
-            wp_schedule_single_event( time() + $delay, $cron_hook );
-            spawn_cron();
+            self::kick( $cron_hook );
         } else {
             $this->cleanup_bulk_queue( $table, $job_type, $pause_option );
             do_action( $complete_action );
@@ -464,27 +535,88 @@ class BatchProcessor {
     }
 
     /**
-     * Mark a set of queue rows as 'processing' atomically.
+     * Atomically claim up to $limit pending rows for this worker.
      *
-     * Uses a two-pass prepare to satisfy wpdb and phpcs: first prepare the
-     * IN clause with the correct number of %d placeholders, then prepare the
-     * outer UPDATE with the timestamp. This avoids the fragile single-pass
-     * pattern that required phpcs:ignore.
+     * The single UPDATE with a per-call token is the claim — two workers
+     * running concurrently (cron + CLI, or several CLI processes) can never
+     * grab the same row, because each row's status flips to 'processing'
+     * with exactly one claimed_by token. The follow-up SELECT then reads
+     * back only the rows this worker won.
      *
-     * @param int[]  $ids   Row IDs (already cast to int).
-     * @param string $table Fully-qualified table name.
-     * @param string $now   MySQL datetime string (UTC).
+     * @param string      $table    Fully-qualified queue table name.
+     * @param string|null $job_type Bulk-queue job type, or null for the migration queue.
+     * @param int         $limit    Maximum rows to claim.
+     * @return object[]   The claimed rows (all columns).
      */
-    private function mark_as_processing( array $ids, string $table, string $now ): void {
+    private function claim_batch( string $table, ?string $job_type, int $limit ): array {
         global $wpdb;
 
-        $in_clause = implode( ',', array_map( 'absint', $ids ) );
-        $wpdb->query(
+        $token = substr( md5( uniqid( (string) getmypid(), true ) ), 0, 32 );
+        $now   = current_time( 'mysql', true );
+
+        if ( $job_type !== null ) {
+            $wpdb->query(
+                $wpdb->prepare(
+                    "UPDATE `{$table}` SET status = 'processing', claimed_by = %s, updated_at = %s
+                     WHERE job_type = %s AND status = 'pending' ORDER BY id ASC LIMIT %d",
+                    $token, $now, $job_type, $limit
+                )
+            );
+        } else {
+            $wpdb->query(
+                $wpdb->prepare(
+                    "UPDATE `{$table}` SET status = 'processing', claimed_by = %s, updated_at = %s
+                     WHERE status = 'pending' ORDER BY id ASC LIMIT %d",
+                    $token, $now, $limit
+                )
+            );
+        }
+
+        return $wpdb->get_results(
             $wpdb->prepare(
-                "UPDATE `{$table}` SET status = 'processing', updated_at = %s WHERE id IN ({$in_clause})",
-                $now
+                "SELECT * FROM `{$table}` WHERE claimed_by = %s AND status = 'processing' ORDER BY id ASC",
+                $token
             )
         );
+    }
+
+    /**
+     * Reset rows stuck in 'processing' longer than LOCK_TTL back to 'pending'.
+     * A stale row means the worker that claimed it died mid-batch.
+     *
+     * @param string|null $job_type Bulk-queue job type, or null for the migration queue.
+     */
+    private function recover_stale_rows( string $table, ?string $job_type ): void {
+        global $wpdb;
+
+        $stale_cutoff = gmdate( 'Y-m-d H:i:s', time() - self::LOCK_TTL );
+        $now          = current_time( 'mysql', true );
+
+        if ( $job_type !== null ) {
+            $recovered = $wpdb->query(
+                $wpdb->prepare(
+                    "UPDATE `{$table}` SET status = 'pending', claimed_by = NULL, updated_at = %s
+                     WHERE job_type = %s AND status = 'processing' AND updated_at < %s",
+                    $now, $job_type, $stale_cutoff
+                )
+            );
+        } else {
+            $recovered = $wpdb->query(
+                $wpdb->prepare(
+                    "UPDATE `{$table}` SET status = 'pending', claimed_by = NULL, updated_at = %s
+                     WHERE status = 'processing' AND updated_at < %s",
+                    $now, $stale_cutoff
+                )
+            );
+        }
+
+        if ( $recovered ) {
+            $this->logger->info( 'Recovered stale processing rows.', [
+                'table'    => $table,
+                'job_type' => $job_type ?? 'migration',
+                'count'    => $recovered,
+            ] );
+        }
     }
 
     private function cleanup_bulk_queue( string $table, string $job_type, string $pause_option ): void {

@@ -1,16 +1,21 @@
 <?php
-namespace Aws\Exception;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Exception;
 
-use Aws\Api\Shape;
-use Aws\CommandInterface;
-use Aws\HasDataTrait;
-use Aws\HasMonitoringEventsTrait;
-use Aws\MonitoringEventsInterface;
-use Aws\ResponseContainerInterface;
-use Aws\ResultInterface;
-use JmesPath\Env as JmesPath;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Aws\Api\Shape;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\HasDataTrait;
+use R2Offload\Vendor\Aws\HasMonitoringEventsTrait;
+use R2Offload\Vendor\Aws\MonitoringEventsInterface;
+use R2Offload\Vendor\Aws\ResponseContainerInterface;
+use R2Offload\Vendor\Aws\ResultInterface;
+use R2Offload\Vendor\JmesPath\Env as JmesPath;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 use Throwable;
 
 /**

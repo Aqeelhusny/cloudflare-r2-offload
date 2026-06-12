@@ -1,33 +1,38 @@
 <?php
-namespace Aws\Polly;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Polly;
 
-use Aws\Api\Serializer\JsonBody;
-use Aws\AwsClient;
-use Aws\Signature\SignatureV4;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Uri;
-use GuzzleHttp\Psr7;
+use R2Offload\Vendor\Aws\Api\Serializer\JsonBody;
+use R2Offload\Vendor\Aws\AwsClient;
+use R2Offload\Vendor\Aws\Signature\SignatureV4;
+use R2Offload\Vendor\GuzzleHttp\Psr7\Request;
+use R2Offload\Vendor\GuzzleHttp\Psr7\Uri;
+use R2Offload\Vendor\GuzzleHttp\Psr7;
 
 /**
  * This client is used to interact with the **Amazon Polly** service.
- * @method \Aws\Result deleteLexicon(array $args = [])
- * @method \GuzzleHttp\Promise\Promise deleteLexiconAsync(array $args = [])
- * @method \Aws\Result describeVoices(array $args = [])
- * @method \GuzzleHttp\Promise\Promise describeVoicesAsync(array $args = [])
- * @method \Aws\Result getLexicon(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getLexiconAsync(array $args = [])
- * @method \Aws\Result getSpeechSynthesisTask(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getSpeechSynthesisTaskAsync(array $args = [])
- * @method \Aws\Result listLexicons(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listLexiconsAsync(array $args = [])
- * @method \Aws\Result listSpeechSynthesisTasks(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listSpeechSynthesisTasksAsync(array $args = [])
- * @method \Aws\Result putLexicon(array $args = [])
- * @method \GuzzleHttp\Promise\Promise putLexiconAsync(array $args = [])
- * @method \Aws\Result startSpeechSynthesisTask(array $args = [])
- * @method \GuzzleHttp\Promise\Promise startSpeechSynthesisTaskAsync(array $args = [])
- * @method \Aws\Result synthesizeSpeech(array $args = [])
- * @method \GuzzleHttp\Promise\Promise synthesizeSpeechAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteLexicon(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteLexiconAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeVoices(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeVoicesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getLexicon(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getLexiconAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getSpeechSynthesisTask(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getSpeechSynthesisTaskAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listLexicons(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listLexiconsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listSpeechSynthesisTasks(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listSpeechSynthesisTasksAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result putLexicon(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise putLexiconAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result startSpeechSynthesisTask(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise startSpeechSynthesisTaskAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result synthesizeSpeech(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise synthesizeSpeechAsync(array $args = [])
  */
 class PollyClient extends AwsClient
 {

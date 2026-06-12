@@ -1,8 +1,13 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace GuzzleHttp\Exception;
+namespace R2Offload\Vendor\GuzzleHttp\Exception;
 
-use Psr\Http\Client\ClientExceptionInterface;
+use R2Offload\Vendor\Psr\Http\Client\ClientExceptionInterface;
 
 interface GuzzleException extends ClientExceptionInterface
 {

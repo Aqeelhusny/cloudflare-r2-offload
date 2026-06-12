@@ -1,10 +1,15 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\S3\S3Transfer;
+namespace R2Offload\Vendor\Aws\S3\S3Transfer;
 
-use Aws\CommandInterface;
-use Aws\Result;
-use Aws\ResultInterface;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\Result;
+use R2Offload\Vendor\Aws\ResultInterface;
 
 final class RangeGetMultipartDownloader extends AbstractMultipartDownloader
 {

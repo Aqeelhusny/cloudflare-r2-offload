@@ -1,9 +1,14 @@
 <?php
-namespace Aws\Identity\S3;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Identity\S3;
 
-use Aws;
-use Aws\LruArrayCache;
-use GuzzleHttp\Promise;
+use R2Offload\Vendor\Aws;
+use R2Offload\Vendor\Aws\LruArrayCache;
+use R2Offload\Vendor\GuzzleHttp\Promise;
 
 class S3ExpressIdentityProvider
 {
@@ -29,7 +34,7 @@ class S3ExpressIdentityProvider
             }
         }
         $response = $s3Client->createSession(['Bucket' => $bucket]);
-        $identity = new Aws\Identity\S3\S3ExpressIdentity(
+        $identity = new \R2Offload\Vendor\Aws\Identity\S3\S3ExpressIdentity(
             $response['Credentials']['AccessKeyId'],
             $response['Credentials']['SecretAccessKey'],
             $response['Credentials']['SessionToken'],
@@ -43,7 +48,7 @@ class S3ExpressIdentityProvider
     {
         if (is_null($this->s3Client)) {
             $this->s3Client = $this->config['client']
-                ?? new Aws\S3\S3Client([
+                ?? new \R2Offload\Vendor\Aws\S3\S3Client([
                     'region' => $this->region,
                     'disable_express_session_auth' => true
                 ]);

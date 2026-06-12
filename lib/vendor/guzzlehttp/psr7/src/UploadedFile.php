@@ -1,12 +1,17 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Psr7;
+namespace R2Offload\Vendor\GuzzleHttp\Psr7;
 
 use InvalidArgumentException;
-use Psr\Http\Message\StreamInterface;
-use Psr\Http\Message\UploadedFileInterface;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
+use R2Offload\Vendor\Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
 
 class UploadedFile implements UploadedFileInterface

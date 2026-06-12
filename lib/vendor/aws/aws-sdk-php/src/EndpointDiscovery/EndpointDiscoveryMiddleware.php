@@ -1,16 +1,21 @@
 <?php
-namespace Aws\EndpointDiscovery;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\EndpointDiscovery;
 
-use Aws\AwsClient;
-use Aws\CacheInterface;
-use Aws\CommandInterface;
-use Aws\Credentials\CredentialsInterface;
-use Aws\Exception\AwsException;
-use Aws\Exception\UnresolvedEndpointException;
-use Aws\LruArrayCache;
-use Aws\Middleware;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\UriInterface;
+use R2Offload\Vendor\Aws\AwsClient;
+use R2Offload\Vendor\Aws\CacheInterface;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\Credentials\CredentialsInterface;
+use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\Exception\UnresolvedEndpointException;
+use R2Offload\Vendor\Aws\LruArrayCache;
+use R2Offload\Vendor\Aws\Middleware;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\UriInterface;
 
 class EndpointDiscoveryMiddleware
 {

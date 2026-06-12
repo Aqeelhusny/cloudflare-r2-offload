@@ -1,5 +1,10 @@
 <?php
-namespace Aws\Endpoint;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Endpoint;
 
 /**
  * Provides endpoints based on an endpoint pattern configuration array.

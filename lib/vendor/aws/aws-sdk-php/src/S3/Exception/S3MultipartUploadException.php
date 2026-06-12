@@ -1,11 +1,16 @@
 <?php
-namespace Aws\S3\Exception;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3\Exception;
 
-use Aws\CommandInterface;
-use Aws\Exception\AwsException;
-use Aws\Multipart\UploadState;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\Multipart\UploadState;
 
-class S3MultipartUploadException extends \Aws\Exception\MultipartUploadException
+class S3MultipartUploadException extends \R2Offload\Vendor\Aws\Exception\MultipartUploadException
 {
     /** @var string Bucket of the transfer object */
     private $bucket;

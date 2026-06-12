@@ -1,10 +1,15 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\Token;
+namespace R2Offload\Vendor\Aws\Token;
 
-use Aws\Configuration\ConfigurationResolver;
-use Aws\Exception\TokenException;
-use GuzzleHttp\Promise;
+use R2Offload\Vendor\Aws\Configuration\ConfigurationResolver;
+use R2Offload\Vendor\Aws\Exception\TokenException;
+use R2Offload\Vendor\GuzzleHttp\Promise;
 
 /**
  * Token provider for Bedrock that sources bearer tokens from environment variables.

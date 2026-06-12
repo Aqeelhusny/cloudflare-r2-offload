@@ -1,9 +1,14 @@
 <?php
-namespace Aws\S3;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3;
 
-use Aws\CommandInterface;
-use GuzzleHttp\Psr7\Uri;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\GuzzleHttp\Psr7\Uri;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 /**
  * Used to update the host used for S3 requests in the case of using a

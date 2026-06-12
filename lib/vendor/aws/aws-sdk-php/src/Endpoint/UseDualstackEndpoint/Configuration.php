@@ -1,8 +1,13 @@
 <?php
-namespace Aws\Endpoint\UseDualstackEndpoint;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Endpoint\UseDualstackEndpoint;
 
-use Aws;
-use Aws\Endpoint\UseDualstackEndpoint\Exception\ConfigurationException;
+use R2Offload\Vendor\Aws;
+use R2Offload\Vendor\Aws\Endpoint\UseDualstackEndpoint\Exception\ConfigurationException;
 
 class Configuration implements ConfigurationInterface
 {
@@ -10,7 +15,7 @@ class Configuration implements ConfigurationInterface
 
     public function __construct($useDualstackEndpoint, $region)
     {
-        $this->useDualstackEndpoint = Aws\boolean_value($useDualstackEndpoint);
+        $this->useDualstackEndpoint = \R2Offload\Vendor\Aws\boolean_value($useDualstackEndpoint);
         if (is_null($this->useDualstackEndpoint)) {
             throw new ConfigurationException("'use_dual_stack_endpoint' config option"
                 . " must be a boolean value.");

@@ -1,10 +1,15 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace GuzzleHttp\Handler;
+namespace R2Offload\Vendor\GuzzleHttp\Handler;
 
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\RequestOptions;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\GuzzleHttp\RequestOptions;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 /**
  * Provides basic proxies for handlers.

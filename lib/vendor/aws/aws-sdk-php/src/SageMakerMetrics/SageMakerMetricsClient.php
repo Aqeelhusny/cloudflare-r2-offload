@@ -1,13 +1,18 @@
 <?php
-namespace Aws\SageMakerMetrics;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\SageMakerMetrics;
 
-use Aws\AwsClient;
+use R2Offload\Vendor\Aws\AwsClient;
 
 /**
  * This client is used to interact with the **Amazon SageMaker Metrics Service** service.
- * @method \Aws\Result batchGetMetrics(array $args = [])
- * @method \GuzzleHttp\Promise\Promise batchGetMetricsAsync(array $args = [])
- * @method \Aws\Result batchPutMetrics(array $args = [])
- * @method \GuzzleHttp\Promise\Promise batchPutMetricsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result batchGetMetrics(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise batchGetMetricsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result batchPutMetrics(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise batchPutMetricsAsync(array $args = [])
  */
 class SageMakerMetricsClient extends AwsClient {}

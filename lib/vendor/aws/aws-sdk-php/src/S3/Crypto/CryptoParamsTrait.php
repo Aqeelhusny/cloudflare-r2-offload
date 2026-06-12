@@ -1,9 +1,14 @@
 <?php
-namespace Aws\S3\Crypto;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3\Crypto;
 
-use Aws\Crypto\MaterialsProvider;
-use Aws\Crypto\MetadataEnvelope;
-use Aws\Crypto\MetadataStrategyInterface;
+use R2Offload\Vendor\Aws\Crypto\MaterialsProvider;
+use R2Offload\Vendor\Aws\Crypto\MetadataEnvelope;
+use R2Offload\Vendor\Aws\Crypto\MetadataStrategyInterface;
 
 trait CryptoParamsTrait
 {

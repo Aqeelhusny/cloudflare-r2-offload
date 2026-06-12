@@ -7,9 +7,11 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
-use Symfony\Polyfill\Mbstring as p;
+use R2Offload\Vendor\Symfony\Polyfill\Mbstring as p;
 
 if (!function_exists('mb_convert_encoding')) {
     function mb_convert_encoding(array|string|null $string, ?string $to_encoding, array|string|null $from_encoding = null): array|string|false { return p\Mbstring::mb_convert_encoding($string ?? '', (string) $to_encoding, $from_encoding); }

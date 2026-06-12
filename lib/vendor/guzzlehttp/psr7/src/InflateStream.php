@@ -1,10 +1,15 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Psr7;
+namespace R2Offload\Vendor\GuzzleHttp\Psr7;
 
-use Psr\Http\Message\StreamInterface;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 
 /**
  * Uses PHP's zlib.inflate filter to inflate zlib (HTTP deflate, RFC1950) or gzipped (RFC1952) content.

@@ -1,8 +1,13 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\S3\S3Transfer\Models;
+namespace R2Offload\Vendor\Aws\S3\S3Transfer\Models;
 
-use Aws\S3\S3Transfer\Exception\S3TransferException;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Exception\S3TransferException;
 
 /**
  * Represents the state of a resumable multipart download.

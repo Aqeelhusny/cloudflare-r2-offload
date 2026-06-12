@@ -1,15 +1,20 @@
 <?php
-namespace Aws\SagemakerEdgeManager;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\SagemakerEdgeManager;
 
-use Aws\AwsClient;
+use R2Offload\Vendor\Aws\AwsClient;
 
 /**
  * This client is used to interact with the **Amazon Sagemaker Edge Manager** service.
- * @method \Aws\Result getDeployments(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getDeploymentsAsync(array $args = [])
- * @method \Aws\Result getDeviceRegistration(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getDeviceRegistrationAsync(array $args = [])
- * @method \Aws\Result sendHeartbeat(array $args = [])
- * @method \GuzzleHttp\Promise\Promise sendHeartbeatAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getDeployments(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDeploymentsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getDeviceRegistration(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDeviceRegistrationAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result sendHeartbeat(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise sendHeartbeatAsync(array $args = [])
  */
 class SagemakerEdgeManagerClient extends AwsClient {}

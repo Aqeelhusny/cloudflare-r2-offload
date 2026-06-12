@@ -1,17 +1,22 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\S3\Parser;
+namespace R2Offload\Vendor\Aws\S3\Parser;
 
-use Aws\Api\ErrorParser\XmlErrorParser;
-use Aws\Api\Parser\AbstractParser;
-use Aws\Api\Parser\Exception\ParserException;
-use Aws\Api\Service;
-use Aws\Api\StructureShape;
-use Aws\CommandInterface;
-use Aws\Exception\AwsException;
-use Aws\ResultInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
+use R2Offload\Vendor\Aws\Api\ErrorParser\XmlErrorParser;
+use R2Offload\Vendor\Aws\Api\Parser\AbstractParser;
+use R2Offload\Vendor\Aws\Api\Parser\Exception\ParserException;
+use R2Offload\Vendor\Aws\Api\Service;
+use R2Offload\Vendor\Aws\Api\StructureShape;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\ResultInterface;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 
 /**
  * Custom S3 parser on top of the S3 protocol parser

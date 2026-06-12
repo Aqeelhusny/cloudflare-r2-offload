@@ -1,13 +1,18 @@
 <?php
-namespace Aws\S3;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3;
 
-use Aws;
-use Aws\CommandInterface;
-use Aws\Exception\AwsException;
-use Aws\MetricsBuilder;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Promise\PromisorInterface;
+use R2Offload\Vendor\Aws;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\MetricsBuilder;
+use R2Offload\Vendor\GuzzleHttp\Promise;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromisorInterface;
 use Iterator;
 
 /**
@@ -51,7 +56,7 @@ class Transfer implements PromisorInterface
      *   iterator. If the $source option is not an array, then this option is
      *   ignored.
      * - before: (callable) A callback to invoke before each transfer. The
-     *   callback accepts a single argument: Aws\CommandInterface $command.
+     *   callback accepts a single argument: R2Offload\Vendor\Aws\CommandInterface $command.
      *   The provided command will be either a GetObject, PutObject,
      *   InitiateMultipartUpload, or UploadPart command.
      * - after: (callable) A callback to invoke after each transfer promise is fulfilled.
@@ -301,7 +306,7 @@ class Transfer implements PromisorInterface
         }
 
         // Create a GetObject command pool and return the promise.
-        return (new Aws\CommandPool($this->client, $commands, [
+        return (new \R2Offload\Vendor\Aws\CommandPool($this->client, $commands, [
             'concurrency' => $this->concurrency,
             'before'      => $this->before,
             'fulfill'     => $this->after,
@@ -314,7 +319,7 @@ class Transfer implements PromisorInterface
     private function createUploadPromise()
     {
         // Map each file into a promise that performs the actual transfer.
-        $files = \Aws\map($this->getUploadsIterator(), function ($file) {
+        $files = \R2Offload\Vendor\Aws\map($this->getUploadsIterator(), function ($file) {
             return (filesize($file) >= $this->mupThreshold)
                 ? $this->uploadMultipart($file)
                 : $this->upload($file);
@@ -329,8 +334,8 @@ class Transfer implements PromisorInterface
     private function getUploadsIterator()
     {
         if (is_string($this->source)) {
-            return Aws\filter(
-                Aws\recursive_dir_iterator($this->sourceMetadata['path']),
+            return \R2Offload\Vendor\Aws\filter(
+                \R2Offload\Vendor\Aws\recursive_dir_iterator($this->sourceMetadata['path']),
                 function ($file) { return !is_dir($file); }
             );
         }
@@ -351,10 +356,10 @@ class Transfer implements PromisorInterface
             $files = $this->client
                 ->getPaginator('ListObjects', $listArgs)
                 ->search('Contents[].Key');
-            $files = Aws\map($files, function ($key) use ($listArgs) {
+            $files = \R2Offload\Vendor\Aws\map($files, function ($key) use ($listArgs) {
                 return "s3://{$listArgs['Bucket']}/$key";
             });
-            return Aws\filter($files, function ($key) {
+            return \R2Offload\Vendor\Aws\filter($files, function ($key) {
                 return substr($key, -1, 1) !== '/';
             });
         }

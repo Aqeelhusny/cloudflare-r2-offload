@@ -1,5 +1,10 @@
 <?php
-namespace Aws\Retry;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Retry;
 
 /**
  * Provides access to retry configuration

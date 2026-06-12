@@ -1,16 +1,21 @@
 <?php
-namespace Aws\S3\Crypto;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3\Crypto;
 
-use Aws\Crypto\AbstractCryptoClientV3;
-use Aws\Crypto\EncryptionTraitV3;
-use Aws\Crypto\AlgorithmSuite;
-use Aws\Crypto\MaterialsProviderInterfaceV3;
-use Aws\Crypto\MetadataEnvelope;
-use Aws\Crypto\Cipher\CipherBuilderTrait;
-use Aws\Exception\CryptoException;
-use Aws\S3\MultipartUploader;
-use Aws\S3\S3ClientInterface;
-use GuzzleHttp\Promise;
+use R2Offload\Vendor\Aws\Crypto\AbstractCryptoClientV3;
+use R2Offload\Vendor\Aws\Crypto\EncryptionTraitV3;
+use R2Offload\Vendor\Aws\Crypto\AlgorithmSuite;
+use R2Offload\Vendor\Aws\Crypto\MaterialsProviderInterfaceV3;
+use R2Offload\Vendor\Aws\Crypto\MetadataEnvelope;
+use R2Offload\Vendor\Aws\Crypto\Cipher\CipherBuilderTrait;
+use R2Offload\Vendor\Aws\Exception\CryptoException;
+use R2Offload\Vendor\Aws\S3\MultipartUploader;
+use R2Offload\Vendor\Aws\S3\S3ClientInterface;
+use R2Offload\Vendor\GuzzleHttp\Promise;
 
 //= ../specification/s3-encryption/client.md#optional-api-operations
 //= type=implication
@@ -99,13 +104,13 @@ class S3EncryptionMultipartUploaderV3 extends MultipartUploader
      *   private by default.
      * - before_complete: (callable) Callback to invoke before the
      *   `CompleteMultipartUpload` operation. The callback should have a
-     *   function signature like `function (Aws\Command $command) {...}`.
+     *   function signature like `function (R2Offload\Vendor\Aws\Command $command) {...}`.
      * - before_initiate: (callable) Callback to invoke before the
      *   `CreateMultipartUpload` operation. The callback should have a function
-     *   signature like `function (Aws\Command $command) {...}`.
+     *   signature like `function (R2Offload\Vendor\Aws\Command $command) {...}`.
      * - before_upload: (callable) Callback to invoke before any `UploadPart`
      *   operations. The callback should have a function signature like
-     *   `function (Aws\Command $command) {...}`.
+     *   `function (R2Offload\Vendor\Aws\Command $command) {...}`.
      * - concurrency: (int, default=int(5)) Maximum number of concurrent
      *   `UploadPart` operations allowed during the multipart upload.
      * - params: (array) An array of key/value parameters that will be applied
@@ -115,7 +120,7 @@ class S3EncryptionMultipartUploaderV3 extends MultipartUploader
      *   options detailed above to update the commands directly.
      * - part_size: (int, default=int(5242880)) Part size, in bytes, to use when
      *   doing a multipart upload. This must between 5 MB and 5 GB, inclusive.
-     * - state: (Aws\Multipart\UploadState) An object that represents the state
+     * - state: (R2Offload\Vendor\Aws\Multipart\UploadState) An object that represents the state
      *   of the multipart upload and that is used to resume a previous upload.
      *   When this option is provided, the `bucket`, `key`, and `part_size`
      *   options are ignored.

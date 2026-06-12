@@ -1,11 +1,16 @@
 <?php
-namespace Aws\S3;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3;
 
-use Aws\Api\Parser\AbstractParser;
-use Aws\Api\StructureShape;
-use Aws\CommandInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
+use R2Offload\Vendor\Aws\Api\Parser\AbstractParser;
+use R2Offload\Vendor\Aws\Api\StructureShape;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 
 /**
  * @internal Decorates a parser for the S3 service to correctly handle the

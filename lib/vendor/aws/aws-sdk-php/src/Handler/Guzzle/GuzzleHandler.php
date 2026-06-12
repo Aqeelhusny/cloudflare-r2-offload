@@ -1,15 +1,20 @@
 <?php
-namespace Aws\Handler\Guzzle;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Handler\Guzzle;
 
 use Exception;
-use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Utils;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\TransferStats;
-use Psr\Http\Message\RequestInterface as Psr7Request;
+use R2Offload\Vendor\GuzzleHttp\Exception\ConnectException;
+use R2Offload\Vendor\GuzzleHttp\Exception\RequestException;
+use R2Offload\Vendor\GuzzleHttp\Utils;
+use R2Offload\Vendor\GuzzleHttp\Promise;
+use R2Offload\Vendor\GuzzleHttp\Client;
+use R2Offload\Vendor\GuzzleHttp\ClientInterface;
+use R2Offload\Vendor\GuzzleHttp\TransferStats;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface as Psr7Request;
 
 /**
  * A request handler that sends PSR-7-compatible requests with Guzzle.

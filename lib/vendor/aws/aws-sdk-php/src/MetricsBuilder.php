@@ -1,11 +1,16 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws;
+namespace R2Offload\Vendor\Aws;
 
-use Aws\Credentials\CredentialsInterface;
-use Aws\Credentials\CredentialSources;
-use Aws\Token;
-use Aws\Token\TokenInterface;
+use R2Offload\Vendor\Aws\Credentials\CredentialsInterface;
+use R2Offload\Vendor\Aws\Credentials\CredentialSources;
+use R2Offload\Vendor\Aws\Token;
+use R2Offload\Vendor\Aws\Token\TokenInterface;
 
 /**
  * A placeholder for gathering metrics in a request.
@@ -382,7 +387,7 @@ final class MetricsBuilder
         }
 
         $retryMode = '';
-        if ($retries instanceof \Aws\Retry\Configuration) {
+        if ($retries instanceof \R2Offload\Vendor\Aws\Retry\Configuration) {
             $retryMode = $retries->getMode();
         } elseif (is_array($retries)
             && isset($retries["mode"])

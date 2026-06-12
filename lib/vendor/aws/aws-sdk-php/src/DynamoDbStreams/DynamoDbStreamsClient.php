@@ -1,20 +1,25 @@
 <?php
-namespace Aws\DynamoDbStreams;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\DynamoDbStreams;
 
-use Aws\AwsClient;
-use Aws\DynamoDb\DynamoDbClient;
+use R2Offload\Vendor\Aws\AwsClient;
+use R2Offload\Vendor\Aws\DynamoDb\DynamoDbClient;
 
 /**
  * This client is used to interact with the **Amazon DynamoDb Streams** service.
  *
- * @method \Aws\Result describeStream(array $args = [])
- * @method \GuzzleHttp\Promise\Promise describeStreamAsync(array $args = [])
- * @method \Aws\Result getRecords(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getRecordsAsync(array $args = [])
- * @method \Aws\Result getShardIterator(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getShardIteratorAsync(array $args = [])
- * @method \Aws\Result listStreams(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listStreamsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeStream(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeStreamAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getRecords(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getRecordsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getShardIterator(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getShardIteratorAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listStreams(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listStreamsAsync(array $args = [])
  */
 class DynamoDbStreamsClient extends AwsClient
 {

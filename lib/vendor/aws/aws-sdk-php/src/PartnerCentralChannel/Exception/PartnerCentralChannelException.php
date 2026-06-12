@@ -1,7 +1,12 @@
 <?php
-namespace Aws\PartnerCentralChannel\Exception;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\PartnerCentralChannel\Exception;
 
-use Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **Partner Central Channel API** service.

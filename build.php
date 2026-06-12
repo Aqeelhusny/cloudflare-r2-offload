@@ -56,7 +56,21 @@ if (is_dir($aws_data)) {
 echo "Pruned {$pruned} unused AWS service data directories.\n";
 
 echo "\n=== Regenerating autoloader...\n";
-passthru('composer dump-autoload --optimize --no-dev');
+// When build.php runs inside a composer script, vendor/bin is prepended to
+// PATH and the bare `composer` resolves to the LOCAL composer/composer
+// package binary (which may not even boot). COMPOSER_BINARY is set by the
+// real running Composer during scripts — prefer it.
+$composer_binary = getenv('COMPOSER_BINARY');
+$composer_cmd    = $composer_binary
+    ? escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($composer_binary)
+    : 'composer';
+
+$dump_exit = 0;
+passthru($composer_cmd . ' dump-autoload --optimize --no-dev', $dump_exit);
+if ($dump_exit !== 0) {
+    echo "Autoloader dump failed with exit code {$dump_exit}\n";
+    exit(1);
+}
 
 $size = trim(shell_exec(PHP_OS_FAMILY === 'Windows'
     ? 'powershell -Command "[math]::Round((Get-ChildItem lib/vendor -Recurse -File | Measure-Object -Property Length -Sum).Sum / 1MB, 1)"'

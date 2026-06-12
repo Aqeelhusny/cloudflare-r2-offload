@@ -1,10 +1,15 @@
 <?php
-namespace Aws\Token;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Token;
 
-use Aws;
-use Aws\CacheInterface;
-use Aws\Exception\TokenException;
-use GuzzleHttp\Promise;
+use R2Offload\Vendor\Aws;
+use R2Offload\Vendor\Aws\CacheInterface;
+use R2Offload\Vendor\Aws\Exception\TokenException;
+use R2Offload\Vendor\GuzzleHttp\Promise;
 
 /**
  * Token providers are functions that accept no arguments and return a
@@ -12,7 +17,7 @@ use GuzzleHttp\Promise;
  * or rejected with an {@see \Aws\Exception\TokenException}.
  *
  * <code>
- * use Aws\Token\TokenProvider;
+ * use R2Offload\Vendor\Aws\Token\TokenProvider;
  * $provider = TokenProvider::defaultProvider();
  * // Returns a TokenInterface or throws.
  * $token = $provider()->wait();
@@ -231,7 +236,7 @@ class TokenProvider
         $configFile = self::getHomeDir() . '/.aws/config';
 
         if (file_exists($configFile)) {
-            $configProfileData = \Aws\parse_ini_file($configFile, true, INI_SCANNER_RAW);
+            $configProfileData = \R2Offload\Vendor\Aws\parse_ini_file($configFile, true, INI_SCANNER_RAW);
             foreach ($configProfileData as $name => $profile) {
                 // standardize config profile names
                 $name = str_replace('profile ', '', $name);
@@ -257,7 +262,7 @@ class TokenProvider
      * @param array $config configuration options
      *
      * @return SsoTokenProvider
-     * @see Aws\Token\SsoTokenProvider for $config details.
+     * @see R2Offload\Vendor\Aws\Token\SsoTokenProvider for $config details.
      */
     public static function sso(
         $profileName,

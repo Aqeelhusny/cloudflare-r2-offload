@@ -1,8 +1,13 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\S3\S3Transfer\Progress;
+namespace R2Offload\Vendor\Aws\S3\S3Transfer\Progress;
 
-use Aws\S3\S3Transfer\Exception\ProgressTrackerException;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Exception\ProgressTrackerException;
 
 /**
  * To track single object transfers.

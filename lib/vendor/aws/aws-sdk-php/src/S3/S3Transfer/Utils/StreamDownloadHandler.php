@@ -1,10 +1,15 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\S3\S3Transfer\Utils;
+namespace R2Offload\Vendor\Aws\S3\S3Transfer\Utils;
 
-use Aws\S3\S3Transfer\Progress\AbstractTransferListener;
-use GuzzleHttp\Psr7\Utils;
-use Psr\Http\Message\StreamInterface;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\AbstractTransferListener;
+use R2Offload\Vendor\GuzzleHttp\Psr7\Utils;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 
 final class StreamDownloadHandler extends AbstractDownloadHandler
 {

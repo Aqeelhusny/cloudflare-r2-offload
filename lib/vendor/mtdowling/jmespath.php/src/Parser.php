@@ -1,7 +1,12 @@
 <?php
-namespace JmesPath;
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\JmesPath;
 
-use JmesPath\Lexer as T;
+use R2Offload\Vendor\JmesPath\Lexer as T;
 
 /**
  * JMESPath Pratt parser

@@ -1,9 +1,14 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace GuzzleHttp\Exception;
+namespace R2Offload\Vendor\GuzzleHttp\Exception;
 
-use Psr\Http\Client\NetworkExceptionInterface;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Client\NetworkExceptionInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 /**
  * Exception thrown when a connection cannot be established.

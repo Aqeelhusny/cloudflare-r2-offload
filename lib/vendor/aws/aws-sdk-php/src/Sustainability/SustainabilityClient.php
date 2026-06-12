@@ -1,13 +1,18 @@
 <?php
-namespace Aws\Sustainability;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Sustainability;
 
-use Aws\AwsClient;
+use R2Offload\Vendor\Aws\AwsClient;
 
 /**
  * This client is used to interact with the **AWS Sustainability** service.
- * @method \Aws\Result getEstimatedCarbonEmissions(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getEstimatedCarbonEmissionsAsync(array $args = [])
- * @method \Aws\Result getEstimatedCarbonEmissionsDimensionValues(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getEstimatedCarbonEmissionsDimensionValuesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getEstimatedCarbonEmissions(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getEstimatedCarbonEmissionsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getEstimatedCarbonEmissionsDimensionValues(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getEstimatedCarbonEmissionsDimensionValuesAsync(array $args = [])
  */
 class SustainabilityClient extends AwsClient {}

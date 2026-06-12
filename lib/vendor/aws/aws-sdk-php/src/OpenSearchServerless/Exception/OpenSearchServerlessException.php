@@ -1,7 +1,12 @@
 <?php
-namespace Aws\OpenSearchServerless\Exception;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\OpenSearchServerless\Exception;
 
-use Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **OpenSearch Service Serverless** service.

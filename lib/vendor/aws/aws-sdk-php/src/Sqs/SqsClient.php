@@ -1,62 +1,67 @@
 <?php
-namespace Aws\Sqs;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Sqs;
 
-use Aws\AwsClient;
-use Aws\CommandInterface;
-use Aws\Sqs\Exception\SqsException;
-use GuzzleHttp\Psr7\Uri;
-use GuzzleHttp\Psr7\UriResolver;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Aws\AwsClient;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\Sqs\Exception\SqsException;
+use R2Offload\Vendor\GuzzleHttp\Psr7\Uri;
+use R2Offload\Vendor\GuzzleHttp\Psr7\UriResolver;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 /**
  * Client used to interact with **Amazon Simple Queue Service (Amazon SQS)**.
  *
- * @method \Aws\Result addPermission(array $args = [])
- * @method \GuzzleHttp\Promise\Promise addPermissionAsync(array $args = [])
- * @method \Aws\Result cancelMessageMoveTask(array $args = [])
- * @method \GuzzleHttp\Promise\Promise cancelMessageMoveTaskAsync(array $args = [])
- * @method \Aws\Result changeMessageVisibility(array $args = [])
- * @method \GuzzleHttp\Promise\Promise changeMessageVisibilityAsync(array $args = [])
- * @method \Aws\Result changeMessageVisibilityBatch(array $args = [])
- * @method \GuzzleHttp\Promise\Promise changeMessageVisibilityBatchAsync(array $args = [])
- * @method \Aws\Result createQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise createQueueAsync(array $args = [])
- * @method \Aws\Result deleteMessage(array $args = [])
- * @method \GuzzleHttp\Promise\Promise deleteMessageAsync(array $args = [])
- * @method \Aws\Result deleteMessageBatch(array $args = [])
- * @method \GuzzleHttp\Promise\Promise deleteMessageBatchAsync(array $args = [])
- * @method \Aws\Result deleteQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise deleteQueueAsync(array $args = [])
- * @method \Aws\Result getQueueAttributes(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getQueueAttributesAsync(array $args = [])
- * @method \Aws\Result getQueueUrl(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getQueueUrlAsync(array $args = [])
- * @method \Aws\Result listDeadLetterSourceQueues(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listDeadLetterSourceQueuesAsync(array $args = [])
- * @method \Aws\Result listMessageMoveTasks(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listMessageMoveTasksAsync(array $args = [])
- * @method \Aws\Result listQueueTags(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listQueueTagsAsync(array $args = [])
- * @method \Aws\Result listQueues(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listQueuesAsync(array $args = [])
- * @method \Aws\Result purgeQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise purgeQueueAsync(array $args = [])
- * @method \Aws\Result receiveMessage(array $args = [])
- * @method \GuzzleHttp\Promise\Promise receiveMessageAsync(array $args = [])
- * @method \Aws\Result removePermission(array $args = [])
- * @method \GuzzleHttp\Promise\Promise removePermissionAsync(array $args = [])
- * @method \Aws\Result sendMessage(array $args = [])
- * @method \GuzzleHttp\Promise\Promise sendMessageAsync(array $args = [])
- * @method \Aws\Result sendMessageBatch(array $args = [])
- * @method \GuzzleHttp\Promise\Promise sendMessageBatchAsync(array $args = [])
- * @method \Aws\Result setQueueAttributes(array $args = [])
- * @method \GuzzleHttp\Promise\Promise setQueueAttributesAsync(array $args = [])
- * @method \Aws\Result startMessageMoveTask(array $args = [])
- * @method \GuzzleHttp\Promise\Promise startMessageMoveTaskAsync(array $args = [])
- * @method \Aws\Result tagQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise tagQueueAsync(array $args = [])
- * @method \Aws\Result untagQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise untagQueueAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result addPermission(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise addPermissionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result cancelMessageMoveTask(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise cancelMessageMoveTaskAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result changeMessageVisibility(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise changeMessageVisibilityAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result changeMessageVisibilityBatch(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise changeMessageVisibilityBatchAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result createQueue(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise createQueueAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteMessage(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteMessageAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteMessageBatch(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteMessageBatchAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteQueue(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteQueueAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getQueueAttributes(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getQueueAttributesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getQueueUrl(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getQueueUrlAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listDeadLetterSourceQueues(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listDeadLetterSourceQueuesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listMessageMoveTasks(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listMessageMoveTasksAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listQueueTags(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listQueueTagsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listQueues(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listQueuesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result purgeQueue(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise purgeQueueAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result receiveMessage(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise receiveMessageAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result removePermission(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise removePermissionAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result sendMessage(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise sendMessageAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result sendMessageBatch(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise sendMessageBatchAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result setQueueAttributes(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise setQueueAttributesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result startMessageMoveTask(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise startMessageMoveTaskAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result tagQueue(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise tagQueueAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result untagQueue(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise untagQueueAsync(array $args = [])
  */
 class SqsClient extends AwsClient
 {

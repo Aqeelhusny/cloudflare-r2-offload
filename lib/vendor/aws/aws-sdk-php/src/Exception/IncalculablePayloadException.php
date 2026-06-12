@@ -1,8 +1,13 @@
 <?php
-namespace Aws\Exception;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Exception;
 
-use Aws\HasMonitoringEventsTrait;
-use Aws\MonitoringEventsInterface;
+use R2Offload\Vendor\Aws\HasMonitoringEventsTrait;
+use R2Offload\Vendor\Aws\MonitoringEventsInterface;
 
 class IncalculablePayloadException extends \RuntimeException implements
     MonitoringEventsInterface

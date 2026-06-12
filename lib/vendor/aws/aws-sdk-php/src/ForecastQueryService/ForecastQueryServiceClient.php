@@ -1,13 +1,18 @@
 <?php
-namespace Aws\ForecastQueryService;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\ForecastQueryService;
 
-use Aws\AwsClient;
+use R2Offload\Vendor\Aws\AwsClient;
 
 /**
  * This client is used to interact with the **Amazon Forecast Query Service** service.
- * @method \Aws\Result queryForecast(array $args = [])
- * @method \GuzzleHttp\Promise\Promise queryForecastAsync(array $args = [])
- * @method \Aws\Result queryWhatIfForecast(array $args = [])
- * @method \GuzzleHttp\Promise\Promise queryWhatIfForecastAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result queryForecast(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise queryForecastAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result queryWhatIfForecast(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise queryWhatIfForecastAsync(array $args = [])
  */
 class ForecastQueryServiceClient extends AwsClient {}

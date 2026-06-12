@@ -1,5 +1,10 @@
 <?php
-namespace Aws\Token;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Token;
 
 trait ParsesIniTrait
 {
@@ -8,10 +13,10 @@ trait ParsesIniTrait
      */
     private static function loadProfiles($filename)
     {
-        $profileData = \Aws\parse_ini_file($filename, true, INI_SCANNER_RAW);
+        $profileData = \R2Offload\Vendor\Aws\parse_ini_file($filename, true, INI_SCANNER_RAW);
         $configFilename = self::getHomeDir() . '/.aws/config';
         if (is_readable($configFilename)) {
-            $configProfiles = \Aws\parse_ini_file($configFilename, true, INI_SCANNER_RAW);
+            $configProfiles = \R2Offload\Vendor\Aws\parse_ini_file($configFilename, true, INI_SCANNER_RAW);
             $profileData = array_merge($configProfiles, $profileData);
         }
         foreach ($profileData as $name => $profile) {

@@ -1,11 +1,16 @@
 <?php
-namespace Aws\EKSAuth;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\EKSAuth;
 
-use Aws\AwsClient;
+use R2Offload\Vendor\Aws\AwsClient;
 
 /**
  * This client is used to interact with the **Amazon EKS Auth** service.
- * @method \Aws\Result assumeRoleForPodIdentity(array $args = [])
- * @method \GuzzleHttp\Promise\Promise assumeRoleForPodIdentityAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result assumeRoleForPodIdentity(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise assumeRoleForPodIdentityAsync(array $args = [])
  */
 class EKSAuthClient extends AwsClient {}

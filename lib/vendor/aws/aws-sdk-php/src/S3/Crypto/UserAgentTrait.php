@@ -1,9 +1,14 @@
 <?php
-namespace Aws\S3\Crypto;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3\Crypto;
 
-use Aws\AwsClientInterface;
-use Aws\Middleware;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Aws\AwsClientInterface;
+use R2Offload\Vendor\Aws\Middleware;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 trait UserAgentTrait
 {

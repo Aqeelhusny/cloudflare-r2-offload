@@ -1,11 +1,16 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\Handler\GuzzleV6;
+namespace R2Offload\Vendor\Aws\Handler\GuzzleV6;
 
 trigger_error(sprintf(
     'Using the "%s" class is deprecated, use "%s" instead.',
     __NAMESPACE__ . '\GuzzleHandler',
-    \Aws\Handler\Guzzle\GuzzleHandler::class
+    \R2Offload\Vendor\Aws\Handler\Guzzle\GuzzleHandler::class
 ), E_USER_DEPRECATED);
 
-class_alias(\Aws\Handler\Guzzle\GuzzleHandler::class, __NAMESPACE__ . '\GuzzleHandler');
+class_alias(\R2Offload\Vendor\Aws\Handler\Guzzle\GuzzleHandler::class, __NAMESPACE__ . '\GuzzleHandler');

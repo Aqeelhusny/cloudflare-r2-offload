@@ -1,25 +1,30 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\S3\S3Transfer;
+namespace R2Offload\Vendor\Aws\S3\S3Transfer;
 
-use Aws\MetricsBuilder;
-use Aws\S3\S3Transfer\Exception\S3TransferException;
-use Aws\S3\S3Transfer\Models\UploadDirectoryRequest;
-use Aws\S3\S3Transfer\Models\UploadDirectoryResult;
-use Aws\S3\S3Transfer\Models\UploadRequest;
-use Aws\S3\S3Transfer\Models\UploadResult;
-use Aws\S3\S3Transfer\Progress\DirectoryProgressTracker;
-use Aws\S3\S3Transfer\Progress\DirectoryTransferProgressAggregator;
-use Aws\S3\S3ClientInterface;
+use R2Offload\Vendor\Aws\MetricsBuilder;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Exception\S3TransferException;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Models\UploadDirectoryRequest;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Models\UploadDirectoryResult;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Models\UploadRequest;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Models\UploadResult;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\DirectoryProgressTracker;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\DirectoryTransferProgressAggregator;
+use R2Offload\Vendor\Aws\S3\S3ClientInterface;
 use Closure;
 use FilesystemIterator;
-use GuzzleHttp\Promise\Each;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Promise\PromisorInterface;
+use R2Offload\Vendor\GuzzleHttp\Promise\Each;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromisorInterface;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Throwable;
-use function Aws\filter;
+use function R2Offload\Vendor\Aws\filter;
 
 final class DirectoryUploader implements PromisorInterface
 {

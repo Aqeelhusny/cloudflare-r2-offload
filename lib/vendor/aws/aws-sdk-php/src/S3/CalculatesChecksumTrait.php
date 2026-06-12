@@ -1,9 +1,14 @@
 <?php
-namespace Aws\S3;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3;
 
-use AWS\CRT\CRT;
-use Aws\Exception\CommonRuntimeException;
-use GuzzleHttp\Psr7;
+use R2Offload\Vendor\AWS\CRT\CRT;
+use R2Offload\Vendor\Aws\Exception\CommonRuntimeException;
+use R2Offload\Vendor\GuzzleHttp\Psr7;
 use InvalidArgumentException;
 
 trait CalculatesChecksumTrait

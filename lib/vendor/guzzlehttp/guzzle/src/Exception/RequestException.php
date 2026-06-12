@@ -1,12 +1,17 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace GuzzleHttp\Exception;
+namespace R2Offload\Vendor\GuzzleHttp\Exception;
 
-use GuzzleHttp\BodySummarizer;
-use GuzzleHttp\BodySummarizerInterface;
-use Psr\Http\Client\RequestExceptionInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\GuzzleHttp\BodySummarizer;
+use R2Offload\Vendor\GuzzleHttp\BodySummarizerInterface;
+use R2Offload\Vendor\Psr\Http\Client\RequestExceptionInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
 
 /**
  * HTTP Request exception
@@ -89,7 +94,7 @@ class RequestException extends TransferException implements RequestExceptionInte
             $className = __CLASS__;
         }
 
-        $uri = \GuzzleHttp\Psr7\Utils::redactUserInfo($request->getUri());
+        $uri = \R2Offload\Vendor\GuzzleHttp\Psr7\Utils::redactUserInfo($request->getUri());
 
         // Client Error: `GET /` resulted in a `404 Not Found` response:
         // <html> ... (truncated)

@@ -1,7 +1,12 @@
 <?php
-namespace Aws\Endpoint;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Endpoint;
 
-use Aws\Exception\UnresolvedEndpointException;
+use R2Offload\Vendor\Aws\Exception\UnresolvedEndpointException;
 
 /**
  * Endpoint providers.
@@ -17,7 +22,7 @@ use Aws\Exception\UnresolvedEndpointException;
  * created. If an endpoint hash is not created, then the resolve() function
  * will throw an {@see Aws\Exception\UnresolvedEndpointException}.
  *
- *     use Aws\Endpoint\EndpointProvider;
+ *     use R2Offload\Vendor\Aws\Endpoint\EndpointProvider;
  *     $provider = EndpointProvider::defaultProvider();
  *     // Returns an array or NULL.
  *     $endpoint = $provider(['service' => 'ec2', 'region' => 'us-west-2']);
@@ -38,7 +43,7 @@ use Aws\Exception\UnresolvedEndpointException;
  *         }
  *     };
  *     $b = EndpointProvider::defaultProvider();
- *     $c = \Aws\or_chain($a, $b);
+ *     $c = \R2Offload\Vendor\Aws\or_chain($a, $b);
  *     $config = ['service' => 'ec2', 'region' => 'my-test-region'];
  *     $res = $c($config);  // $a handles this.
  *     $config['region'] = 'us-west-2';

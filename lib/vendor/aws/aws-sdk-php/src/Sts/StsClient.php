@@ -1,38 +1,43 @@
 <?php
-namespace Aws\Sts;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Sts;
 
-use Aws\Arn\ArnParser;
-use Aws\AwsClient;
-use Aws\CacheInterface;
-use Aws\Credentials\Credentials;
-use Aws\Result;
-use Aws\Sts\RegionalEndpoints\ConfigurationProvider;
+use R2Offload\Vendor\Aws\Arn\ArnParser;
+use R2Offload\Vendor\Aws\AwsClient;
+use R2Offload\Vendor\Aws\CacheInterface;
+use R2Offload\Vendor\Aws\Credentials\Credentials;
+use R2Offload\Vendor\Aws\Result;
+use R2Offload\Vendor\Aws\Sts\RegionalEndpoints\ConfigurationProvider;
 
 /**
  * This client is used to interact with the **AWS Security Token Service (AWS STS)**.
  *
- * @method \Aws\Result assumeRole(array $args = [])
- * @method \GuzzleHttp\Promise\Promise assumeRoleAsync(array $args = [])
- * @method \Aws\Result assumeRoleWithSAML(array $args = [])
- * @method \GuzzleHttp\Promise\Promise assumeRoleWithSAMLAsync(array $args = [])
- * @method \Aws\Result assumeRoleWithWebIdentity(array $args = [])
- * @method \GuzzleHttp\Promise\Promise assumeRoleWithWebIdentityAsync(array $args = [])
- * @method \Aws\Result assumeRoot(array $args = [])
- * @method \GuzzleHttp\Promise\Promise assumeRootAsync(array $args = [])
- * @method \Aws\Result decodeAuthorizationMessage(array $args = [])
- * @method \GuzzleHttp\Promise\Promise decodeAuthorizationMessageAsync(array $args = [])
- * @method \Aws\Result getAccessKeyInfo(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getAccessKeyInfoAsync(array $args = [])
- * @method \Aws\Result getCallerIdentity(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getCallerIdentityAsync(array $args = [])
- * @method \Aws\Result getDelegatedAccessToken(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getDelegatedAccessTokenAsync(array $args = [])
- * @method \Aws\Result getFederationToken(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getFederationTokenAsync(array $args = [])
- * @method \Aws\Result getSessionToken(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getSessionTokenAsync(array $args = [])
- * @method \Aws\Result getWebIdentityToken(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getWebIdentityTokenAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result assumeRole(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise assumeRoleAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result assumeRoleWithSAML(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise assumeRoleWithSAMLAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result assumeRoleWithWebIdentity(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise assumeRoleWithWebIdentityAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result assumeRoot(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise assumeRootAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result decodeAuthorizationMessage(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise decodeAuthorizationMessageAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getAccessKeyInfo(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getAccessKeyInfoAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getCallerIdentity(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getCallerIdentityAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getDelegatedAccessToken(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDelegatedAccessTokenAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getFederationToken(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getFederationTokenAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getSessionToken(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getSessionTokenAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getWebIdentityToken(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getWebIdentityTokenAsync(array $args = [])
  */
 class StsClient extends AwsClient
 {
@@ -45,7 +50,7 @@ class StsClient extends AwsClient
      * options:
      *
      * - sts_regional_endpoints:
-     *   (Aws\Sts\RegionalEndpoints\ConfigurationInterface|Aws\CacheInterface\|callable|string|array)
+     *   (R2Offload\Vendor\Aws\Sts\RegionalEndpoints\ConfigurationInterface|R2Offload\Vendor\Aws\CacheInterface\|callable|string|array)
      *   Specifies whether to use regional or legacy endpoints for legacy regions.
      *   Provide an Aws\Sts\RegionalEndpoints\ConfigurationInterface object, an
      *   instance of Aws\CacheInterface, a callable configuration provider used

@@ -1,13 +1,18 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Psr7;
+namespace R2Offload\Vendor\GuzzleHttp\Psr7;
 
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
-use Psr\Http\Message\UriInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\ServerRequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
+use R2Offload\Vendor\Psr\Http\Message\UriInterface;
 
 final class Utils
 {

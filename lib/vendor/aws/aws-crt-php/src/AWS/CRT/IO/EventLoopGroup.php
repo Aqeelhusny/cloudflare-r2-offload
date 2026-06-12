@@ -2,11 +2,14 @@
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
+ *
+ * @license Apache-2.0
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
-namespace AWS\CRT\IO;
+namespace R2Offload\Vendor\AWS\CRT\IO;
 
-use AWS\CRT\NativeResource as NativeResource;
-use AWS\CRT\Options as Options;
+use R2Offload\Vendor\AWS\CRT\NativeResource as NativeResource;
+use R2Offload\Vendor\AWS\CRT\Options as Options;
 
 /**
  * Represents 1 or more event loops (1 per thread) for doing I/O and background tasks.

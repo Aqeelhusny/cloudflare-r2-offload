@@ -1,24 +1,29 @@
 <?php
-namespace Aws\S3;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3;
 
-use Aws\AwsClientInterface;
-use Aws\S3\Exception\DeleteMultipleObjectsException;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Promise\PromisorInterface;
-use GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\Aws\AwsClientInterface;
+use R2Offload\Vendor\Aws\S3\Exception\DeleteMultipleObjectsException;
+use R2Offload\Vendor\GuzzleHttp\Promise;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromisorInterface;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
 
 /**
  * Efficiently deletes many objects from a single Amazon S3 bucket using an
  * iterator that yields keys. Deletes are made using the DeleteObjects API
  * operation.
  *
- *     $s3 = new Aws\S3\Client([
+ *     $s3 = new \R2Offload\Vendor\Aws\S3\Client([
  *         'region' => 'us-west-2',
  *         'version' => 'latest'
  *     ]);
  *
  *     $listObjectsParams = ['Bucket' => 'foo', 'Prefix' => 'starts/with/'];
- *     $delete = Aws\S3\BatchDelete::fromListObjects($s3, $listObjectsParams);
+ *     $delete = R2Offload\Vendor\Aws\S3\BatchDelete::fromListObjects($s3, $listObjectsParams);
  *     // Asynchronously delete
  *     $promise = $delete->promise();
  *     // Force synchronous completion

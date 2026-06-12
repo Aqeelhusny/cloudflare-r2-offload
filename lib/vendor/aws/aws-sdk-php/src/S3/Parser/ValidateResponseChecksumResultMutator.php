@@ -1,13 +1,18 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\S3\Parser;
+namespace R2Offload\Vendor\Aws\S3\Parser;
 
-use Aws\Api\Service;
-use Aws\CommandInterface;
-use Aws\ResultInterface;
-use Aws\S3\CalculatesChecksumTrait;
-use Aws\S3\Exception\S3Exception;
-use Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\Aws\Api\Service;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\ResultInterface;
+use R2Offload\Vendor\Aws\S3\CalculatesChecksumTrait;
+use R2Offload\Vendor\Aws\S3\Exception\S3Exception;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
 
 /**
  * A custom s3 result mutator that validates the response checksums.

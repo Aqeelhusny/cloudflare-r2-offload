@@ -1,22 +1,27 @@
 <?php
-namespace Aws\S3;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3;
 
-use Aws\Api\Service;
-use Aws\Arn\AccessPointArnInterface;
-use Aws\Arn\ArnParser;
-use Aws\Arn\ObjectLambdaAccessPointArn;
-use Aws\Arn\Exception\InvalidArnException;
-use Aws\Arn\AccessPointArn as BaseAccessPointArn;
-use Aws\Arn\S3\OutpostsAccessPointArn;
-use Aws\Arn\S3\MultiRegionAccessPointArn;
-use Aws\Arn\S3\OutpostsArnInterface;
-use Aws\CommandInterface;
-use Aws\Endpoint\PartitionEndpointProvider;
-use Aws\Exception\InvalidRegionException;
-use Aws\Exception\UnresolvedEndpointException;
-use Aws\S3\Exception\S3Exception;
+use R2Offload\Vendor\Aws\Api\Service;
+use R2Offload\Vendor\Aws\Arn\AccessPointArnInterface;
+use R2Offload\Vendor\Aws\Arn\ArnParser;
+use R2Offload\Vendor\Aws\Arn\ObjectLambdaAccessPointArn;
+use R2Offload\Vendor\Aws\Arn\Exception\InvalidArnException;
+use R2Offload\Vendor\Aws\Arn\AccessPointArn as BaseAccessPointArn;
+use R2Offload\Vendor\Aws\Arn\S3\OutpostsAccessPointArn;
+use R2Offload\Vendor\Aws\Arn\S3\MultiRegionAccessPointArn;
+use R2Offload\Vendor\Aws\Arn\S3\OutpostsArnInterface;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\Endpoint\PartitionEndpointProvider;
+use R2Offload\Vendor\Aws\Exception\InvalidRegionException;
+use R2Offload\Vendor\Aws\Exception\UnresolvedEndpointException;
+use R2Offload\Vendor\Aws\S3\Exception\S3Exception;
 use InvalidArgumentException;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 /**
  * Checks for access point ARN in members targeting BucketName, modifying
@@ -212,7 +217,7 @@ class BucketEndpointArnMiddleware
         } else {
             $region = $this->region;
         }
-        $region = \Aws\strip_fips_pseudo_regions($region);
+        $region = \R2Offload\Vendor\Aws\strip_fips_pseudo_regions($region);
         $host .= '.' . $region . '.' . $this->getPartitionSuffix($arn, $this->partitionProvider);
         return $host;
     }
@@ -222,7 +227,7 @@ class BucketEndpointArnMiddleware
      * if successful
      *
      * @param $arn
-     * @return \Aws\Endpoint\Partition
+     * @return \R2Offload\Vendor\Aws\Endpoint\Partition
      */
     private function validateArn($arn)
     {
@@ -311,7 +316,7 @@ class BucketEndpointArnMiddleware
             // If client partition not found, try removing pseudo-region qualifiers
             if (!($clientPart->isRegionMatch($this->region, 's3'))) {
                 $clientPart = $this->partitionProvider->getPartition(
-                    \Aws\strip_fips_pseudo_regions($this->region),
+                    \R2Offload\Vendor\Aws\strip_fips_pseudo_regions($this->region),
                     's3'
                 );
             }

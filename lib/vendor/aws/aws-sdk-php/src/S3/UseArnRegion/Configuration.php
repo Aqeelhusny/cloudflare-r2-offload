@@ -1,8 +1,13 @@
 <?php
-namespace Aws\S3\UseArnRegion;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3\UseArnRegion;
 
-use Aws;
-use Aws\S3\UseArnRegion\Exception\ConfigurationException;
+use R2Offload\Vendor\Aws;
+use R2Offload\Vendor\Aws\S3\UseArnRegion\Exception\ConfigurationException;
 
 class Configuration implements ConfigurationInterface
 {
@@ -10,7 +15,7 @@ class Configuration implements ConfigurationInterface
 
     public function __construct($useArnRegion)
     {
-        $this->useArnRegion = Aws\boolean_value($useArnRegion);
+        $this->useArnRegion = \R2Offload\Vendor\Aws\boolean_value($useArnRegion);
         if (is_null($this->useArnRegion)) {
             throw new ConfigurationException("'use_arn_region' config option"
                 . " must be a boolean value.");

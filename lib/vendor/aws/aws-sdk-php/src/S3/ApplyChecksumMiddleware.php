@@ -1,14 +1,19 @@
 <?php
-namespace Aws\S3;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3;
 
-use Aws\Api\Service;
-use Aws\Api\Shape;
-use Aws\CommandInterface;
-use Aws\MetricsBuilder;
-use GuzzleHttp\Psr7;
+use R2Offload\Vendor\Aws\Api\Service;
+use R2Offload\Vendor\Aws\Api\Shape;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\MetricsBuilder;
+use R2Offload\Vendor\GuzzleHttp\Psr7;
 use InvalidArgumentException;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\StreamInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 
 /**
  * Apply required or optional checksums to requests before sending.

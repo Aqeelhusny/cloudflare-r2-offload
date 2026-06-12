@@ -1,10 +1,15 @@
 <?php
-namespace Aws;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws;
 
-use Aws\Endpoint\PartitionEndpointProvider;
-use Aws\Endpoint\PartitionInterface;
-use Aws\EndpointV2\EndpointProviderV2;
-use Aws\EndpointV2\EndpointDefinitionProvider;
+use R2Offload\Vendor\Aws\Endpoint\PartitionEndpointProvider;
+use R2Offload\Vendor\Aws\Endpoint\PartitionInterface;
+use R2Offload\Vendor\Aws\EndpointV2\EndpointProviderV2;
+use R2Offload\Vendor\Aws\EndpointV2\EndpointDefinitionProvider;
 
 class MultiRegionClient implements AwsClientInterface
 {
@@ -55,7 +60,7 @@ class MultiRegionClient implements AwsClientInterface
                     'internal' => true,
                     'default' => function (array $args) {
                         $namespace = manifest($args['service'])['namespace'];
-                        $klass = "Aws\\{$namespace}\\{$namespace}Client";
+                        $klass = "R2Offload\\Vendor\\Aws\\{$namespace}\\{$namespace}Client";
                         $region = isset($args['region']) ? $args['region'] : null;
 
                         return function (array $args) use ($klass, $region) {
@@ -107,7 +112,7 @@ class MultiRegionClient implements AwsClientInterface
      *
      * - client_factory: (callable) An optional callable that takes an array of
      *   client configuration arguments and returns a regionalized client.
-     * - partition: (Aws\Endpoint\Partition|string) AWS partition to connect to.
+     * - partition: (R2Offload\Vendor\Aws\Endpoint\Partition|string) AWS partition to connect to.
      *   Valid partitions include "aws," "aws-cn," and "aws-us-gov." Used to
      *   restrict the scope of the mapRegions method.
      * - region: (string) Region to connect to when no override is provided.

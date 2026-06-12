@@ -1,10 +1,15 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\EndpointV2;
+namespace R2Offload\Vendor\Aws\EndpointV2;
 
-use Aws\Api\Serializer\RestSerializer;
-use Aws\EndpointV2\Ruleset\RulesetEndpoint;
-use GuzzleHttp\Psr7\Uri;
+use R2Offload\Vendor\Aws\Api\Serializer\RestSerializer;
+use R2Offload\Vendor\Aws\EndpointV2\Ruleset\RulesetEndpoint;
+use R2Offload\Vendor\GuzzleHttp\Psr7\Uri;
 
 /**
  * Set of helper functions used to set endpoints and endpoint

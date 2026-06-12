@@ -1,6 +1,11 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace GuzzleHttp;
+namespace R2Offload\Vendor\GuzzleHttp;
 
 /**
  * Debug function used to describe the provided value type and class.
@@ -50,7 +55,7 @@ function debug_resource($value = null)
  *
  * The returned handler is not wrapped by any default middlewares.
  *
- * @return callable(\Psr\Http\Message\RequestInterface, array): Promise\PromiseInterface Returns the best handler for the given system.
+ * @return callable(\R2Offload\Vendor\Psr\Http\Message\RequestInterface, array): Promise\PromiseInterface Returns the best handler for the given system.
  *
  * @throws \RuntimeException if no viable Handler is available.
  *

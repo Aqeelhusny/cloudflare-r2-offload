@@ -1,8 +1,13 @@
 <?php
-namespace Aws\Retry;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Retry;
 
-use Aws\Exception\AwsException;
-use Aws\ResultInterface;
+use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\ResultInterface;
 
 trait RetryHelperTrait
 {

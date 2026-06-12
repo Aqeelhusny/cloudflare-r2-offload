@@ -1,9 +1,14 @@
 <?php
-namespace Aws\S3;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3;
 
-use Aws\CommandInterface;
-use Aws\Multipart\UploadState;
-use Aws\ResultInterface;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\Multipart\UploadState;
+use R2Offload\Vendor\Aws\ResultInterface;
 
 trait MultipartUploadingTrait
 {

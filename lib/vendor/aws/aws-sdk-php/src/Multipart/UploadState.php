@@ -1,5 +1,10 @@
 <?php
-namespace Aws\Multipart;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Multipart;
 
 /**
  * Representation of the multipart upload.

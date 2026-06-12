@@ -1,8 +1,13 @@
 <?php
-namespace Aws\S3;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3;
 
-use Aws\CommandInterface;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 /**
  * Simplifies the SSE-C process by encoding and hashing the key.

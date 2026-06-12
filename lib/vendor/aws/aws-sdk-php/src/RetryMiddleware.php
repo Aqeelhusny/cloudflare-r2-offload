@@ -1,12 +1,17 @@
 <?php
-namespace Aws;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws;
 
-use Aws\Exception\AwsException;
-use Aws\Retry\RetryHelperTrait;
-use GuzzleHttp\Exception\RequestException;
-use Psr\Http\Message\RequestInterface;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Promise;
+use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\Retry\RetryHelperTrait;
+use R2Offload\Vendor\GuzzleHttp\Exception\RequestException;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\GuzzleHttp\Promise;
 
 /**
  * Middleware that retries failures. V1 implemention that supports 'legacy' mode.

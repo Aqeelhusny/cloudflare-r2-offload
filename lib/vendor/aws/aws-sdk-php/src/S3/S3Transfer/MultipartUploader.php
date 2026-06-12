@@ -1,26 +1,31 @@
 <?php
-namespace Aws\S3\S3Transfer;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3\S3Transfer;
 
-use Aws\HashingStream;
-use Aws\PhpHash;
-use Aws\ResultInterface;
-use Aws\S3\ApplyChecksumMiddleware;
-use Aws\S3\S3ClientInterface;
-use Aws\S3\S3Transfer\Exception\S3TransferException;
-use Aws\S3\S3Transfer\Models\ResumableUpload;
-use Aws\S3\S3Transfer\Models\S3TransferManagerConfig;
-use Aws\S3\S3Transfer\Models\UploadResult;
-use Aws\S3\S3Transfer\Progress\AbstractTransferListener;
-use Aws\S3\S3Transfer\Progress\TransferListenerNotifier;
-use Aws\S3\S3Transfer\Progress\TransferProgressSnapshot;
-use GuzzleHttp\Promise\Create;
-use GuzzleHttp\Promise\Each;
-use GuzzleHttp\Promise\Promise;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7\LazyOpenStream;
-use GuzzleHttp\Psr7\LimitStream;
-use GuzzleHttp\Psr7\Utils;
-use Psr\Http\Message\StreamInterface;
+use R2Offload\Vendor\Aws\HashingStream;
+use R2Offload\Vendor\Aws\PhpHash;
+use R2Offload\Vendor\Aws\ResultInterface;
+use R2Offload\Vendor\Aws\S3\ApplyChecksumMiddleware;
+use R2Offload\Vendor\Aws\S3\S3ClientInterface;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Exception\S3TransferException;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Models\ResumableUpload;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Models\S3TransferManagerConfig;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Models\UploadResult;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\AbstractTransferListener;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\TransferListenerNotifier;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\TransferProgressSnapshot;
+use R2Offload\Vendor\GuzzleHttp\Promise\Create;
+use R2Offload\Vendor\GuzzleHttp\Promise\Each;
+use R2Offload\Vendor\GuzzleHttp\Promise\Promise;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\GuzzleHttp\Psr7\LazyOpenStream;
+use R2Offload\Vendor\GuzzleHttp\Psr7\LimitStream;
+use R2Offload\Vendor\GuzzleHttp\Psr7\Utils;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 use Throwable;
 
 /**

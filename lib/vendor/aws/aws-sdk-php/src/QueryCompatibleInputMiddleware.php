@@ -1,11 +1,16 @@
 <?php
-namespace Aws;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws;
 
-use Aws\Api\ListShape;
-use Aws\Api\MapShape;
-use Aws\Api\Service;
-use Aws\Api\Shape;
-use Aws\Api\StructureShape;
+use R2Offload\Vendor\Aws\Api\ListShape;
+use R2Offload\Vendor\Aws\Api\MapShape;
+use R2Offload\Vendor\Aws\Api\Service;
+use R2Offload\Vendor\Aws\Api\Shape;
+use R2Offload\Vendor\Aws\Api\StructureShape;
 use Closure;
 
 /**

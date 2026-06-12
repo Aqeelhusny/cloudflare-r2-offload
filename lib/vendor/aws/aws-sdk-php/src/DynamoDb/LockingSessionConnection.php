@@ -1,7 +1,12 @@
 <?php
-namespace Aws\DynamoDb;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\DynamoDb;
 
-use Aws\DynamoDb\Exception\DynamoDbException;
+use R2Offload\Vendor\Aws\DynamoDb\Exception\DynamoDbException;
 
 /**
  * The locking connection adds locking logic to the read operation.

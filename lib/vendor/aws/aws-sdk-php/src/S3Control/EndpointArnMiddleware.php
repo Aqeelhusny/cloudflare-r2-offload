@@ -1,20 +1,25 @@
 <?php
-namespace Aws\S3Control;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3Control;
 
-use Aws\Api\Service;
-use Aws\Arn\AccessPointArnInterface;
-use Aws\Arn\ArnInterface;
-use Aws\Arn\ArnParser;
-use Aws\Arn\Exception\InvalidArnException;
-use Aws\Arn\S3\BucketArnInterface;
-use Aws\Arn\S3\OutpostsArnInterface;
-use Aws\CommandInterface;
-use Aws\Endpoint\PartitionEndpointProvider;
-use Aws\Exception\InvalidRegionException;
-use Aws\Exception\UnresolvedEndpointException;
-use Aws\S3\EndpointRegionHelperTrait;
-use GuzzleHttp\Psr7;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Aws\Api\Service;
+use R2Offload\Vendor\Aws\Arn\AccessPointArnInterface;
+use R2Offload\Vendor\Aws\Arn\ArnInterface;
+use R2Offload\Vendor\Aws\Arn\ArnParser;
+use R2Offload\Vendor\Aws\Arn\Exception\InvalidArnException;
+use R2Offload\Vendor\Aws\Arn\S3\BucketArnInterface;
+use R2Offload\Vendor\Aws\Arn\S3\OutpostsArnInterface;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\Endpoint\PartitionEndpointProvider;
+use R2Offload\Vendor\Aws\Exception\InvalidRegionException;
+use R2Offload\Vendor\Aws\Exception\UnresolvedEndpointException;
+use R2Offload\Vendor\Aws\S3\EndpointRegionHelperTrait;
+use R2Offload\Vendor\GuzzleHttp\Psr7;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 /**
  * Checks for access point ARN in members targeting BucketName, modifying
@@ -308,7 +313,7 @@ class EndpointArnMiddleware
      * if successful
      *
      * @param $arn
-     * @return \Aws\Endpoint\Partition
+     * @return \R2Offload\Vendor\Aws\Endpoint\Partition
      */
     private function validateArn(ArnInterface $arn)
     {
@@ -333,7 +338,7 @@ class EndpointArnMiddleware
         // If client partition not found, try removing pseudo-region qualifiers
         if (!($clientPart->isRegionMatch($this->region, 's3'))) {
             $clientPart = $this->partitionProvider->getPartition(
-                \Aws\strip_fips_pseudo_regions($this->region),
+                \R2Offload\Vendor\Aws\strip_fips_pseudo_regions($this->region),
                 's3'
             );
         }

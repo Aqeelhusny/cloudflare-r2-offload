@@ -1,10 +1,15 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws;
+namespace R2Offload\Vendor\Aws;
 
-use Aws\EndpointDiscovery\Configuration;
+use R2Offload\Vendor\Aws\EndpointDiscovery\Configuration;
 use Closure;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 /**
  * Builds and injects the user agent header values.

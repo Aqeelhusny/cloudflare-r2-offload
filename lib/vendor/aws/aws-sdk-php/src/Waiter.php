@@ -1,11 +1,16 @@
 <?php
-namespace Aws;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws;
 
-use Aws\Exception\AwsException;
-use GuzzleHttp\Promise\Coroutine;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Promise\PromisorInterface;
-use GuzzleHttp\Promise\RejectedPromise;
+use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\GuzzleHttp\Promise\Coroutine;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromisorInterface;
+use R2Offload\Vendor\GuzzleHttp\Promise\RejectedPromise;
 
 /**
  * "Waiters" are associated with an AWS resource (e.g., EC2 instance), and poll

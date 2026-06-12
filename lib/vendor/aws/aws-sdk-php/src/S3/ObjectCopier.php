@@ -1,14 +1,19 @@
 <?php
-namespace Aws\S3;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3;
 
-use Aws\Arn\ArnParser;
-use Aws\Arn\S3\AccessPointArn;
-use Aws\Exception\MultipartUploadException;
-use Aws\Result;
-use Aws\S3\Exception\S3Exception;
-use GuzzleHttp\Promise\Coroutine;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Promise\PromisorInterface;
+use R2Offload\Vendor\Aws\Arn\ArnParser;
+use R2Offload\Vendor\Aws\Arn\S3\AccessPointArn;
+use R2Offload\Vendor\Aws\Exception\MultipartUploadException;
+use R2Offload\Vendor\Aws\Result;
+use R2Offload\Vendor\Aws\S3\Exception\S3Exception;
+use R2Offload\Vendor\GuzzleHttp\Promise\Coroutine;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromisorInterface;
 use InvalidArgumentException;
 
 /**

@@ -1,8 +1,13 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Promise;
+namespace R2Offload\Vendor\GuzzleHttp\Promise;
 
 use Generator;
 use Throwable;
@@ -18,7 +23,7 @@ use Throwable;
  * This can lead to less verbose code when doing lots of sequential async calls
  * with minimal processing in between.
  *
- *     use GuzzleHttp\Promise;
+ *     use R2Offload\Vendor\GuzzleHttp\Promise;
  *
  *     function createPromise($value) {
  *         return new Promise\FulfilledPromise($value);

@@ -1,11 +1,16 @@
 <?php
-namespace Aws;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws;
 
-use Aws\Api\Parser\Exception\ParserException;
-use Aws\Exception\AwsException;
-use GuzzleHttp\Promise;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\Aws\Api\Parser\Exception\ParserException;
+use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\GuzzleHttp\Promise;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
 
 /**
  * Converts an HTTP handler into a Command HTTP handler.

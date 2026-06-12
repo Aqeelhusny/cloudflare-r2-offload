@@ -1,13 +1,18 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace GuzzleHttp;
+namespace R2Offload\Vendor\GuzzleHttp;
 
-use GuzzleHttp\Cookie\CookieJarInterface;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Promise as P;
-use GuzzleHttp\Promise\PromiseInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\GuzzleHttp\Cookie\CookieJarInterface;
+use R2Offload\Vendor\GuzzleHttp\Exception\RequestException;
+use R2Offload\Vendor\GuzzleHttp\Promise as P;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 
 /**

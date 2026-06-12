@@ -1,7 +1,12 @@
 <?php
-namespace Aws\Glacier;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Glacier;
 
-use Aws\HashInterface;
+use R2Offload\Vendor\Aws\HashInterface;
 
 /**
  * Encapsulates the creation of a tree hash from streamed data

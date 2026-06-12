@@ -1,8 +1,13 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Promise;
+namespace R2Offload\Vendor\GuzzleHttp\Promise;
 
 /**
  * A promise that has been fulfilled.

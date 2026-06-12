@@ -1,11 +1,16 @@
 <?php
-namespace Aws\Endpoint\UseDualstackEndpoint;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Endpoint\UseDualstackEndpoint;
 
-use Aws\AbstractConfigurationProvider;
-use Aws\CacheInterface;
-use Aws\ConfigurationProviderInterface;
-use Aws\Endpoint\UseDualstackEndpoint\Exception\ConfigurationException;
-use GuzzleHttp\Promise;
+use R2Offload\Vendor\Aws\AbstractConfigurationProvider;
+use R2Offload\Vendor\Aws\CacheInterface;
+use R2Offload\Vendor\Aws\ConfigurationProviderInterface;
+use R2Offload\Vendor\Aws\Endpoint\UseDualstackEndpoint\Exception\ConfigurationException;
+use R2Offload\Vendor\GuzzleHttp\Promise;
 
 /**
  * A configuration provider is a function that returns a promise that is
@@ -13,7 +18,7 @@ use GuzzleHttp\Promise;
  * or rejected with an {@see \Aws\Endpoint\UseDualstackEndpoint\ConfigurationException}.
  *
  * <code>
- * use Aws\Endpoint\UseDualstackEndpoint\ConfigurationProvider;
+ * use R2Offload\Vendor\Aws\Endpoint\UseDualstackEndpoint\ConfigurationProvider;
  * $provider = ConfigurationProvider::defaultProvider();
  * // Returns a ConfigurationInterface or throws.
  * $config = $provider()->wait();
@@ -136,7 +141,7 @@ class ConfigurationProvider extends AbstractConfigurationProvider
             }
 
             // Use INI_SCANNER_NORMAL instead of INI_SCANNER_TYPED for PHP 5.5 compatibility
-            $data = \Aws\parse_ini_file($filename, true, INI_SCANNER_NORMAL);
+            $data = \R2Offload\Vendor\Aws\parse_ini_file($filename, true, INI_SCANNER_NORMAL);
             if ($data === false) {
                 return self::reject("Invalid config file: $filename");
             }

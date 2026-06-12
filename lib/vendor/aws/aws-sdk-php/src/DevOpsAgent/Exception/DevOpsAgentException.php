@@ -1,7 +1,12 @@
 <?php
-namespace Aws\DevOpsAgent\Exception;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\DevOpsAgent\Exception;
 
-use Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\Exception\AwsException;
 
 /**
  * Represents an error interacting with the **AWS DevOps Agent Service** service.

@@ -1,17 +1,22 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace GuzzleHttp\Handler;
+namespace R2Offload\Vendor\GuzzleHttp\Handler;
 
-use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Promise as P;
-use GuzzleHttp\Promise\FulfilledPromise;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7\LazyOpenStream;
-use GuzzleHttp\TransferStats;
-use GuzzleHttp\Utils;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\UriInterface;
+use R2Offload\Vendor\GuzzleHttp\Exception\ConnectException;
+use R2Offload\Vendor\GuzzleHttp\Exception\RequestException;
+use R2Offload\Vendor\GuzzleHttp\Promise as P;
+use R2Offload\Vendor\GuzzleHttp\Promise\FulfilledPromise;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\GuzzleHttp\Psr7\LazyOpenStream;
+use R2Offload\Vendor\GuzzleHttp\TransferStats;
+use R2Offload\Vendor\GuzzleHttp\Utils;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\UriInterface;
 
 /**
  * Creates curl resources from a request
@@ -266,7 +271,7 @@ class CurlFactory implements CurlFactoryInterface
         );
 
         if ('' !== $sanitizedError) {
-            $redactedUriString = \GuzzleHttp\Psr7\Utils::redactUserInfo($uri)->__toString();
+            $redactedUriString = \R2Offload\Vendor\GuzzleHttp\Psr7\Utils::redactUserInfo($uri)->__toString();
             if ($redactedUriString !== '' && false === \strpos($sanitizedError, $redactedUriString)) {
                 $message .= \sprintf(' for %s', $redactedUriString);
             }
@@ -293,7 +298,7 @@ class CurlFactory implements CurlFactoryInterface
             return $error;
         }
 
-        $redactedUriString = \GuzzleHttp\Psr7\Utils::redactUserInfo($baseUri)->__toString();
+        $redactedUriString = \R2Offload\Vendor\GuzzleHttp\Psr7\Utils::redactUserInfo($baseUri)->__toString();
 
         return str_replace($baseUriString, $redactedUriString, $error);
     }
@@ -486,11 +491,11 @@ class CurlFactory implements CurlFactoryInterface
 
         if (!isset($options['sink'])) {
             // Use a default temp stream if no sink was set.
-            $options['sink'] = \GuzzleHttp\Psr7\Utils::tryFopen('php://temp', 'w+');
+            $options['sink'] = \R2Offload\Vendor\GuzzleHttp\Psr7\Utils::tryFopen('php://temp', 'w+');
         }
         $sink = $options['sink'];
         if (!\is_string($sink)) {
-            $sink = \GuzzleHttp\Psr7\Utils::streamFor($sink);
+            $sink = \R2Offload\Vendor\GuzzleHttp\Psr7\Utils::streamFor($sink);
         } elseif (!\is_dir(\dirname($sink))) {
             // Ensure that the directory exists before failing in curl.
             throw new \RuntimeException(\sprintf('Directory %s does not exist for sink value of %s', \dirname($sink), $sink));

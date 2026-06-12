@@ -1,19 +1,24 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace GuzzleHttp\Handler;
+namespace R2Offload\Vendor\GuzzleHttp\Handler;
 
-use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Promise as P;
-use GuzzleHttp\Promise\FulfilledPromise;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7;
-use GuzzleHttp\TransferStats;
-use GuzzleHttp\Utils;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
-use Psr\Http\Message\UriInterface;
+use R2Offload\Vendor\GuzzleHttp\Exception\ConnectException;
+use R2Offload\Vendor\GuzzleHttp\Exception\RequestException;
+use R2Offload\Vendor\GuzzleHttp\Promise as P;
+use R2Offload\Vendor\GuzzleHttp\Promise\FulfilledPromise;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\GuzzleHttp\Psr7;
+use R2Offload\Vendor\GuzzleHttp\TransferStats;
+use R2Offload\Vendor\GuzzleHttp\Utils;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
+use R2Offload\Vendor\Psr\Http\Message\UriInterface;
 
 /**
  * HTTP handler that uses PHP's HTTP stream wrapper.

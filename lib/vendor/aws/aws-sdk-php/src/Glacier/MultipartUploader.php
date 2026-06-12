@@ -1,14 +1,19 @@
 <?php
-namespace Aws\Glacier;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Glacier;
 
-use Aws\CommandInterface;
-use Aws\HashingStream;
-use Aws\Multipart\AbstractUploader;
-use Aws\Multipart\UploadState;
-use Aws\PhpHash;
-use Aws\ResultInterface;
-use GuzzleHttp\Psr7;
-use Psr\Http\Message\StreamInterface as Stream;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\HashingStream;
+use R2Offload\Vendor\Aws\Multipart\AbstractUploader;
+use R2Offload\Vendor\Aws\Multipart\UploadState;
+use R2Offload\Vendor\Aws\PhpHash;
+use R2Offload\Vendor\Aws\ResultInterface;
+use R2Offload\Vendor\GuzzleHttp\Psr7;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface as Stream;
 
 /**
  * Encapsulates the execution of a multipart upload to Glacier.
@@ -89,13 +94,13 @@ class MultipartUploader extends AbstractUploader
      * - archive_description: (string) Description of the archive.
      * - before_complete: (callable) Callback to invoke before the
      *   `CompleteMultipartUpload` operation. The callback should have a
-     *   function signature like `function (Aws\Command $command) {...}`.
+     *   function signature like `function (R2Offload\Vendor\Aws\Command $command) {...}`.
      * - before_initiate: (callable) Callback to invoke before the
      *   `InitiateMultipartUpload` operation. The callback should have a
-     *   function signature like `function (Aws\Command $command) {...}`.
+     *   function signature like `function (R2Offload\Vendor\Aws\Command $command) {...}`.
      * - before_upload: (callable) Callback to invoke before any
      *   `UploadMultipartPart` operations. The callback should have a function
-     *   signature like `function (Aws\Command $command) {...}`.
+     *   signature like `function (R2Offload\Vendor\Aws\Command $command) {...}`.
      * - concurrency: (int, default=int(3)) Maximum number of concurrent
      *   `UploadMultipartPart` operations allowed during the multipart upload.
      * - part_size: (int, default=int(1048576)) Part size, in bytes, to use when
@@ -104,7 +109,7 @@ class MultipartUploader extends AbstractUploader
      * - prepare_data_source: (callable) Callback to invoke before starting the
      *   multipart upload workflow. The callback should have a function
      *   signature like `function () {...}`.
-     * - state: (Aws\Multipart\UploadState) An object that represents the state
+     * - state: (R2Offload\Vendor\Aws\Multipart\UploadState) An object that represents the state
      *   of the multipart upload and that is used to resume a previous upload.
      *   When this options is provided, the `account_id`, `key`, and `part_size`
      *   options are ignored.

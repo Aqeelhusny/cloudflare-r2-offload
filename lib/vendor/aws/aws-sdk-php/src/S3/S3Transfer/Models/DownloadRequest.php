@@ -1,13 +1,18 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\S3\S3Transfer\Models;
+namespace R2Offload\Vendor\Aws\S3\S3Transfer\Models;
 
-use Aws\S3\S3Transfer\Exception\S3TransferException;
-use Aws\S3\S3Transfer\Progress\AbstractTransferListener;
-use Aws\S3\S3Transfer\S3TransferManager;
-use Aws\S3\S3Transfer\Utils\AbstractDownloadHandler;
-use Aws\S3\S3Transfer\Utils\FileDownloadHandler;
-use Aws\S3\S3Transfer\Utils\StreamDownloadHandler;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Exception\S3TransferException;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Progress\AbstractTransferListener;
+use R2Offload\Vendor\Aws\S3\S3Transfer\S3TransferManager;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Utils\AbstractDownloadHandler;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Utils\FileDownloadHandler;
+use R2Offload\Vendor\Aws\S3\S3Transfer\Utils\StreamDownloadHandler;
 
 final class DownloadRequest extends AbstractTransferRequest
 {

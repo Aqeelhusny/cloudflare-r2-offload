@@ -1,6 +1,11 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace GuzzleHttp;
+namespace R2Offload\Vendor\GuzzleHttp;
 
 /**
  * This class contains a list of built-in Guzzle request options.
@@ -57,7 +62,7 @@ final class RequestOptions
     public const CERT = 'cert';
 
     /**
-     * cookies: (bool|GuzzleHttp\Cookie\CookieJarInterface, default=false)
+     * cookies: (bool|R2Offload\Vendor\GuzzleHttp\Cookie\CookieJarInterface, default=false)
      * Specifies whether or not cookies are used in a request or what cookie
      * jar to use or what cookies to send. This option only works if your
      * handler has the `cookie` middleware. Valid values are `false` and

@@ -2,10 +2,13 @@
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
+ *
+ * @license Apache-2.0
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
-namespace AWS\CRT\HTTP;
+namespace R2Offload\Vendor\AWS\CRT\HTTP;
 
-use AWS\CRT\Internal\Encoding;
+use R2Offload\Vendor\AWS\CRT\Internal\Encoding;
 
 final class Headers {
     private $headers;

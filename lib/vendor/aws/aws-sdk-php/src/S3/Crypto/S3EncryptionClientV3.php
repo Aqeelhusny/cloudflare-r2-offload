@@ -1,21 +1,26 @@
 <?php
-namespace Aws\S3\Crypto;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\S3\Crypto;
 
-use Aws\Crypto\DecryptionTraitV3;
-use Aws\Exception\CryptoException;
-use Aws\HashingStream;
-use Aws\MetricsBuilder;
-use Aws\PhpHash;
-use Aws\Result;
-use Aws\Crypto\AbstractCryptoClientV3;
-use Aws\Crypto\EncryptionTraitV3;
-use Aws\Crypto\MetadataEnvelope;
-use Aws\Crypto\AlgorithmSuite;
-use Aws\Crypto\Cipher\CipherBuilderTrait;
-use Aws\S3\S3Client;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7;
+use R2Offload\Vendor\Aws\Crypto\DecryptionTraitV3;
+use R2Offload\Vendor\Aws\Exception\CryptoException;
+use R2Offload\Vendor\Aws\HashingStream;
+use R2Offload\Vendor\Aws\MetricsBuilder;
+use R2Offload\Vendor\Aws\PhpHash;
+use R2Offload\Vendor\Aws\Result;
+use R2Offload\Vendor\Aws\Crypto\AbstractCryptoClientV3;
+use R2Offload\Vendor\Aws\Crypto\EncryptionTraitV3;
+use R2Offload\Vendor\Aws\Crypto\MetadataEnvelope;
+use R2Offload\Vendor\Aws\Crypto\AlgorithmSuite;
+use R2Offload\Vendor\Aws\Crypto\Cipher\CipherBuilderTrait;
+use R2Offload\Vendor\Aws\S3\S3Client;
+use R2Offload\Vendor\GuzzleHttp\Promise;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\GuzzleHttp\Psr7;
 
 /**
  * Provides a wrapper for an S3Client that supplies functionality to encrypt
@@ -32,9 +37,9 @@ use GuzzleHttp\Psr7;
  * Example write path:
  *
  * <code>
- * use Aws\Crypto\KmsMaterialsProviderV3;
- * use Aws\S3\Crypto\S3EncryptionClientV3;
- * use Aws\S3\S3Client;
+ * use R2Offload\Vendor\Aws\Crypto\KmsMaterialsProviderV3;
+ * use R2Offload\Vendor\Aws\S3\Crypto\S3EncryptionClientV3;
+ * use R2Offload\Vendor\Aws\S3\S3Client;
  *
  * $encryptionClient = new S3EncryptionClientV3(
  *     new S3Client([
@@ -349,7 +354,7 @@ class S3EncryptionClientV3 extends AbstractCryptoClientV3
      *   instruction file if an using an InstructionFileMetadataHandler was
      *   determined.
      *
-     * @return \Aws\Result PutObject call result with the details of uploading
+     * @return \R2Offload\Vendor\Aws\Result PutObject call result with the details of uploading
      *                     the encrypted file.
      *
      * @throws \InvalidArgumentException Thrown when arguments above are not
@@ -564,7 +569,7 @@ class S3EncryptionClientV3 extends AbstractCryptoClientV3
      *   be specified and provided to the decrypt operation. Ignored for non-KMS
      *   materials providers. Defaults to false.
      *
-     * @return \Aws\Result GetObject call result with the 'Body' field
+     * @return \R2Offload\Vendor\Aws\Result GetObject call result with the 'Body' field
      *                     wrapped in a decryption stream with its metadata
      *                     information.
      *

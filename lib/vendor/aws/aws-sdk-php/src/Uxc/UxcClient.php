@@ -1,15 +1,20 @@
 <?php
-namespace Aws\Uxc;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Uxc;
 
-use Aws\AwsClient;
+use R2Offload\Vendor\Aws\AwsClient;
 
 /**
  * This client is used to interact with the **AWS User Experience Customization** service.
- * @method \Aws\Result getAccountCustomizations(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getAccountCustomizationsAsync(array $args = [])
- * @method \Aws\Result listServices(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listServicesAsync(array $args = [])
- * @method \Aws\Result updateAccountCustomizations(array $args = [])
- * @method \GuzzleHttp\Promise\Promise updateAccountCustomizationsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getAccountCustomizations(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getAccountCustomizationsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listServices(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listServicesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateAccountCustomizations(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateAccountCustomizationsAsync(array $args = [])
  */
 class UxcClient extends AwsClient {}

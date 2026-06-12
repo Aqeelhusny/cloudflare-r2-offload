@@ -1,10 +1,15 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace GuzzleHttp;
+namespace R2Offload\Vendor\GuzzleHttp;
 
-use Psr\Http\Message\MessageInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\Psr\Http\Message\MessageInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
 
 /**
  * Formats log messages using variable substitutions for requests, responses,

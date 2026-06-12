@@ -1,9 +1,14 @@
 <?php
-namespace Aws\Script\Composer;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Script\Composer;
 
 use Composer\Script\Event;
-use Symfony\Component\Filesystem\Exception\IOException;
-use Symfony\Component\Filesystem\Filesystem;
+use R2Offload\Vendor\Symfony\Component\Filesystem\Exception\IOException;
+use R2Offload\Vendor\Symfony\Component\Filesystem\Filesystem;
 
 class Composer
 {

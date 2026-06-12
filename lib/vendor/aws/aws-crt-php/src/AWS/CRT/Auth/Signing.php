@@ -2,10 +2,13 @@
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
+ *
+ * @license Apache-2.0
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
-namespace AWS\CRT\Auth;
+namespace R2Offload\Vendor\AWS\CRT\Auth;
 
-use AWS\CRT\NativeResource;
+use R2Offload\Vendor\AWS\CRT\NativeResource;
 
 abstract class Signing extends NativeResource {
     static function signRequestAws($signable, $signing_config, $on_complete) {

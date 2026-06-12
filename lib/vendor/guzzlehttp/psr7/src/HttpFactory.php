@@ -1,21 +1,26 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Psr7;
+namespace R2Offload\Vendor\GuzzleHttp\Psr7;
 
-use Psr\Http\Message\RequestFactoryInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseFactoryInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestFactoryInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamFactoryInterface;
-use Psr\Http\Message\StreamInterface;
-use Psr\Http\Message\UploadedFileFactoryInterface;
-use Psr\Http\Message\UploadedFileInterface;
-use Psr\Http\Message\UriFactoryInterface;
-use Psr\Http\Message\UriInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestFactoryInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\ResponseFactoryInterface;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\Psr\Http\Message\ServerRequestFactoryInterface;
+use R2Offload\Vendor\Psr\Http\Message\ServerRequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\StreamFactoryInterface;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
+use R2Offload\Vendor\Psr\Http\Message\UploadedFileFactoryInterface;
+use R2Offload\Vendor\Psr\Http\Message\UploadedFileInterface;
+use R2Offload\Vendor\Psr\Http\Message\UriFactoryInterface;
+use R2Offload\Vendor\Psr\Http\Message\UriInterface;
 
 /**
  * Implements all of the PSR-17 interfaces.

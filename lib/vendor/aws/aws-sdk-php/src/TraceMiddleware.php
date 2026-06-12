@@ -1,12 +1,17 @@
 <?php
-namespace Aws;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws;
 
-use Aws\Api\Service;
-use Aws\Exception\AwsException;
-use GuzzleHttp\Promise\RejectedPromise;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
+use R2Offload\Vendor\Aws\Api\Service;
+use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\GuzzleHttp\Promise\RejectedPromise;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 

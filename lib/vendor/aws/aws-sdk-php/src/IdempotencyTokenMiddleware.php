@@ -1,8 +1,13 @@
 <?php
-namespace Aws;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws;
 
-use Aws\Api\Service;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Aws\Api\Service;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 /**
  * @internal Middleware that auto fills parameters with `idempotencyToken` trait
@@ -32,7 +37,7 @@ class IdempotencyTokenMiddleware
      * You may also supply a custom bytes generator as an optional second
      * parameter.
      *
-     * @param \Aws\Api\Service $service
+     * @param \R2Offload\Vendor\Aws\Api\Service $service
      * @param callable|null $bytesGenerator
      *
      * @return callable

@@ -1,8 +1,13 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace GuzzleHttp\Handler;
+namespace R2Offload\Vendor\GuzzleHttp\Handler;
 
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 interface CurlFactoryInterface
 {

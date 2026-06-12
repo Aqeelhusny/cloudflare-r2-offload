@@ -1,15 +1,20 @@
 <?php
-namespace Aws\SageMakerRuntime;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\SageMakerRuntime;
 
-use Aws\AwsClient;
+use R2Offload\Vendor\Aws\AwsClient;
 
 /**
  * This client is used to interact with the **Amazon SageMaker Runtime** service.
- * @method \Aws\Result invokeEndpoint(array $args = [])
- * @method \GuzzleHttp\Promise\Promise invokeEndpointAsync(array $args = [])
- * @method \Aws\Result invokeEndpointAsync(array $args = [])
- * @method \GuzzleHttp\Promise\Promise invokeEndpointAsyncAsync(array $args = [])
- * @method \Aws\Result invokeEndpointWithResponseStream(array $args = [])
- * @method \GuzzleHttp\Promise\Promise invokeEndpointWithResponseStreamAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result invokeEndpoint(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise invokeEndpointAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result invokeEndpointAsync(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise invokeEndpointAsyncAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result invokeEndpointWithResponseStream(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise invokeEndpointWithResponseStreamAsync(array $args = [])
  */
 class SageMakerRuntimeClient extends AwsClient {}

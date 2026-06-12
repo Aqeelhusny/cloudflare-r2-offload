@@ -1,8 +1,13 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\S3\S3Transfer\Models;
+namespace R2Offload\Vendor\Aws\S3\S3Transfer\Models;
 
-use Aws\Result;
+use R2Offload\Vendor\Aws\Result;
 
 final class UploadResult extends Result
 {

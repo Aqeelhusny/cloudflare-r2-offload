@@ -1,10 +1,15 @@
 <?php
-namespace Aws\DynamoDb;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\DynamoDb;
 
-use Aws\CommandInterface;
-use Aws\CommandPool;
-use Aws\Exception\AwsException;
-use Aws\ResultInterface;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\CommandPool;
+use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\ResultInterface;
 
 /**
  * The WriteRequestBatch is an object that is capable of efficiently sending

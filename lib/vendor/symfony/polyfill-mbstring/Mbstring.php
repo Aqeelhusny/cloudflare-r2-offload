@@ -7,9 +7,11 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
-namespace Symfony\Polyfill\Mbstring;
+namespace R2Offload\Vendor\Symfony\Polyfill\Mbstring;
 
 /**
  * Partial mbstring implementation in PHP, iconv based, UTF-8 centric.

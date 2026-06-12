@@ -1,15 +1,20 @@
 <?php
-namespace Aws\SSMGuiConnect;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\SSMGuiConnect;
 
-use Aws\AwsClient;
+use R2Offload\Vendor\Aws\AwsClient;
 
 /**
  * This client is used to interact with the **AWS SSM-GUIConnect** service.
- * @method \Aws\Result deleteConnectionRecordingPreferences(array $args = [])
- * @method \GuzzleHttp\Promise\Promise deleteConnectionRecordingPreferencesAsync(array $args = [])
- * @method \Aws\Result getConnectionRecordingPreferences(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getConnectionRecordingPreferencesAsync(array $args = [])
- * @method \Aws\Result updateConnectionRecordingPreferences(array $args = [])
- * @method \GuzzleHttp\Promise\Promise updateConnectionRecordingPreferencesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result deleteConnectionRecordingPreferences(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteConnectionRecordingPreferencesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getConnectionRecordingPreferences(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getConnectionRecordingPreferencesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result updateConnectionRecordingPreferences(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateConnectionRecordingPreferencesAsync(array $args = [])
  */
 class SSMGuiConnectClient extends AwsClient {}

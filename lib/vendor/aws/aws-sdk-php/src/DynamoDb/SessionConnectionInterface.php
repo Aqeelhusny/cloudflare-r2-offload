@@ -1,5 +1,10 @@
 <?php
-namespace Aws\DynamoDb;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\DynamoDb;
 
 /**
  * The session connection provides the underlying logic for interacting with

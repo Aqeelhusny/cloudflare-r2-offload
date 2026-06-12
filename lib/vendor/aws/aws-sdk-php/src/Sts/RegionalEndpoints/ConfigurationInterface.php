@@ -1,5 +1,10 @@
 <?php
-namespace Aws\Sts\RegionalEndpoints;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Sts\RegionalEndpoints;
 
 /**
  * Provides access to STS regional endpoints configuration options: endpoints_type

@@ -1,11 +1,16 @@
 <?php
-namespace Aws\EventBridge;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\EventBridge;
 
-use Aws\CommandInterface;
-use Aws\Endpoint\EndpointProvider;
-use Aws\Endpoint\PartitionEndpointProvider;
+use R2Offload\Vendor\Aws\CommandInterface;
+use R2Offload\Vendor\Aws\Endpoint\EndpointProvider;
+use R2Offload\Vendor\Aws\Endpoint\PartitionEndpointProvider;
 use InvalidArgumentException;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 /**
  * Reroutes an eventbridge request to the proper endpoint

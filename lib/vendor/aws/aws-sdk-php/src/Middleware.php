@@ -1,19 +1,24 @@
 <?php
-namespace Aws;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws;
 
-use Aws\Api\Service;
-use Aws\Api\Validator;
-use Aws\Credentials\CredentialsInterface;
-use Aws\EndpointV2\EndpointProviderV2;
-use Aws\Exception\AwsException;
-use Aws\Signature\DpopSignature;
-use Aws\Signature\S3ExpressSignature;
-use Aws\Token\TokenAuthorization;
-use Aws\Token\TokenInterface;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\LazyOpenStream;
-use Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Aws\Api\Service;
+use R2Offload\Vendor\Aws\Api\Validator;
+use R2Offload\Vendor\Aws\Credentials\CredentialsInterface;
+use R2Offload\Vendor\Aws\EndpointV2\EndpointProviderV2;
+use R2Offload\Vendor\Aws\Exception\AwsException;
+use R2Offload\Vendor\Aws\Signature\DpopSignature;
+use R2Offload\Vendor\Aws\Signature\S3ExpressSignature;
+use R2Offload\Vendor\Aws\Token\TokenAuthorization;
+use R2Offload\Vendor\Aws\Token\TokenInterface;
+use R2Offload\Vendor\GuzzleHttp\Promise;
+use R2Offload\Vendor\GuzzleHttp\Psr7;
+use R2Offload\Vendor\GuzzleHttp\Psr7\LazyOpenStream;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
 final class Middleware
 {

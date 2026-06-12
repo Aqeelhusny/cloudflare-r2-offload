@@ -1,19 +1,24 @@
 <?php
-namespace Aws\Pricing;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\Pricing;
 
-use Aws\AwsClient;
+use R2Offload\Vendor\Aws\AwsClient;
 
 /**
  * This client is used to interact with the **AWS Price List Service** service.
- * @method \Aws\Result describeServices(array $args = [])
- * @method \GuzzleHttp\Promise\Promise describeServicesAsync(array $args = [])
- * @method \Aws\Result getAttributeValues(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getAttributeValuesAsync(array $args = [])
- * @method \Aws\Result getPriceListFileUrl(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getPriceListFileUrlAsync(array $args = [])
- * @method \Aws\Result getProducts(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getProductsAsync(array $args = [])
- * @method \Aws\Result listPriceLists(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listPriceListsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result describeServices(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeServicesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getAttributeValues(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getAttributeValuesAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getPriceListFileUrl(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getPriceListFileUrlAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result getProducts(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getProductsAsync(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Result listPriceLists(array $args = [])
+ * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listPriceListsAsync(array $args = [])
  */
 class PricingClient extends AwsClient {}

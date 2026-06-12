@@ -1,5 +1,10 @@
 <?php
-namespace Aws\EndpointDiscovery;
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\Aws\EndpointDiscovery;
 
 class Configuration implements ConfigurationInterface
 {

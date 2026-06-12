@@ -1,5 +1,10 @@
 <?php
-namespace JmesPath;
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
+namespace R2Offload\Vendor\JmesPath;
 
 /**
  * Provides CLI debugging information for the AST and Compiler runtimes.

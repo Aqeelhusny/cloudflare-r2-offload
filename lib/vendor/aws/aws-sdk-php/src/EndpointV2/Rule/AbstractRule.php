@@ -1,8 +1,13 @@
 <?php
+/**
+ * @license Apache-2.0
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace Aws\EndpointV2\Rule;
+namespace R2Offload\Vendor\Aws\EndpointV2\Rule;
 
-use Aws\EndpointV2\Ruleset\RulesetStandardLibrary;
+use R2Offload\Vendor\Aws\EndpointV2\Ruleset\RulesetStandardLibrary;
 
 /**
  *  A rule within a rule set. All rules contain a conditions property,

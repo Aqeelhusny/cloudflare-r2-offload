@@ -1,13 +1,18 @@
 <?php
+/**
+ * @license MIT
+ *
+ * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ */
 
-namespace GuzzleHttp;
+namespace R2Offload\Vendor\GuzzleHttp;
 
-use GuzzleHttp\Exception\BadResponseException;
-use GuzzleHttp\Exception\TooManyRedirectsException;
-use GuzzleHttp\Promise\PromiseInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\UriInterface;
+use R2Offload\Vendor\GuzzleHttp\Exception\BadResponseException;
+use R2Offload\Vendor\GuzzleHttp\Exception\TooManyRedirectsException;
+use R2Offload\Vendor\GuzzleHttp\Promise\PromiseInterface;
+use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
+use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
+use R2Offload\Vendor\Psr\Http\Message\UriInterface;
 
 /**
  * Request redirect middleware.

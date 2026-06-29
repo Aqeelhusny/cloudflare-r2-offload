@@ -272,7 +272,9 @@ class Settings {
         if ( $cipher === false ) {
             return '';
         }
-        return 'r2enc:' . base64_encode( $iv . $cipher );
+        $payload = $iv . $cipher;
+        $hmac    = hash_hmac( 'sha256', $payload, $key, true );
+        return 'r2enc:' . base64_encode( $hmac . $payload );
     }
 
     private function decrypt( string $ciphertext ): string {
@@ -280,7 +282,28 @@ class Settings {
             $ciphertext = substr( $ciphertext, 6 );
         }
         $data = base64_decode( $ciphertext, true );
-        if ( $data === false || strlen( $data ) < 17 ) {
+        if ( $data === false || strlen( $data ) < 49 ) { // 32 HMAC + 16 IV + 1 min cipher
+            // Backwards compat: old format without HMAC (IV + cipher, min 17 bytes).
+            if ( $data !== false && strlen( $data ) >= 17 ) {
+                return $this->decrypt_legacy( $data );
+            }
+            return '';
+        }
+        $key          = $this->get_encryption_key();
+        $stored_hmac  = substr( $data, 0, 32 );
+        $payload      = substr( $data, 32 );
+        $expected_hmac = hash_hmac( 'sha256', $payload, $key, true );
+        if ( ! hash_equals( $expected_hmac, $stored_hmac ) ) {
+            // Fallback: try legacy format (no HMAC) for data encrypted before upgrade.
+            return $this->decrypt_legacy( $data );
+        }
+        $iv    = substr( $payload, 0, 16 );
+        $plain = openssl_decrypt( substr( $payload, 16 ), 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv );
+        return $plain !== false ? $plain : '';
+    }
+
+    private function decrypt_legacy( string $data ): string {
+        if ( strlen( $data ) < 17 ) {
             return '';
         }
         $key   = $this->get_encryption_key();

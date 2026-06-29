@@ -1,13 +1,25 @@
 <?php
 /**
- * WordPress function stubs for unit testing.
+ * WordPress function stubs for isolated unit testing.
  */
 
 define( 'ABSPATH', __DIR__ . '/../' );
 
-$GLOBALS['__wp_postmeta']  = [];
-$GLOBALS['__wp_options']   = [];
-$GLOBALS['__wp_deleted']   = [];
+$GLOBALS['__wp_postmeta']       = [];
+$GLOBALS['__wp_options']        = [];
+$GLOBALS['__wp_deleted']        = [];
+$GLOBALS['__wp_hooks']          = [];
+$GLOBALS['__wp_transients']     = [];
+$GLOBALS['__wp_cron_scheduled'] = [];
+$GLOBALS['__wp_cron_cleared']   = [];
+$GLOBALS['__wp_next_scheduled'] = [];
+$GLOBALS['__wp_actions_fired']  = [];
+$GLOBALS['__wp_cron_spawned']   = 0;
+$GLOBALS['__wp_cache']          = [];
+$GLOBALS['__wp_settings_errors'] = [];
+$GLOBALS['__wp_is_admin']       = true;
+$GLOBALS['__wp_doing_ajax']     = false;
+$GLOBALS['__wp_doing_cron']     = false;
 
 function get_post_meta( int $post_id, string $key = '', bool $single = false ) {
     $store = $GLOBALS['__wp_postmeta'];
@@ -50,6 +62,10 @@ function trailingslashit( string $string ): string {
     return rtrim( $string, '/\\' ) . '/';
 }
 
+function untrailingslashit( string $string ): string {
+    return rtrim( $string, '/\\' );
+}
+
 function wp_json_encode( $data ): string {
     return json_encode( $data );
 }
@@ -69,15 +85,9 @@ function wp_mkdir_p( string $target ): bool {
 }
 
 function current_time( string $type, bool $gmt = false ) {
-    if ( $type === 'timestamp' ) {
-        return time();
-    }
-    if ( $type === 'c' ) {
-        return date( 'c' );
-    }
-    if ( $type === 'Y-m-d' ) {
-        return date( 'Y-m-d' );
-    }
+    if ( $type === 'timestamp' ) return time();
+    if ( $type === 'c' ) return date( 'c' );
+    if ( $type === 'Y-m-d' ) return date( 'Y-m-d' );
     return date( 'Y-m-d H:i:s' );
 }
 
@@ -110,7 +120,13 @@ function register_setting( ...$args ): void {}
 function add_settings_error( ...$args ): void {
     $GLOBALS['__wp_settings_errors'][] = $args;
 }
-function sanitize_text_field( $str ): string { return trim( (string) $str ); }
+
+function sanitize_text_field( $str ): string {
+    $str = (string) $str;
+    $str = preg_replace( '/<[^>]*>/', '', $str ); // Strip HTML tags.
+    $str = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $str ); // Strip control chars.
+    return trim( $str );
+}
 function sanitize_mime_type( $str ): string { return trim( (string) $str ); }
 function absint( $val ): int { return abs( (int) $val ); }
 function wp_salt( string $scheme = 'auth' ): string { return 'test-salt-key-1234567890abcdef'; }
@@ -191,38 +207,30 @@ function wp_doing_cron(): bool {
 }
 
 function load_plugin_textdomain( ...$args ): bool { return true; }
-
 function __( string $text, string $domain = 'default' ): string { return $text; }
+
+function attachment_url_to_postid( string $url ): int {
+    return $GLOBALS['__wp_url_to_id'][ $url ] ?? 0;
+}
 
 if ( ! defined( 'FS_CHMOD_FILE' ) ) {
     define( 'FS_CHMOD_FILE', 0644 );
 }
-
 if ( ! defined( 'R2_OFFLOAD_DB_VERSION' ) ) {
-    define( 'R2_OFFLOAD_DB_VERSION', '1.2.0' );
+    define( 'R2_OFFLOAD_DB_VERSION', '1.3.0' );
 }
-
 if ( ! defined( 'R2_OFFLOAD_BASENAME' ) ) {
     define( 'R2_OFFLOAD_BASENAME', 'cloudflare-r2-offload/cloudflare-r2-offload.php' );
 }
-
 if ( ! defined( 'OPENSSL_RAW_DATA' ) ) {
     define( 'OPENSSL_RAW_DATA', 1 );
 }
-
 if ( ! defined( 'DAY_IN_SECONDS' ) ) {
     define( 'DAY_IN_SECONDS', 86400 );
 }
-
 if ( ! defined( 'WP_DEBUG' ) ) {
     define( 'WP_DEBUG', false );
 }
-
-// ---------------------------------------------------------------------------
-// WP_Filesystem stubs — used by ErrorLogger for local log writes.
-// WP_Filesystem_Base is abstract in real WP; we provide a direct-file
-// implementation so the real ErrorLogger can run in test contexts.
-// ---------------------------------------------------------------------------
 
 if ( ! class_exists( 'WP_Filesystem_Base' ) ) {
     class WP_Filesystem_Base {
@@ -232,9 +240,7 @@ if ( ! class_exists( 'WP_Filesystem_Base' ) ) {
         public function get_contents( string $path )   { return file_exists( $path ) ? file_get_contents( $path ) : false; }
         public function put_contents( string $path, string $contents, $mode = false ): bool {
             $dir = dirname( $path );
-            if ( ! is_dir( $dir ) ) {
-                mkdir( $dir, 0755, true );
-            }
+            if ( ! is_dir( $dir ) ) { mkdir( $dir, 0755, true ); }
             return file_put_contents( $path, $contents ) !== false;
         }
         public function delete( string $path, bool $recursive = false ): bool {
@@ -244,14 +250,10 @@ if ( ! class_exists( 'WP_Filesystem_Base' ) ) {
             return rename( $source, $destination );
         }
         public function dirlist( string $path ): array {
-            if ( ! is_dir( $path ) ) {
-                return [];
-            }
+            if ( ! is_dir( $path ) ) return [];
             $list = [];
             foreach ( scandir( $path ) as $name ) {
-                if ( $name === '.' || $name === '..' ) {
-                    continue;
-                }
+                if ( $name === '.' || $name === '..' ) continue;
                 $list[ $name ] = [ 'name' => $name, 'type' => is_dir( $path . '/' . $name ) ? 'd' : 'f' ];
             }
             return $list;
@@ -272,9 +274,15 @@ if ( ! function_exists( 'WP_Filesystem' ) ) {
     }
 }
 
-// Pre-initialise filesystem so ErrorLogger::get_filesystem() skips the require_once.
 if ( ! isset( $GLOBALS['wp_filesystem'] ) ) {
     $GLOBALS['wp_filesystem'] = new WP_Filesystem_Base();
 }
 
-function current_time_timestamp(): int { return time(); }
+if ( ! class_exists( 'WP_REST_Response' ) ) {
+    class WP_REST_Response {
+        private array $data;
+        public function __construct( array $data = [] ) { $this->data = $data; }
+        public function get_data(): array { return $this->data; }
+        public function set_data( array $data ): void { $this->data = $data; }
+    }
+}

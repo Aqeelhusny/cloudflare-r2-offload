@@ -314,19 +314,17 @@ class R2Client {
             ] );
             return [ 'success' => true, 'message' => __( 'Connection successful.', 'cloudflare-r2-offload' ) ];
         } catch ( AwsException $e ) {
+            $this->logger->error( 'Connection test failed.', [
+                'code'    => $e->getAwsErrorCode(),
+                'message' => $e->getMessage(),
+            ] );
             return [
                 'success' => false,
                 'message' => sprintf(
                     /* translators: %s: AWS error code */
                     __( 'R2 error: %s', 'cloudflare-r2-offload' ),
-                    $e->getAwsErrorCode() ?: $e->getMessage()
+                    $e->getAwsErrorCode() ?: __( 'Connection failed — check credentials and bucket name.', 'cloudflare-r2-offload' )
                 ),
-                'debug' => [
-                    'account_id'    => $account_id,
-                    'access_key_id' => $key_id,
-                    'secret_set'    => $secret !== '',
-                    'bucket'        => $bucket,
-                ],
             ];
         }
     }

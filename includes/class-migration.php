@@ -140,7 +140,7 @@ class Migration {
             $plugin->batch_processor->process_batch();
         } catch ( \Throwable $e ) {
             $plugin->logger->error( 'Batch run fatal error.', [ 'error' => $e->getMessage() ] );
-            wp_send_json_error( [ 'message' => 'Batch processing error: ' . $e->getMessage() ] );
+            wp_send_json_error( [ 'message' => __( 'Batch processing encountered an error. Check the logs for details.', 'cloudflare-r2-offload' ) ] );
         }
 
         // Return current status after processing.

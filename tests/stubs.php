@@ -1,15 +1,16 @@
 <?php
 /**
  * Stub classes in the R2Offload namespace for unit testing.
- * These replace the real classes so we don't need AWS SDK or WP_Filesystem.
+ * These replace the real AWS SDK / WP_Filesystem dependencies.
  */
 namespace R2Offload;
 
 class R2Client {
-    public bool   $upload_returns   = true;
-    public bool   $download_returns = true;
-    public string $check_key_default = 'missing'; // returned when key not in $check_key_responses
-    public array  $check_key_responses = [];      // key => 'found'|'missing'|'error'
+    public bool   $upload_returns    = true;
+    public bool   $download_returns  = true;
+    public bool   $delete_returns    = true;
+    public string $check_key_default = 'missing';
+    public array  $check_key_responses = [];
     public array  $uploaded      = [];
     public array  $downloaded    = [];
     public array  $deleted_keys  = [];
@@ -39,8 +40,6 @@ class R2Client {
         return $this->download_returns;
     }
 
-    public bool $delete_returns = true;
-
     public function delete_files( array $keys ): bool {
         $this->deleted_keys = array_merge( $this->deleted_keys, $keys );
         return $this->delete_returns;
@@ -53,8 +52,8 @@ class R2Client {
 }
 
 class ErrorLogger {
-    public array $logs              = [];
-    public array $validate_terminal = [];
+    public array $logs               = [];
+    public array $validate_terminal  = [];
     public array $migration_terminal = [];
 
     public function __construct( ...$args ) {}
@@ -89,10 +88,10 @@ class ErrorLogger {
 }
 
 class Settings {
-    private bool $configured = true;
-    private bool $delete_local = false;
-    private string $path_prefix = 'wp-content/uploads';
-    private array $excluded_mimes = [];
+    private bool   $configured     = true;
+    private bool   $delete_local   = false;
+    private string $path_prefix    = 'wp-content/uploads';
+    private array  $excluded_mimes = [];
 
     public function __construct( ...$args ) {}
 

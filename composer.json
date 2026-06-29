@@ -46,10 +46,10 @@
             "@composer dump-autoload --optimize"
         ],
         "test": [
-            "php tests/test-attachment-sync.php",
-            "php tests/test-connection-migration.php",
-            "php tests/test-upload-delete-check.php",
+            "php tests/test-settings.php",
+            "php tests/test-security.php",
             "php tests/test-url-rewriter.php",
+            "php tests/test-attachment-sync.php",
             "php tests/test-batch-processor.php"
         ],
         "release": [

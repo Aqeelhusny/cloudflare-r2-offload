@@ -21,6 +21,9 @@ class UrlRewriter {
     /** Per-request cache: full URL → attachment ID (avoids repeated DB queries). */
     private array $url_id_cache = [];
 
+    /** Per-request cache: attachment_id → is_synced boolean. */
+    private array $sync_cache = [];
+
     public function __construct( Settings $settings ) {
         $this->settings = $settings;
     }
@@ -184,6 +187,7 @@ class UrlRewriter {
      */
     public function flush_url_cache(): void {
         $this->url_id_cache = [];
+        $this->sync_cache   = [];
     }
 
     // -------------------------------------------------------------------------
@@ -191,7 +195,10 @@ class UrlRewriter {
     // -------------------------------------------------------------------------
 
     private function is_synced( int $attachment_id ): bool {
-        return get_post_meta( $attachment_id, '_r2_offload_synced', true ) === '1';
+        if ( ! array_key_exists( $attachment_id, $this->sync_cache ) ) {
+            $this->sync_cache[ $attachment_id ] = get_post_meta( $attachment_id, '_r2_offload_synced', true ) === '1';
+        }
+        return $this->sync_cache[ $attachment_id ];
     }
 
     /**

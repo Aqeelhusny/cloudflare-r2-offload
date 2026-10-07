@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 declare(strict_types=1);
@@ -19,6 +19,8 @@ interface TaskQueueInterface
     /**
      * Adds a task to the queue that will be executed the next time run is
      * called.
+     *
+     * @param callable(): void $task
      */
     public function add(callable $task): void;
 

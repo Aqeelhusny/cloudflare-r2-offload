@@ -377,9 +377,20 @@ class AttachmentSync {
         // Collect local paths the same way collect_files() does.
         $all_files = $this->collect_files( $attached, $metadata, $base_dir, $this->settings->get_path_prefix() );
 
+        // Only delete files whose key is confirmed on R2. Attachments synced before
+        // original_image was collected (< 1.5.0) never uploaded it — without this
+        // gate a bulk delete-local would destroy the only copy. Legacy rows with no
+        // keys meta keep the old behaviour.
+        $keys_json   = get_post_meta( $attachment_id, '_r2_offload_keys', true );
+        $tracked_set = $keys_json ? array_flip( (array) json_decode( $keys_json, true ) ) : null;
+
         $any_local_exists = false;
 
-        foreach ( array_keys( $all_files ) as $local_path ) {
+        foreach ( $all_files as $local_path => $r2_key ) {
+            if ( $tracked_set !== null && ! isset( $tracked_set[ $r2_key ] ) ) {
+                $result['skipped']++;
+                continue;
+            }
             if ( ! file_exists( $local_path ) ) {
                 $result['skipped']++;
                 continue;
@@ -596,15 +607,23 @@ class AttachmentSync {
         $original_key             = $path_prefix ? "{$path_prefix}/{$attached}" : $attached;
         $files[ $original_local ] = $original_key;
 
+        // Sizes (and the pre-scale original) are stored relative to the
+        // attached file's directory (year/month subdir).
+        $subdir = trailingslashit( dirname( $attached ) );
+        // Normalise '.' subdir (root-level uploads, no year/month).
+        if ( $subdir === './' ) {
+            $subdir = '';
+        }
+
+        // Big images: _wp_attached_file is "photo-scaled.jpg" and the full-res
+        // upload lives in original_image (WP 5.3+, also produced client-side in 7.1).
+        if ( ! empty( $metadata['original_image'] ) && is_string( $metadata['original_image'] ) ) {
+            $relative                       = $subdir . $metadata['original_image'];
+            $files[ $base_dir . $relative ] = $path_prefix ? "{$path_prefix}/{$relative}" : $relative;
+        }
+
         // All generated sizes — this is where WooCommerce sizes appear.
         if ( ! empty( $metadata['sizes'] ) && is_array( $metadata['sizes'] ) ) {
-            // Sizes are stored relative to the original's directory (year/month subdir).
-            $subdir = trailingslashit( dirname( $attached ) );
-            // Normalise '.' subdir (root-level uploads, no year/month).
-            if ( $subdir === './' ) {
-                $subdir = '';
-            }
-
             foreach ( $metadata['sizes'] as $size_name => $size_data ) {
                 if ( empty( $size_data['file'] ) ) {
                     continue;

@@ -286,3 +286,13 @@ if ( ! class_exists( 'WP_REST_Response' ) ) {
         public function set_data( array $data ): void { $this->data = $data; }
     }
 }
+
+if ( ! function_exists( 'wp_validate_boolean' ) ) {
+    function wp_validate_boolean( $var ): bool {
+        return is_string( $var ) && 'false' === strtolower( $var ) ? false : (bool) $var;
+    }
+}
+
+if ( ! function_exists( 'wp_unslash' ) ) {
+    function wp_unslash( $value ) { return is_string( $value ) ? stripslashes( $value ) : $value; }
+}

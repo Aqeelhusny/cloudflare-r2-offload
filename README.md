@@ -34,7 +34,7 @@ WordPress plugin that offloads your entire media library to **Cloudflare R2** ob
 
 | Requirement | Minimum |
 |---|---|
-| PHP | 7.4 |
+| PHP | 8.1 |
 | WordPress | 5.8 |
 | WooCommerce *(optional)* | 6.0 |
 | Cloudflare account | Free tier or above |

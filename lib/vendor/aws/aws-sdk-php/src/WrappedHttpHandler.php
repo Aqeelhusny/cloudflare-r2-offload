@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws;
 
@@ -173,8 +173,14 @@ class WrappedHttpHandler
 
         $serviceError = "AWS HTTP error:\n";
 
-        if (!isset($err['response'])) {
-            $parts = ['response' => null];
+        // A 2xx status on a rejected promise means the transport failed
+        // mid-body after a success response was received; there is no error
+        // document to parse, and parsing one would buffer the entire partial
+        // body into memory.
+        if (!isset($err['response'])
+            || $err['response']->getStatusCode() < 300
+        ) {
+            $parts = ['response' => $err['response'] ?? null];
             $serviceError .= $err['exception']->getMessage();
         } else {
             try {

@@ -2,13 +2,14 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 declare(strict_types=1);
 
 namespace R2Offload\Vendor\GuzzleHttp\Psr7;
 
+use R2Offload\Vendor\GuzzleHttp\Psr7\Exception\TimeoutException;
 use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 
 /**
@@ -25,12 +26,15 @@ use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 final class InflateStream implements StreamInterface
 {
     use StreamDecoratorTrait;
+    use NonSerializableStreamTrait;
 
-    /** @var StreamInterface */
-    private $stream;
+    private StreamInterface $stream;
+
+    private ?StreamInterface $source;
 
     public function __construct(StreamInterface $stream)
     {
+        $this->source = $stream;
         $resource = StreamWrapper::getResource($stream);
         // Specify window=15+32, so zlib will use header detection to both gzip (with header) and zlib data
         // See https://www.zlib.net/manual.html#Advanced definition of inflateInit2
@@ -38,5 +42,65 @@ final class InflateStream implements StreamInterface
         // Default window size is 15.
         stream_filter_append($resource, 'zlib.inflate', STREAM_FILTER_READ, ['window' => 15 + 32]);
         $this->stream = $stream->isSeekable() ? new Stream($resource) : new NoSeekStream(new Stream($resource));
+    }
+
+    public function read(int $length): string
+    {
+        if ($length <= 0 || $this->source === null) {
+            return $this->stream->read($length);
+        }
+
+        try {
+            $data = $this->stream->read($length);
+        } catch (TimeoutException $e) {
+            throw $e;
+        } catch (\RuntimeException $e) {
+            if (StreamTimeout::isReadTimedOut($this->source)) {
+                throw new TimeoutException('Unable to read from stream: timed out', 0, $e);
+            }
+
+            throw $e;
+        }
+
+        if ($data === '' && StreamTimeout::isReadTimedOut($this->source)) {
+            throw new TimeoutException('Unable to read from stream: timed out');
+        }
+
+        return $data;
+    }
+
+    public function close(): void
+    {
+        $source = $this->source;
+        $this->source = null;
+
+        $exception = null;
+
+        try {
+            $this->stream->close();
+        } catch (\Throwable $e) {
+            $exception = $e;
+        }
+
+        if ($source !== null) {
+            try {
+                $source->close();
+            } catch (\Throwable $e) {
+                if ($exception === null) {
+                    $exception = $e;
+                }
+            }
+        }
+
+        if ($exception !== null) {
+            throw $exception;
+        }
+    }
+
+    public function detach()
+    {
+        $this->source = null;
+
+        return $this->stream->detach();
     }
 }

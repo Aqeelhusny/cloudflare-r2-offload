@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\JmesPath;
 
@@ -10,7 +10,7 @@ use R2Offload\Vendor\JmesPath\Lexer as T;
 
 /**
  * JMESPath Pratt parser
- * @link http://hall.org.ua/halls/wizzard/pdf/Vaughan.Pratt.TDOP.pdf
+ * @link https://dl.acm.org/doi/10.1145/512927.512931
  */
 class Parser
 {
@@ -27,6 +27,8 @@ class Parser
         T::T_EOF               => 0,
         T::T_QUOTED_IDENTIFIER => 0,
         T::T_IDENTIFIER        => 0,
+        T::T_UNKNOWN           => 0,
+        T::T_LITERAL           => 0,
         T::T_RBRACKET          => 0,
         T::T_RPAREN            => 0,
         T::T_COMMA             => 0,
@@ -277,6 +279,10 @@ class Parser
 
     private function led_lparen(array $left)
     {
+        if (!isset($left['type'], $left['value']) || $left['type'] !== 'field') {
+            throw $this->syntax('Invalid function name');
+        }
+
         $args = [];
         $this->next();
 
@@ -352,6 +358,10 @@ class Parser
         if ($this->token['type'] == T::T_LBRACKET) {
             $this->next();
             return $this->parseMultiSelectList();
+        } elseif ($this->token['type'] == T::T_LBRACE) {
+            // Like the multi-select list above, a multi-select hash ends any
+            // projection: tokens that follow apply to the projected list.
+            return $this->nud_lbrace();
         }
 
         return $this->expr($bp);

@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\Credentials;
 
@@ -87,7 +87,8 @@ class InstanceProfileProvider
      */
     public function __construct(array $config = [])
     {
-        $this->timeout = (float) getenv(self::ENV_TIMEOUT) ?: ($config['timeout'] ?? self::DEFAULT_TIMEOUT);
+        $timeout = (float) getenv(self::ENV_TIMEOUT) ?: ($config['timeout'] ?? self::DEFAULT_TIMEOUT);
+        $this->timeout = is_string($timeout) && is_numeric($timeout) ? (float) $timeout : $timeout;
         $this->profile = $config['profile'] ?? null;
         $this->retries = (int) getenv(self::ENV_RETRIES) ?: ($config['retries'] ?? self::DEFAULT_RETRIES);
         $this->client = $config['client'] ?? \R2Offload\Vendor\Aws\default_http_handler();
@@ -270,7 +271,7 @@ class InstanceProfileProvider
         $userAgent .= ' ' . \R2Offload\Vendor\Aws\default_user_agent();
         $request = $request->withHeader('User-Agent', $userAgent);
         foreach ($headers as $key => $value) {
-            $request = $request->withHeader($key, $value);
+            $request = $request->withHeader($key, (string) $value);
         }
 
         return $fn($request, ['timeout' => $this->timeout])

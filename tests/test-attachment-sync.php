@@ -448,6 +448,109 @@ for ( $i = 1; $i <= 25; $i++ ) {
 $t->assertEqual( 25, $still_flagged, '10.3 All 25 still flagged after bulk delete' );
 
 // =============================================================================
+// 11. Big images: original_image (pre-scale full-res file)
+// =============================================================================
+
+$t->section( '11. original_image handling' );
+
+function setup_scaled_attachment( int $id ): void {
+    foreach ( [ 'photo-scaled.jpg', 'photo.jpg', 'photo-150x150.jpg' ] as $f ) {
+        create_test_file( "2024/03/{$f}" );
+    }
+    $GLOBALS['__wp_postmeta'][ $id ]['_wp_attached_file']       = '2024/03/photo-scaled.jpg';
+    $GLOBALS['__wp_postmeta'][ $id ]['_wp_attachment_metadata'] = [
+        'original_image' => 'photo.jpg',
+        'sizes'          => [ 'thumbnail' => [ 'file' => 'photo-150x150.jpg' ] ],
+    ];
+}
+
+$orig_key = 'wp-content/uploads/2024/03/photo.jpg';
+
+// 11.1 Fresh sync uploads scaled + original + thumbnail.
+reset_state(); cleanup_upload_dir();
+setup_scaled_attachment( 1100 );
+$r2     = new R2Client();
+$result = make_sync( null, $r2 )->sync_attachment( 1100 );
+$t->assertEqual( 3, $result['uploaded'], '11.1 Scaled, original and thumbnail uploaded' );
+$t->assertEqual( true, in_array( $orig_key, json_decode( get_post_meta( 1100, '_r2_offload_keys', true ), true ), true ), '11.1b original_image key tracked' );
+
+// 11.2 Legacy sync (pre-1.5.0, original never uploaded): delete-local must keep the original.
+reset_state(); cleanup_upload_dir();
+setup_scaled_attachment( 1101 );
+update_post_meta( 1101, '_r2_offload_synced', '1' );
+update_post_meta( 1101, '_r2_offload_keys', json_encode( [
+    'wp-content/uploads/2024/03/photo-scaled.jpg',
+    'wp-content/uploads/2024/03/photo-150x150.jpg',
+] ) );
+$result = make_sync()->delete_local_for_attachment( 1101 );
+$base   = setup_upload_dir() . '/2024/03/';
+$t->assertEqual( 2, $result['deleted'], '11.2 Only tracked files deleted' );
+$t->assertEqual( true, file_exists( $base . 'photo.jpg' ), '11.2b Untracked original kept on disk' );
+$t->assertEqual( true, ! file_exists( $base . 'photo-scaled.jpg' ), '11.2c Tracked scaled file deleted' );
+
+// 11.3 Re-sync of a legacy attachment uploads the missing original.
+reset_state(); cleanup_upload_dir();
+setup_scaled_attachment( 1102 );
+update_post_meta( 1102, '_r2_offload_synced', '1' );
+update_post_meta( 1102, '_r2_offload_keys', json_encode( [
+    'wp-content/uploads/2024/03/photo-scaled.jpg',
+    'wp-content/uploads/2024/03/photo-150x150.jpg',
+] ) );
+$r2     = new R2Client();
+$result = make_sync( null, $r2 )->sync_attachment( 1102 );
+$t->assertEqual( 1, $result['uploaded'], '11.3 Only the original uploaded on re-sync' );
+$t->assertEqual( $orig_key, $r2->uploaded[0]['key'] ?? '', '11.3b Uploaded key is the original' );
+
+// =============================================================================
+// 12. UploadHandler: WP 7.1 client-side processing + WC gallery re-sync
+// =============================================================================
+
+require_once __DIR__ . '/../includes/class-upload-handler.php';
+
+$t->section( '12. UploadHandler' );
+
+class SpySync extends AttachmentSync {
+    public array $synced_ids = [];
+    public function sync_attachment( int $attachment_id ): array {
+        $this->synced_ids[] = $attachment_id;
+        return [ 'uploaded' => 1, 'failed' => 0, 'skipped' => 0, 'missing' => 0 ];
+    }
+}
+
+function make_handler( SpySync $spy ): \R2Offload\UploadHandler {
+    return new \R2Offload\UploadHandler( $spy, new Settings(), new ErrorLogger() );
+}
+
+// 12.1 Client-side upload ('create' with generate_sub_sizes=false) is deferred.
+reset_state();
+$spy                            = new SpySync( new R2Client(), new Settings(), new ErrorLogger() );
+$_REQUEST['generate_sub_sizes'] = 'false';
+make_handler( $spy )->on_generate_metadata( [], 1200, 'create' );
+$t->assertEqual( [], $spy->synced_ids, '12.1 create pass skipped while sizes pending client-side' );
+
+// 12.2 Finalize ('update') pass syncs.
+make_handler( $spy )->on_generate_metadata( [ 'sizes' => [] ], 1200, 'update' );
+$t->assertEqual( [ 1200 ], $spy->synced_ids, '12.2 update pass syncs' );
+
+// 12.3 Server-side upload (no flag) syncs on create as before.
+unset( $_REQUEST['generate_sub_sizes'] );
+$spy = new SpySync( new R2Client(), new Settings(), new ErrorLogger() );
+make_handler( $spy )->on_generate_metadata( [], 1201, 'create' );
+$t->assertEqual( [ 1201 ], $spy->synced_ids, '12.3 server-side create pass syncs' );
+
+// 12.4 WC REST save re-syncs featured + gallery images that are synced; skips unsynced.
+reset_state();
+update_post_meta( 1210, '_r2_offload_synced', '1' );
+update_post_meta( 1211, '_r2_offload_synced', '1' );
+$product = new class {
+    public function get_image_id() { return 1210; }
+    public function get_gallery_image_ids() { return [ '1211', 1212, 1210 ]; }
+};
+$spy = new SpySync( new R2Client(), new Settings(), new ErrorLogger() );
+make_handler( $spy )->on_wc_rest_product_save( $product );
+$t->assertEqual( [ 1210, 1211 ], $spy->synced_ids, '12.4 featured + synced gallery images re-synced, unsynced and duplicate skipped' );
+
+// =============================================================================
 // Cleanup
 // =============================================================================
 

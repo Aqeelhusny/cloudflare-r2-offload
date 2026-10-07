@@ -2,13 +2,14 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 declare(strict_types=1);
 
 namespace R2Offload\Vendor\GuzzleHttp\Psr7;
 
+use R2Offload\Vendor\GuzzleHttp\Psr7\Exception\TimeoutException;
 use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 
 /**
@@ -16,27 +17,17 @@ use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
  */
 class Stream implements StreamInterface
 {
-    /**
-     * @see https://www.php.net/manual/en/function.fopen.php
-     * @see https://www.php.net/manual/en/function.gzopen.php
-     */
-    private const READABLE_MODES = '/r|a\+|ab\+|w\+|wb\+|x\+|xb\+|c\+|cb\+/';
-    private const WRITABLE_MODES = '/a|w|r\+|rb\+|rw|x|c/';
+    use NonSerializableStreamTrait;
 
     /** @var resource */
     private $stream;
-    /** @var int|null */
-    private $size;
-    /** @var bool */
-    private $seekable;
-    /** @var bool */
-    private $readable;
-    /** @var bool */
-    private $writable;
-    /** @var string|null */
-    private $uri;
+    private ?int $size = null;
+    private bool $seekable;
+    private bool $readable;
+    private bool $writable;
+    private ?string $uri = null;
     /** @var mixed[] */
-    private $customMetadata;
+    private array $customMetadata;
 
     /**
      * This constructor accepts an associative array of options.
@@ -58,17 +49,15 @@ class Stream implements StreamInterface
             throw new \InvalidArgumentException('Stream must be a resource');
         }
 
-        if (isset($options['size'])) {
-            $this->size = $options['size'];
-        }
+        $this->size = Integers::assertOptionalNonNegativeSize($options['size'] ?? null, 'Stream size');
 
         $this->customMetadata = $options['metadata'] ?? [];
         $this->stream = $stream;
         $meta = stream_get_meta_data($this->stream);
         $this->seekable = $meta['seekable'];
-        $this->readable = (bool) preg_match(self::READABLE_MODES, $meta['mode']);
-        $this->writable = (bool) preg_match(self::WRITABLE_MODES, $meta['mode']);
-        $this->uri = $this->getMetadata('uri');
+        $this->readable = self::isReadableMode($meta['mode']);
+        $this->writable = self::isWritableMode($meta['mode']);
+        $this->uri = $meta['uri'] ?? null;
     }
 
     /**
@@ -81,20 +70,11 @@ class Stream implements StreamInterface
 
     public function __toString(): string
     {
-        try {
-            if ($this->isSeekable()) {
-                $this->seek(0);
-            }
-
-            return $this->getContents();
-        } catch (\Throwable $e) {
-            if (\PHP_VERSION_ID >= 70400) {
-                throw $e;
-            }
-            trigger_error(sprintf('%s::__toString exception: %s', self::class, (string) $e), E_USER_ERROR);
-
-            return '';
+        if ($this->isSeekable()) {
+            $this->seek(0);
         }
+
+        return $this->getContents();
     }
 
     public function getContents(): string
@@ -150,13 +130,13 @@ class Stream implements StreamInterface
         }
 
         $stats = fstat($this->stream);
-        if (is_array($stats) && isset($stats['size'])) {
-            $this->size = $stats['size'];
-
-            return $this->size;
+        if ($stats === false) {
+            return null;
         }
 
-        return null;
+        $this->size = Integers::assertEngineInteger($stats['size'], 'Stream size');
+
+        return $this->size;
     }
 
     public function isReadable(): bool
@@ -190,12 +170,16 @@ class Stream implements StreamInterface
         }
 
         $result = ftell($this->stream);
-
         if ($result === false) {
             throw new \RuntimeException('Unable to determine stream position');
         }
 
-        return $result;
+        $position = Integers::assertEngineInteger($result, 'Stream position');
+        if ($position === null) {
+            throw new \RuntimeException('Unable to determine stream position');
+        }
+
+        return $position;
     }
 
     public function rewind(): void
@@ -203,10 +187,8 @@ class Stream implements StreamInterface
         $this->seek(0);
     }
 
-    public function seek($offset, $whence = SEEK_SET): void
+    public function seek(int $offset, int $whence = SEEK_SET): void
     {
-        $whence = (int) $whence;
-
         if (!isset($this->stream)) {
             throw new \RuntimeException('Stream is detached');
         }
@@ -219,7 +201,7 @@ class Stream implements StreamInterface
         }
     }
 
-    public function read($length): string
+    public function read(int $length): string
     {
         if (!isset($this->stream)) {
             throw new \RuntimeException('Stream is detached');
@@ -237,18 +219,32 @@ class Stream implements StreamInterface
 
         try {
             $string = fread($this->stream, $length);
+        } catch (TimeoutException $e) {
+            throw $e;
         } catch (\Exception $e) {
+            if ($this->timedOut()) {
+                throw new TimeoutException('Unable to read from stream: timed out', 0, $e);
+            }
+
             throw new \RuntimeException('Unable to read from stream', 0, $e);
         }
 
         if (false === $string) {
+            if ($this->timedOut()) {
+                throw new TimeoutException('Unable to read from stream: timed out');
+            }
+
             throw new \RuntimeException('Unable to read from stream');
+        }
+
+        if ($string === '' && $this->timedOut()) {
+            throw new TimeoutException('Unable to read from stream: timed out');
         }
 
         return $string;
     }
 
-    public function write($string): int
+    public function write(string $string): int
     {
         if (!isset($this->stream)) {
             throw new \RuntimeException('Stream is detached');
@@ -257,12 +253,35 @@ class Stream implements StreamInterface
             throw new \RuntimeException('Cannot write to a non-writable stream');
         }
 
+        if ($string === '') {
+            return 0;
+        }
+
         // We can't know the size after writing anything
         $this->size = null;
-        $result = fwrite($this->stream, $string);
+
+        try {
+            $result = fwrite($this->stream, $string);
+        } catch (TimeoutException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            if ($this->writeTimedOut()) {
+                throw new TimeoutException('Unable to write to stream: timed out', 0, $e);
+            }
+
+            throw new \RuntimeException('Unable to write to stream', 0, $e);
+        }
 
         if ($result === false) {
+            if ($this->writeTimedOut()) {
+                throw new TimeoutException('Unable to write to stream: timed out');
+            }
+
             throw new \RuntimeException('Unable to write to stream');
+        }
+
+        if ($result === 0 && $this->writeTimedOut()) {
+            throw new TimeoutException('Unable to write to stream: timed out');
         }
 
         return $result;
@@ -271,11 +290,11 @@ class Stream implements StreamInterface
     /**
      * @return mixed
      */
-    public function getMetadata($key = null)
+    public function getMetadata(?string $key = null)
     {
         if (!isset($this->stream)) {
-            return $key ? null : [];
-        } elseif (!$key) {
+            return $key === null ? [] : null;
+        } elseif ($key === null) {
             return $this->customMetadata + stream_get_meta_data($this->stream);
         } elseif (isset($this->customMetadata[$key])) {
             return $this->customMetadata[$key];
@@ -284,5 +303,37 @@ class Stream implements StreamInterface
         $meta = stream_get_meta_data($this->stream);
 
         return $meta[$key] ?? null;
+    }
+
+    /**
+     * @see https://www.php.net/manual/en/function.fopen.php
+     * @see https://www.php.net/manual/en/function.gzopen.php
+     */
+    private static function isReadableMode(string $mode): bool
+    {
+        return str_starts_with($mode, 'r') || str_contains($mode, '+');
+    }
+
+    /**
+     * @see https://www.php.net/manual/en/function.fopen.php
+     * @see https://www.php.net/manual/en/function.gzopen.php
+     */
+    private static function isWritableMode(string $mode): bool
+    {
+        return str_starts_with($mode, 'a')
+            || str_starts_with($mode, 'w')
+            || str_starts_with($mode, 'x')
+            || str_starts_with($mode, 'c')
+            || str_contains($mode, '+');
+    }
+
+    private function timedOut(): bool
+    {
+        return StreamTimeout::isResourceReadTimedOut($this->stream);
+    }
+
+    private function writeTimedOut(): bool
+    {
+        return StreamTimeout::isResourceWriteTimedOut($this->stream);
     }
 }

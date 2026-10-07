@@ -2,13 +2,13 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\Credentials;
 
 use R2Offload\Vendor\Aws\Arn\Arn;
 use R2Offload\Vendor\Aws\Exception\CredentialsException;
-use R2Offload\Vendor\GuzzleHttp\Exception\ConnectException;
+use R2Offload\Vendor\Aws\Handler\HttpHandlerError;
 use R2Offload\Vendor\GuzzleHttp\Exception\GuzzleException;
 use R2Offload\Vendor\GuzzleHttp\Psr7\Request;
 use R2Offload\Vendor\GuzzleHttp\Promise;
@@ -56,9 +56,8 @@ class EcsCredentialProvider
      */
     public function __construct(array $config = [])
     {
-        $this->timeout = (float) isset($config['timeout'])
-            ? $config['timeout']
-            : (getenv(self::ENV_TIMEOUT) ?: self::DEFAULT_ENV_TIMEOUT);
+        $timeout = $config['timeout'] ?? (getenv(self::ENV_TIMEOUT) ?: self::DEFAULT_ENV_TIMEOUT);
+        $this->timeout = is_string($timeout) && is_numeric($timeout) ? (float) $timeout : $timeout;
         $this->retries = (int) isset($config['retries'])
             ? $config['retries']
             : ((int) getenv(self::ENV_RETRIES) ?: self::DEFAULT_ENV_RETRIES);
@@ -110,13 +109,14 @@ class EcsCredentialProvider
                             CredentialSources::ECS
                         );
                     })->otherwise(function ($reason) {
-                        $reason = is_array($reason) ? $reason['exception'] : $reason;
+                        $connectionError = is_array($reason) && !empty($reason['connection_error']);
+                        $exception = is_array($reason) ? ($reason['exception'] ?? null) : $reason;
+                        $isRetryable = $connectionError || ($exception instanceof \Throwable && HttpHandlerError::isConnectionError($exception));
 
-                        $isRetryable = $reason instanceof ConnectException;
                         if ($isRetryable && ($this->attempts < $this->retries)) {
                             sleep((int)pow(1.2, $this->attempts));
                         } else {
-                            $msg = $reason->getMessage();
+                            $msg = $exception instanceof \Throwable ? $exception->getMessage() : \R2Offload\Vendor\Aws\describe_type($reason);
                             throw new CredentialsException(
                                 sprintf('Error retrieving credentials from container metadata after attempt %d/%d (%s)', $this->attempts, $this->retries, $msg)
                             );

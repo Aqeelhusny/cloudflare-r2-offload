@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 declare(strict_types=1);
@@ -18,12 +18,11 @@ use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 final class DroppingStream implements StreamInterface
 {
     use StreamDecoratorTrait;
+    use NonSerializableStreamTrait;
 
-    /** @var int */
-    private $maxLength;
+    private int $maxLength;
 
-    /** @var StreamInterface */
-    private $stream;
+    private StreamInterface $stream;
 
     /**
      * @param StreamInterface $stream    Underlying stream to decorate.
@@ -32,10 +31,10 @@ final class DroppingStream implements StreamInterface
     public function __construct(StreamInterface $stream, int $maxLength)
     {
         $this->stream = $stream;
-        $this->maxLength = $maxLength;
+        $this->maxLength = Integers::assertNonNegativeInteger($maxLength, 'Maximum length');
     }
 
-    public function write($string): int
+    public function write(string $string): int
     {
         $diff = $this->maxLength - $this->stream->getSize();
 

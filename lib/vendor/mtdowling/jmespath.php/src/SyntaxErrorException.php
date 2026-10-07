@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\JmesPath;
 
@@ -21,6 +21,7 @@ class SyntaxErrorException extends \InvalidArgumentException
         array $token,
         $expression
     ) {
+        $token += ['pos' => mb_strlen($expression, 'UTF-8'), 'value' => null];
         $message = sprintf("Syntax error at character %d\n", max($token['pos'], 0))
             . $expression . "\n" . str_repeat(' ', max($token['pos'], 0)) . "^\n";
         $message .= !is_array($expectedTypesOrMessage)

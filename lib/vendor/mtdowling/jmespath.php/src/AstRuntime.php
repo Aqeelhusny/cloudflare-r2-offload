@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\JmesPath;
 
@@ -14,7 +14,6 @@ class AstRuntime
     private $parser;
     private $interpreter;
     private $cache = [];
-    private $cachedCount = 0;
 
     public function __construct(
         ?Parser $parser = null,
@@ -39,10 +38,9 @@ class AstRuntime
     public function __invoke($expression, $data)
     {
         if (!isset($this->cache[$expression])) {
-            // Clear the AST cache when it hits 1024 entries
-            if (++$this->cachedCount > 1024) {
+            // Clear the AST cache when it already holds 1024 entries.
+            if (count($this->cache) >= 1024) {
                 $this->cache = [];
-                $this->cachedCount = 0;
             }
             $this->cache[$expression] = $this->parser->parse($expression);
         }

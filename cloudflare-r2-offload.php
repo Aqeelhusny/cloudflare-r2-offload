@@ -3,31 +3,33 @@
  * Plugin Name: Cloudflare R2 Offload
  * Plugin URI:  https://github.com/aqeelhusny/cloudflare-r2-offload
  * Description: Offload your entire WordPress media library to Cloudflare R2 with custom CDN domain support, bulk migration, file manager, upload stats, and optimized multipart uploads.
- * Version:     1.4.0
+ * Version:     1.5.0
  * Author:      Aqeel Husny
  * Author URI:  https://github.com/aqeelhusny
  * License:     GPL-2.0+
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: cloudflare-r2-offload
  * Domain Path: /languages
- * Requires PHP: 7.4
+ * Requires PHP: 8.1
  * Requires at least: 5.8
+ * WC requires at least: 7.1
+ * WC tested up to: 11.1
  */
 
 defined( 'ABSPATH' ) || exit;
 
 // Minimum PHP version check.
-if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
+if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
     add_action( 'admin_notices', function () {
         echo '<div class="notice notice-error"><p>' .
-             esc_html__( 'Cloudflare R2 Offload requires PHP 7.4 or higher.', 'cloudflare-r2-offload' ) .
+             esc_html__( 'Cloudflare R2 Offload requires PHP 8.1 or higher.', 'cloudflare-r2-offload' ) .
              '</p></div>';
     } );
     return;
 }
 
 // Plugin constants.
-define( 'R2_OFFLOAD_VERSION',    '1.4.0' );
+define( 'R2_OFFLOAD_VERSION',    '1.5.0' );
 define( 'R2_OFFLOAD_PATH',       plugin_dir_path( __FILE__ ) );
 define( 'R2_OFFLOAD_URL',        plugin_dir_url( __FILE__ ) );
 define( 'R2_OFFLOAD_BASENAME',   plugin_basename( __FILE__ ) );

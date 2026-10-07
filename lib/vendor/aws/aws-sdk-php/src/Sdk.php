@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws;
 
@@ -21,8 +21,14 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionAccessAnalyzer(array $args = [])
  * @method \R2Offload\Vendor\Aws\Account\AccountClient createAccount(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionAccount(array $args = [])
+ * @method \R2Offload\Vendor\Aws\AccountAccess\AccountAccessClient createAccountAccess(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionAccountAccess(array $args = [])
  * @method \R2Offload\Vendor\Aws\Acm\AcmClient createAcm(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionAcm(array $args = [])
+ * @method \R2Offload\Vendor\Aws\AgentRegistry\AgentRegistryClient createAgentRegistry(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionAgentRegistry(array $args = [])
+ * @method \R2Offload\Vendor\Aws\AgentRegistryControl\AgentRegistryControlClient createAgentRegistryControl(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionAgentRegistryControl(array $args = [])
  * @method \R2Offload\Vendor\Aws\Amplify\AmplifyClient createAmplify(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionAmplify(array $args = [])
  * @method \R2Offload\Vendor\Aws\AmplifyBackend\AmplifyBackendClient createAmplifyBackend(array $args = [])
@@ -167,6 +173,8 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionCloudWatchEvents(array $args = [])
  * @method \R2Offload\Vendor\Aws\CloudWatchLogs\CloudWatchLogsClient createCloudWatchLogs(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionCloudWatchLogs(array $args = [])
+ * @method \R2Offload\Vendor\Aws\CloudWatchOmni\CloudWatchOmniClient createCloudWatchOmni(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionCloudWatchOmni(array $args = [])
  * @method \R2Offload\Vendor\Aws\CloudWatchRUM\CloudWatchRUMClient createCloudWatchRUM(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionCloudWatchRUM(array $args = [])
  * @method \R2Offload\Vendor\Aws\CodeArtifact\CodeArtifactClient createCodeArtifact(array $args = [])
@@ -313,10 +321,14 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionElementalInference(array $args = [])
  * @method \R2Offload\Vendor\Aws\Emr\EmrClient createEmr(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionEmr(array $args = [])
+ * @method \R2Offload\Vendor\Aws\EndUserMessaging\EndUserMessagingClient createEndUserMessaging(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionEndUserMessaging(array $args = [])
  * @method \R2Offload\Vendor\Aws\EntityResolution\EntityResolutionClient createEntityResolution(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionEntityResolution(array $args = [])
  * @method \R2Offload\Vendor\Aws\EventBridge\EventBridgeClient createEventBridge(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionEventBridge(array $args = [])
+ * @method \R2Offload\Vendor\Aws\EventBridgeV2\EventBridgeV2Client createEventBridgeV2(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionEventBridgeV2(array $args = [])
  * @method \R2Offload\Vendor\Aws\Evs\EvsClient createEvs(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionEvs(array $args = [])
  * @method \R2Offload\Vendor\Aws\FIS\FISClient createFIS(array $args = [])
@@ -367,6 +379,8 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionHealth(array $args = [])
  * @method \R2Offload\Vendor\Aws\HealthLake\HealthLakeClient createHealthLake(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionHealthLake(array $args = [])
+ * @method \R2Offload\Vendor\Aws\IAMToolbox\IAMToolboxClient createIAMToolbox(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionIAMToolbox(array $args = [])
  * @method \R2Offload\Vendor\Aws\IVS\IVSClient createIVS(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionIVS(array $args = [])
  * @method \R2Offload\Vendor\Aws\IVSRealTime\IVSRealTimeClient createIVSRealTime(array $args = [])
@@ -391,10 +405,6 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionInvoicing(array $args = [])
  * @method \R2Offload\Vendor\Aws\IoTDeviceAdvisor\IoTDeviceAdvisorClient createIoTDeviceAdvisor(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionIoTDeviceAdvisor(array $args = [])
- * @method \R2Offload\Vendor\Aws\IoTEvents\IoTEventsClient createIoTEvents(array $args = [])
- * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionIoTEvents(array $args = [])
- * @method \R2Offload\Vendor\Aws\IoTEventsData\IoTEventsDataClient createIoTEventsData(array $args = [])
- * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionIoTEventsData(array $args = [])
  * @method \R2Offload\Vendor\Aws\IoTFleetWise\IoTFleetWiseClient createIoTFleetWise(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionIoTFleetWise(array $args = [])
  * @method \R2Offload\Vendor\Aws\IoTJobsDataPlane\IoTJobsDataPlaneClient createIoTJobsDataPlane(array $args = [])
@@ -447,6 +457,12 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionLakeFormation(array $args = [])
  * @method \R2Offload\Vendor\Aws\Lambda\LambdaClient createLambda(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionLambda(array $args = [])
+ * @method \R2Offload\Vendor\Aws\LambdaCore\LambdaCoreClient createLambdaCore(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionLambdaCore(array $args = [])
+ * @method \R2Offload\Vendor\Aws\LambdaMicrovms\LambdaMicrovmsClient createLambdaMicrovms(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionLambdaMicrovms(array $args = [])
+ * @method \R2Offload\Vendor\Aws\LambdaWeb\LambdaWebClient createLambdaWeb(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionLambdaWeb(array $args = [])
  * @method \R2Offload\Vendor\Aws\LaunchWizard\LaunchWizardClient createLaunchWizard(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionLaunchWizard(array $args = [])
  * @method \R2Offload\Vendor\Aws\LexModelBuildingService\LexModelBuildingServiceClient createLexModelBuildingService(array $args = [])
@@ -555,6 +571,8 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionNetworkManager(array $args = [])
  * @method \R2Offload\Vendor\Aws\NetworkMonitor\NetworkMonitorClient createNetworkMonitor(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionNetworkMonitor(array $args = [])
+ * @method \R2Offload\Vendor\Aws\NetworkSecurityManager\NetworkSecurityManagerClient createNetworkSecurityManager(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionNetworkSecurityManager(array $args = [])
  * @method \R2Offload\Vendor\Aws\Notifications\NotificationsClient createNotifications(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionNotifications(array $args = [])
  * @method \R2Offload\Vendor\Aws\NotificationsContacts\NotificationsContactsClient createNotificationsContacts(array $args = [])
@@ -583,14 +601,14 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionPCS(array $args = [])
  * @method \R2Offload\Vendor\Aws\PI\PIClient createPI(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionPI(array $args = [])
- * @method \R2Offload\Vendor\Aws\Panorama\PanoramaClient createPanorama(array $args = [])
- * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionPanorama(array $args = [])
  * @method \R2Offload\Vendor\Aws\PartnerCentralAccount\PartnerCentralAccountClient createPartnerCentralAccount(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionPartnerCentralAccount(array $args = [])
  * @method \R2Offload\Vendor\Aws\PartnerCentralBenefits\PartnerCentralBenefitsClient createPartnerCentralBenefits(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionPartnerCentralBenefits(array $args = [])
  * @method \R2Offload\Vendor\Aws\PartnerCentralChannel\PartnerCentralChannelClient createPartnerCentralChannel(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionPartnerCentralChannel(array $args = [])
+ * @method \R2Offload\Vendor\Aws\PartnerCentralRevenueMeasurement\PartnerCentralRevenueMeasurementClient createPartnerCentralRevenueMeasurement(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionPartnerCentralRevenueMeasurement(array $args = [])
  * @method \R2Offload\Vendor\Aws\PartnerCentralSelling\PartnerCentralSellingClient createPartnerCentralSelling(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionPartnerCentralSelling(array $args = [])
  * @method \R2Offload\Vendor\Aws\PaymentCryptography\PaymentCryptographyClient createPaymentCryptography(array $args = [])
@@ -621,6 +639,8 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionPolly(array $args = [])
  * @method \R2Offload\Vendor\Aws\Pricing\PricingClient createPricing(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionPricing(array $args = [])
+ * @method \R2Offload\Vendor\Aws\PricingPlanManager\PricingPlanManagerClient createPricingPlanManager(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionPricingPlanManager(array $args = [])
  * @method \R2Offload\Vendor\Aws\PrometheusService\PrometheusServiceClient createPrometheusService(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionPrometheusService(array $args = [])
  * @method \R2Offload\Vendor\Aws\Proton\ProtonClient createProton(array $args = [])
@@ -655,6 +675,8 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionRepostspace(array $args = [])
  * @method \R2Offload\Vendor\Aws\ResilienceHub\ResilienceHubClient createResilienceHub(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionResilienceHub(array $args = [])
+ * @method \R2Offload\Vendor\Aws\Resiliencehubv2\Resiliencehubv2Client createResiliencehubv2(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionResiliencehubv2(array $args = [])
  * @method \R2Offload\Vendor\Aws\ResourceExplorer2\ResourceExplorer2Client createResourceExplorer2(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionResourceExplorer2(array $args = [])
  * @method \R2Offload\Vendor\Aws\ResourceGroups\ResourceGroupsClient createResourceGroups(array $args = [])
@@ -717,6 +739,8 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionSageMakerRuntime(array $args = [])
  * @method \R2Offload\Vendor\Aws\SagemakerEdgeManager\SagemakerEdgeManagerClient createSagemakerEdgeManager(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionSagemakerEdgeManager(array $args = [])
+ * @method \R2Offload\Vendor\Aws\SagemakerJobRuntime\SagemakerJobRuntimeClient createSagemakerJobRuntime(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionSagemakerJobRuntime(array $args = [])
  * @method \R2Offload\Vendor\Aws\SavingsPlans\SavingsPlansClient createSavingsPlans(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionSavingsPlans(array $args = [])
  * @method \R2Offload\Vendor\Aws\Scheduler\SchedulerClient createScheduler(array $args = [])
@@ -753,8 +777,6 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionSignerData(array $args = [])
  * @method \R2Offload\Vendor\Aws\Signin\SigninClient createSignin(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionSignin(array $args = [])
- * @method \R2Offload\Vendor\Aws\SimSpaceWeaver\SimSpaceWeaverClient createSimSpaceWeaver(array $args = [])
- * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionSimSpaceWeaver(array $args = [])
  * @method \R2Offload\Vendor\Aws\SimpleDBv2\SimpleDBv2Client createSimpleDBv2(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionSimpleDBv2(array $args = [])
  * @method \R2Offload\Vendor\Aws\SnowBall\SnowBallClient createSnowBall(array $args = [])
@@ -781,6 +803,8 @@ namespace R2Offload\Vendor\Aws;
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionSupport(array $args = [])
  * @method \R2Offload\Vendor\Aws\SupportApp\SupportAppClient createSupportApp(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionSupportApp(array $args = [])
+ * @method \R2Offload\Vendor\Aws\SupportAuthZ\SupportAuthZClient createSupportAuthZ(array $args = [])
+ * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionSupportAuthZ(array $args = [])
  * @method \R2Offload\Vendor\Aws\Sustainability\SustainabilityClient createSustainability(array $args = [])
  * @method \R2Offload\Vendor\Aws\MultiRegionClient createMultiRegionSustainability(array $args = [])
  * @method \R2Offload\Vendor\Aws\Swf\SwfClient createSwf(array $args = [])
@@ -858,7 +882,7 @@ namespace R2Offload\Vendor\Aws;
  */
 class Sdk
 {
-    const VERSION = '3.379.9';
+    const VERSION = '3.399.2';
 
     /** @var array Arguments for creating clients */
     private $args;
@@ -877,7 +901,10 @@ class Sdk
         $this->args = $args;
 
         if (!isset($args['handler']) && !isset($args['http_handler'])) {
-            $this->args['http_handler'] = default_http_handler();
+            $this->args['http_handler'] = default_http_handler(
+                $args['transport_sharing'] ?? null
+            );
+            unset($this->args['transport_sharing']);
         }
     }
 

@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 declare(strict_types=1);
@@ -11,6 +11,10 @@ namespace R2Offload\Vendor\GuzzleHttp\Psr7;
 
 final class MimeType
 {
+    private function __construct()
+    {
+    }
+
     private const MIME_TYPES = [
         '123' => 'application/vnd.lotus-1-2-3',
         '1km' => 'application/vnd.1000minds.decision-model+xml',
@@ -1289,7 +1293,7 @@ final class MimeType
     ];
 
     /**
-     * Determines the mimetype of a file by looking at its extension.
+     * Determines the MIME type of a file by looking at its extension.
      *
      * @see https://raw.githubusercontent.com/jshttp/mime-db/master/db.json
      */
@@ -1299,12 +1303,12 @@ final class MimeType
     }
 
     /**
-     * Maps a file extensions to a mimetype.
+     * Maps a file extension to a MIME type.
      *
      * @see https://raw.githubusercontent.com/jshttp/mime-db/master/db.json
      */
     public static function fromExtension(string $extension): ?string
     {
-        return self::MIME_TYPES[strtolower($extension)] ?? null;
+        return self::MIME_TYPES[Utils::asciiToLower($extension)] ?? null;
     }
 }

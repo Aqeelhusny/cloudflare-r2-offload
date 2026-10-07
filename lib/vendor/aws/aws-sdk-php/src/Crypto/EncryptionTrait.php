@@ -2,13 +2,14 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\Crypto;
 
 use R2Offload\Vendor\GuzzleHttp\Psr7;
 use R2Offload\Vendor\GuzzleHttp\Psr7\AppendStream;
 use R2Offload\Vendor\GuzzleHttp\Psr7\Stream;
+use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 
 trait EncryptionTrait
 {
@@ -54,7 +55,7 @@ trait EncryptionTrait
      * @internal
      */
     public function encrypt(
-        Stream $plaintext,
+        StreamInterface $plaintext,
         array $cipherOptions,
         MaterialsProvider $provider,
         MetadataEnvelope $envelope
@@ -147,7 +148,7 @@ trait EncryptionTrait
      * @internal
      */
     protected function getEncryptingStream(
-        Stream $plaintext,
+        StreamInterface $plaintext,
         $cek,
         &$cipherOptions
     ) {

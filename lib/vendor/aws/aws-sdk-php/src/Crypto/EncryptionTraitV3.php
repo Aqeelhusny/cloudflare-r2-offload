@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\Crypto;
 
@@ -48,7 +48,7 @@ trait EncryptionTraitV3
      * Builds an AesStreamInterface and populates encryption metadata into the
      * supplied envelope.
      *
-     * @param Stream $plaintext Plain-text data to be encrypted using the
+     * @param StreamInterface $plaintext Plain-text data to be encrypted using the
      *                          materials, algorithm, and data provided.
      * @param AlgorithmSuite $algorithmSuite Algorithm Suite for use in encryption
      * @param array $options    Options for use in encryption, including cipher
@@ -66,7 +66,7 @@ trait EncryptionTraitV3
      * @internal
      */
     public function encrypt(
-        Stream $plaintext,
+        StreamInterface $plaintext,
         AlgorithmSuite $algorithmSuite,
         array $options,
         MaterialsProviderV3 $provider,
@@ -148,7 +148,7 @@ trait EncryptionTraitV3
     }
 
     private function encryptNonCommitingStream(
-        Stream $plaintext,
+        StreamInterface $plaintext,
         array &$cipherOptions,
         array $keys,
         array $materialsDescription,
@@ -207,7 +207,7 @@ trait EncryptionTraitV3
     }
 
     private function encryptCommitingStream(
-        Stream $plaintext,
+        StreamInterface $plaintext,
         AlgorithmSuite $algorithmSuite,
         array &$options,
         array $keys,
@@ -281,7 +281,7 @@ trait EncryptionTraitV3
      * Generates a stream that wraps the plaintext with the proper cipher and
      * uses the content encryption key (CEK) to encrypt the data when read.
      *
-     * @param Stream $plaintext Plain-text data to be encrypted using the
+     * @param StreamInterface $plaintext Plain-text data to be encrypted using the
      *                          materials, algorithm, and data provided.
      * @param string $cek A content encryption key for use by the stream for
      *                    encrypting the plaintext data.
@@ -293,7 +293,7 @@ trait EncryptionTraitV3
      * @internal
      */
     protected function getNonCommittingEncryptingStream(
-        Stream $plaintext,
+        StreamInterface $plaintext,
         string $cek,
         array &$cipherOptions
     ): AppendStream
@@ -351,7 +351,7 @@ trait EncryptionTraitV3
      * Generates a stream that wraps the plaintext with the proper cipher and
      * uses the content encryption key (CEK) to encrypt the data when read.
      *
-     * @param Stream $plaintext Plain-text data to be encrypted using the
+     * @param StreamInterface $plaintext Plain-text data to be encrypted using the
      *                          materials, algorithm, and data provided.
      * @param string $cek A content encryption key for use by the stream for
      *                    encrypting the plaintext data.
@@ -366,7 +366,7 @@ trait EncryptionTraitV3
      * @internal
      */
     protected function getCommitingEncryptionStream(
-        Stream $plaintext,
+        StreamInterface $plaintext,
         string $dek,
         array &$cipherOptions,
         string $messageId,
@@ -438,13 +438,13 @@ trait EncryptionTraitV3
 
                 if (!empty($cipherOptions['Aad'])) {
                     trigger_error("'Aad' has been supplied for content encryption"
-                        . " with " . $encryptClass->getAesName() . ". The"
+                        . " with " . $encryptClass::getStaticAesName() . ". The"
                         . " PHP SDK encryption client can decrypt an object"
                         . " encrypted in this way, but other AWS SDKs may not be"
                         . " able to.", E_USER_NOTICE);
                 }
                 $cipherOptions['Aad'] = isset($cipherOptions['Aad'])
-                    ? $cipherOptions['Aad'] + $algorithmSuiteIdAsBytes
+                    ? $cipherOptions['Aad'] . $algorithmSuiteIdAsBytes
                     : $algorithmSuiteIdAsBytes;
                 //= ../specification/s3-encryption/key-derivation.md#hkdf-operation
                 //= type=implication

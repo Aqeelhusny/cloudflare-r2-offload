@@ -4,9 +4,8 @@
 // @see https://github.com/BrianHenryIE/strauss/
 
 require_once __DIR__ . '/aws/aws-sdk-php/src/functions.php';
-require_once __DIR__ . '/guzzlehttp/guzzle/src/functions_include.php';
-require_once __DIR__ . '/ralouphie/getallheaders/src/getallheaders.php';
-require_once __DIR__ . '/symfony/deprecation-contracts/function.php';
+require_once __DIR__ . '/symfony/polyfill-php80/bootstrap.php';
+require_once __DIR__ . '/symfony/polyfill-php82/bootstrap.php';
 require_once __DIR__ . '/mtdowling/jmespath.php/src/JmesPath.php';
 require_once __DIR__ . '/symfony/polyfill-mbstring/bootstrap.php';
 require_once __DIR__ . '/symfony/polyfill-ctype/bootstrap.php';

@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\EndpointV2;
 
@@ -131,7 +131,7 @@ class EndpointV2Middleware
      */
     private function resolveArgs(array $commandArgs, Operation $operation): array
     {
-        $rulesetParams = $this->endpointProvider->getRuleset()->getParameters();
+        $rulesetParams = $this->endpointProvider->getActiveParameters();
 
         if (isset($rulesetParams[self::ACCOUNT_ID_PARAM])
             && isset($rulesetParams[self::ACCOUNT_ID_ENDPOINT_MODE_PARAM])) {

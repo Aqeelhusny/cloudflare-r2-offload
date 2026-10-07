@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws;
 
@@ -12,7 +12,6 @@ use R2Offload\Vendor\Aws\Retry\QuotaManager;
 use R2Offload\Vendor\Aws\Retry\RateLimiter;
 use R2Offload\Vendor\Aws\Retry\RetryHelperTrait;
 use Exception;
-use R2Offload\Vendor\GuzzleHttp\Exception\RequestException;
 use R2Offload\Vendor\GuzzleHttp\Promise;
 use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 
@@ -85,16 +84,11 @@ class RetryMiddlewareV2
         $maxAttempts = 3,
         $options = []
     ) {
-        $retryCurlErrors = [];
-        if (extension_loaded('curl')) {
-            $retryCurlErrors[CURLE_RECV_ERROR] = true;
-        }
-
         return function(
             $attempts,
             CommandInterface $command,
             $result
-        ) use ($options, $quotaManager, $retryCurlErrors, $maxAttempts) {
+        ) use ($options, $quotaManager, $maxAttempts) {
 
             // Release retry tokens back to quota on a successful result
             $quotaManager->releaseToQuota($result);
@@ -107,7 +101,6 @@ class RetryMiddlewareV2
 
             $isRetryable = self::isRetryable(
                 $result,
-                $retryCurlErrors,
                 $options
             );
 
@@ -180,7 +173,7 @@ class RetryMiddlewareV2
         $monitoringEvents = [];
         $requestStats = [];
 
-        $req = $this->addRetryHeader($req, 0, 0);
+        $req = $this->addRetryHeader($req, 0, $this->resolveMaxAttempts($cmd));
 
         $callback = function ($value) use (
             $handler,
@@ -208,6 +201,7 @@ class RetryMiddlewareV2
             }
             if ($value instanceof Exception || $value instanceof \Throwable) {
                 if (!$decider($attempts, $cmd, $value)) {
+                    $callback = null;
                     return Promise\Create::rejectionFor(
                         $this->bindStatsToReturn($value, $requestStats)
                     );
@@ -215,6 +209,7 @@ class RetryMiddlewareV2
             } elseif ($value instanceof ResultInterface
                 && !$decider($attempts, $cmd, $value)
             ) {
+                $callback = null;
                 return $this->bindStatsToReturn($value, $requestStats);
             }
 
@@ -225,7 +220,11 @@ class RetryMiddlewareV2
             }
 
             // Update retry header with retry count and delayBy
-            $req = $this->addRetryHeader($req, $attempts - 1, $delayBy);
+            $req = $this->addRetryHeader(
+                $req,
+                $attempts - 1,
+                $this->resolveMaxAttempts($cmd)
+            );
 
             // Get token from rate limiter, which will sleep if necessary
             if ($this->mode === 'adaptive') {
@@ -264,7 +263,6 @@ class RetryMiddlewareV2
 
     private static function isRetryable(
         $result,
-        $retryCurlErrors,
         $options = []
     ) {
         $errorCodes = self::$standardThrottlingErrors + self::$standardTransientErrors;
@@ -289,14 +287,6 @@ class RetryMiddlewareV2
         ) {
             foreach($options['status_codes'] as $code) {
                 $statusCodes[$code] = true;
-            }
-        }
-
-        if (!empty($options['curl_errors'])
-            && is_array($options['curl_errors'])
-        ) {
-            foreach($options['curl_errors'] as $code) {
-                $retryCurlErrors[$code] = true;
             }
         }
 
@@ -329,24 +319,6 @@ class RetryMiddlewareV2
         $status = $result->getStatusCode();
         if (!is_null($status) && isset($statusCodes[$status])) {
             return true;
-        }
-
-        if (count($retryCurlErrors)
-            && ($previous = $result->getPrevious())
-            && $previous instanceof RequestException
-        ) {
-            if (method_exists($previous, 'getHandlerContext')) {
-                $context = $previous->getHandlerContext();
-                return !empty($context['errno'])
-                    && isset($retryCurlErrors[$context['errno']]);
-            }
-
-            $message = $previous->getMessage();
-            foreach (array_keys($retryCurlErrors) as $curlError) {
-                if (strpos($message, 'cURL error ' . $curlError . ':') === 0) {
-                    return true;
-                }
-            }
         }
 
         // Check error shape for the retryable trait
@@ -388,5 +360,12 @@ class RetryMiddlewareV2
         }
 
         return false;
+    }
+
+    private function resolveMaxAttempts(CommandInterface $cmd)
+    {
+        return $cmd['@retries'] !== null
+            ? $cmd['@retries'] + 1
+            : $this->maxAttempts;
     }
 }

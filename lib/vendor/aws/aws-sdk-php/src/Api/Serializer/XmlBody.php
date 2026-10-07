@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\Api\Serializer;
 
@@ -210,7 +210,9 @@ class XmlBody
         $timestampFormat = !empty($shape['timestampFormat'])
             ? $shape['timestampFormat']
             : 'iso8601';
-        $xml->writeRaw(TimestampShape::format($value, $timestampFormat));
+        $xml->writeRaw(
+            TimestampShape::formatAsString($value, $timestampFormat)
+        );
         $xml->endElement();
     }
 

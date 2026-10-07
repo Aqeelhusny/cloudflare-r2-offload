@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\CloudFront;
 
@@ -17,16 +17,25 @@ class CookieSigner
     ];
 
     /**
-     * @param $keyPairId  string ID of the key pair
-     * @param $privateKey string Path to the private key used for signing
+     * @param string     $keyPairId  ID of the key pair.
+     * @param string     $privateKey Path to the private key used for signing,
+     *                               or a PEM-encoded key string.
+     * @param int|string $algorithm  Signing hash algorithm. Accepts either an
+     *                               OpenSSL constant (OPENSSL_ALGO_SHA1,
+     *                               OPENSSL_ALGO_SHA256) or the canonical name
+     *                               string ("SHA1", "SHA256"). Defaults to SHA1.
      *
-     * @throws \RuntimeException if the openssl extension is missing
-     * @throws \InvalidArgumentException if the private key cannot be found.
+     * @throws \RuntimeException if the openssl extension is missing.
+     * @throws \InvalidArgumentException if the private key cannot be found,
+     *                                   the key type is not supported by
+     *                                   CloudFront (RSA or ECDSA P-256), or
+     *                                   the requested algorithm is not supported.
      */
-    public function __construct($keyPairId, $privateKey)
+    public function __construct($keyPairId, $privateKey, $algorithm = Signer::DEFAULT_ALGORITHM)
     {
-        $this->signer = new Signer($keyPairId, $privateKey);
+        $this->signer = new Signer($keyPairId, $privateKey, '', $algorithm);
     }
+
 
     /**
      * Create a signed Amazon CloudFront Cookie.

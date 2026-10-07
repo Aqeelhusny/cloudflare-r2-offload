@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 declare(strict_types=1);
@@ -22,8 +22,11 @@ namespace R2Offload\Vendor\GuzzleHttp\Promise;
  */
 class TaskQueue implements TaskQueueInterface
 {
-    private $enableShutdown = true;
-    private $queue = [];
+    use NonSerializableTrait;
+
+    private bool $enableShutdown = true;
+    /** @var list<callable(): void> */
+    private array $queue = [];
 
     public function __construct(bool $withShutdown = true)
     {
@@ -45,6 +48,9 @@ class TaskQueue implements TaskQueueInterface
         return !$this->queue;
     }
 
+    /**
+     * @param callable(): void $task
+     */
     public function add(callable $task): void
     {
         $this->queue[] = $task;
@@ -53,7 +59,7 @@ class TaskQueue implements TaskQueueInterface
     public function run(): void
     {
         while ($task = array_shift($this->queue)) {
-            /** @var callable $task */
+            /** @var callable(): void $task */
             $task();
         }
     }

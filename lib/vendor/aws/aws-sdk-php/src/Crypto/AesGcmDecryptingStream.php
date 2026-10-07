@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\Crypto;
 
@@ -84,6 +84,11 @@ class AesGcmDecryptingStream implements AesStreamInterface
 
     public function createStream()
     {
+        if (strlen($this->tag) !== 16) {
+            throw new CryptoException(
+                'Unsupported GCM tag length; only 128-bit tags are supported.'
+            );
+        }
 
         $result = \openssl_decrypt(
             (string)$this->cipherText,

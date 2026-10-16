@@ -105,8 +105,13 @@
     function addChip() {
         var v = $.trim($input.val()).toLowerCase();
         if (!v) return;
-        if (!/^[a-z0-9.+-]+\/[a-z0-9.+*-]+$/.test(v)) { $input.attr('aria-invalid', 'true'); return; }
+        if (!/^[a-z0-9.+-]+\/[a-z0-9.+*-]+$/.test(v)) {
+            $input.attr({ 'aria-invalid': 'true', 'aria-describedby': 'r2ui-chip-error' });
+            $('#r2ui-chip-error').text(t.mimeInvalid).prop('hidden', false);
+            return;
+        }
         $input.removeAttr('aria-invalid').val('');
+        $('#r2ui-chip-error').prop('hidden', true);
         if ($.inArray(v, mimes()) === -1) { $mime.val(mimes().concat(v).join('\n')); renderChips(); markDirty(); }
     }
 
@@ -115,7 +120,9 @@
         else if (e.key === 'Backspace' && !this.value) {
             var list = mimes(); list.pop(); $mime.val(list.join('\n')); renderChips(); markDirty();
         }
-    }).on('blur', addChip);
+    }).on('blur', addChip).on('input', function () {
+        if (!this.value) { $input.removeAttr('aria-invalid'); $('#r2ui-chip-error').prop('hidden', true); }
+    });
     renderChips();
 
     // ---------------------------------------------------------------- unsaved changes
@@ -139,7 +146,17 @@
 
     $form.on('input change', 'input, select, textarea', markDirty);
     $('#r2ui-discard').on('click', function () { dirty = false; location.reload(); });
-    $form.on('submit', function () { dirty = false; $('#r2ui-save').prop('disabled', true).text(t.saving); });
+    $form.on('submit', function (e) {
+        addChip();   // a typed-but-unconfirmed type is saved, not silently dropped
+        if ($input.attr('aria-invalid') === 'true') {
+            e.preventDefault();
+            showTab('advanced');
+            $input.trigger('focus');
+            return;
+        }
+        dirty = false;
+        $('#r2ui-save').prop('disabled', true).text(t.saving);
+    });
     $(window).on('beforeunload', function () { if (dirty) return t.unsaved; });
 
     // ---------------------------------------------------------------- connection test (saved credentials)

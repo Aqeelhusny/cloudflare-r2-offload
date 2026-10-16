@@ -187,6 +187,11 @@
             }
             $(job.btn).prop('disabled', name === 'desync');
             $('#r2m-validate-cancel').prop('hidden', true);
+            if (!knownTotal) {
+                // Page load: kept 'failed' rows are history from an earlier run, not a job that just ended.
+                if (d.failed) jobStatus(name, t.lastRunFailed.replace('%s', fmt(d.failed)), 'info');
+                return;
+            }
             jobStatus(name, d.failed ? t.jobDoneFailed.replace('%s', fmt(d.failed)) : t.jobDone, d.failed ? 'warning' : 'success');
             refresh();
         });

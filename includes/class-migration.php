@@ -66,7 +66,7 @@ class Migration {
         }
     }
 
-    private const READ_ONLY_ACTIONS = [
+    private const UNTHROTTLED_ACTIONS = [
         'r2_offload_migration_status',
         'r2_offload_restore_status',
         'r2_offload_local_delete_status',
@@ -77,6 +77,9 @@ class Migration {
         'r2_offload_live_logs_start',
         'r2_offload_live_logs_poll',
         'r2_offload_live_logs_stop',
+        // Called back-to-back by the Migration page's "go faster" loop; claim_batch()
+        // already makes overlapping runs safe, so the per-action throttle must not apply.
+        'r2_offload_run_batch_now',
     ];
 
     public function handle_ajax(): void {
@@ -96,7 +99,7 @@ class Migration {
         // Throttle mutating endpoints: one call per action per 3 seconds.
         // Use 200 status so jQuery's .done() fires and the error message is shown,
         // not .fail() which swallows the response body and shows "Request failed."
-        if ( ! in_array( $action, self::READ_ONLY_ACTIONS, true ) ) {
+        if ( ! in_array( $action, self::UNTHROTTLED_ACTIONS, true ) ) {
             $throttle_key = 'r2_throttle_' . md5( $action . get_current_user_id() );
             if ( get_transient( $throttle_key ) ) {
                 wp_send_json_error( [ 'message' => __( 'Please wait a few seconds before trying again.', 'cloudflare-r2-offload' ) ] );
@@ -973,14 +976,17 @@ class Migration {
     // =========================================================================
 
     private function ajax_live_logs_start(): void {
-        $this->logger->live_start();
+        if ( ! $this->logger->live_start() ) {
+            wp_send_json_error( [ 'message' => __( 'Live logs could not start: the uploads folder is not writable.', 'cloudflare-r2-offload' ) ] );
+        }
         $this->logger->info( __( 'Live logs started.', 'cloudflare-r2-offload' ) );
         wp_send_json_success( $this->logger->live_poll( 0 ) );
     }
 
     private function ajax_live_logs_poll(): void {
         $offset = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
-        wp_send_json_success( $this->logger->live_poll( $offset ) );
+        $gen    = isset( $_POST['gen'] ) ? absint( $_POST['gen'] ) : 0;
+        wp_send_json_success( $this->logger->live_poll( $offset, $gen ) );
     }
 
     private function ajax_live_logs_stop(): void {

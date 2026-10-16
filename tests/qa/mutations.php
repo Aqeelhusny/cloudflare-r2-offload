@@ -56,6 +56,8 @@ return [
       '-', 'Upload-mode radio not mapped onto background_offload (B12 checks the form; B13 tests the server save with explicit values)', [ 'B12' ] ],
     [ 'M25', 'includes/class-error-logger.php', "        if ( ! \$this->is_live() ) {\n            return; // Nobody is watching", "        if ( false ) {\n            return; // Nobody is watching",
       'O', 'Logs written even when nobody is watching (kept on disk)', [ 'O2' ] ],
-    [ 'M26', 'includes/class-error-logger.php', 'foreach ( [ $this->buffer, $this->heartbeat ] as $f ) {', 'foreach ( [] as $f ) {',
+    [ 'M26', 'includes/class-error-logger.php', 'foreach ( [ $this->heartbeat, $this->buffer ] as $f ) {', 'foreach ( [] as $f ) {',
       'O', 'Switching Live logs off deletes nothing', [ 'O4' ] ],
+    [ 'M27', 'includes/class-migration.php', "        'r2_offload_run_batch_now',\n    ];", "    ];",
+      'H', 'Fast-offload loop throttled (run_batch_now back under the 3 s limit)', [ 'H6' ] ],
 ];

@@ -42,9 +42,9 @@ class StatsPage {
         <div class="wrap r2ui r2ui--stats">
             <div class="r2ui-head">
                 <h1><?php esc_html_e( 'Stats', 'cloudflare-r2-offload' ); ?></h1>
-                <div class="r2ui-seg" role="radiogroup" aria-label="<?php esc_attr_e( 'Time range', 'cloudflare-r2-offload' ); ?>">
-                    <button type="button" role="radio" class="r2ui-seg-btn" data-range="7" aria-checked="false"><?php esc_html_e( '7 days', 'cloudflare-r2-offload' ); ?></button>
-                    <button type="button" role="radio" class="r2ui-seg-btn" data-range="30" aria-checked="true"><?php esc_html_e( '30 days', 'cloudflare-r2-offload' ); ?></button>
+                <div class="r2ui-seg" role="group" aria-label="<?php esc_attr_e( 'Time range', 'cloudflare-r2-offload' ); ?>">
+                    <button type="button" class="r2ui-seg-btn" data-range="7" aria-pressed="false"><?php esc_html_e( '7 days', 'cloudflare-r2-offload' ); ?></button>
+                    <button type="button" class="r2ui-seg-btn" data-range="30" aria-pressed="true"><?php esc_html_e( '30 days', 'cloudflare-r2-offload' ); ?></button>
                 </div>
             </div>
 
@@ -111,10 +111,10 @@ class StatsPage {
             <div class="r2ui-live-body" data-live-body hidden>
                 <div class="r2ui-box-head">
                     <span class="r2ui-live-status" data-live-status aria-live="polite"></span>
-                    <div class="r2ui-pills" role="tablist" aria-label="<?php esc_attr_e( 'Filter logs', 'cloudflare-r2-offload' ); ?>">
-                        <button type="button" role="tab" class="r2ui-pill" data-filter="all" aria-selected="true"><?php esc_html_e( 'All', 'cloudflare-r2-offload' ); ?></button>
-                        <button type="button" role="tab" class="r2ui-pill" data-filter="error" aria-selected="false"><?php esc_html_e( 'Errors', 'cloudflare-r2-offload' ); ?></button>
-                        <button type="button" role="tab" class="r2ui-pill" data-filter="warning" aria-selected="false"><?php esc_html_e( 'Warnings', 'cloudflare-r2-offload' ); ?></button>
+                    <div class="r2ui-pills" role="group" aria-label="<?php esc_attr_e( 'Filter logs', 'cloudflare-r2-offload' ); ?>">
+                        <button type="button" class="r2ui-pill" data-filter="all" aria-pressed="true"><?php esc_html_e( 'All', 'cloudflare-r2-offload' ); ?></button>
+                        <button type="button" class="r2ui-pill" data-filter="error" aria-pressed="false"><?php esc_html_e( 'Errors', 'cloudflare-r2-offload' ); ?></button>
+                        <button type="button" class="r2ui-pill" data-filter="warning" aria-pressed="false"><?php esc_html_e( 'Warnings', 'cloudflare-r2-offload' ); ?></button>
                     </div>
                 </div>
                 <ul class="r2ui-log" data-live-list></ul>

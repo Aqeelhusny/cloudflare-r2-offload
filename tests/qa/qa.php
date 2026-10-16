@@ -365,6 +365,12 @@ $s = h( 'state', $rid );
 $left = (int) wp( 'db query --skip-column-names', "SELECT COUNT(*) FROM wp_r2_offload_migration_queue WHERE attachment_id={$rid} AND status='failed'" );
 ok( $s['synced'] === '1' && all_on_r2( $s ) && $left === 0, 'H5 wp r2 retry resets the failed row and actually uploads it', [ $o, brief( $s ) ] );
 
+// Review finding: the Migration page's "go faster" loop calls run_batch_now back to back.
+// The per-action 3 s throttle must not apply to it (claim_batch() already makes overlap safe).
+$b1 = http( 'POST', '/wp-admin/admin-ajax.php', [ 'cookie' => 'admin', 'form' => [ 'action' => 'r2_offload_run_batch_now', 'nonce' => $NONCE ] ] );
+$b2 = http( 'POST', '/wp-admin/admin-ajax.php', [ 'cookie' => 'admin', 'form' => [ 'action' => 'r2_offload_run_batch_now', 'nonce' => $NONCE ] ] );
+ok( ( $b1['json']['success'] ?? false ) && ( $b2['json']['success'] ?? false ), 'H6 back-to-back "run batch now" calls (fast-offload loop) are not throttled', [ $b1['json'] ?? $b1['body'], $b2['json'] ?? $b2['body'] ] );
+
 }
 if ( want( 'I' ) ) {
 // =====================================================================

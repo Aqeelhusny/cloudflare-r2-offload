@@ -156,7 +156,6 @@ switch ( $cmd ) {
             $wpdb->insert( $t, [ 'attachment_id' => 900000 + $i, 'status' => 'pending', 'retry_count' => 0, 'created_at' => $now, 'updated_at' => $now ] );
         }
         $m = new ReflectionMethod( R2Offload\BatchProcessor::class, 'claim_batch' );
-        $m->setAccessible( true );
         $w1 = new R2Offload\BatchProcessor( $p->sync, $p->settings, $p->logger );
         $w2 = new R2Offload\BatchProcessor( $p->sync, $p->settings, $p->logger );
         $a  = array_map( fn( $r ) => (int) $r->attachment_id, $m->invoke( $w1, $t, null, 10 ) );

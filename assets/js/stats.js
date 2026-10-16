@@ -23,7 +23,7 @@
         $('[data-kpi="bytes"]').text(bytes(sum(rows, 'bytes')));
         $('[data-kpi="failures"]').text(sum(rows, 'failures').toLocaleString());
         $('[data-kpi-range]').text(t.lastNDays.replace('%s', range));
-        $('.r2ui-seg-btn').each(function () { this.setAttribute('aria-checked', String(+this.getAttribute('data-range') === range)); });
+        $('.r2ui-seg-btn').each(function () { this.setAttribute('aria-pressed', String(+this.getAttribute('data-range') === range)); });
 
         var empty = !sum(rows, 'uploads') && !sum(rows, 'failures');
         $('#r2s-empty').prop('hidden', !empty);

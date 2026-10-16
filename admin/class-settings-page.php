@@ -243,6 +243,7 @@ class SettingsPage {
                         <div class="r2ui-chips" id="r2ui-chips">
                             <input type="text" id="r2ui-chip-input" aria-labelledby="r2ui-mime-label" placeholder="<?php esc_attr_e( 'Add type, e.g. image/gif — press Enter', 'cloudflare-r2-offload' ); ?>" spellcheck="false">
                         </div>
+                        <span class="r2ui-help r2ui-help--danger" id="r2ui-chip-error" role="alert" hidden></span>
                         <textarea name="r2_offload_excluded_mime_types" id="r2ui-mime" hidden><?php echo esc_textarea( implode( "\n", $excluded ) ); ?></textarea>
                     </div>
                     <div class="r2ui-row">

@@ -248,11 +248,19 @@ class Admin {
                 /* translators: %s: number of failed items */
                 'jobDoneFailed'         => __( 'Done — %s item(s) failed. See Activity for details.', 'cloudflare-r2-offload' ),
                 'confirmRestore'        => __( 'Download these files from R2 back to this server?', 'cloudflare-r2-offload' ),
+                /* translators: %s: number of failed items */
+                'lastRunFailed'         => __( 'Last run: %s item(s) failed. Run it again to retry them.', 'cloudflare-r2-offload' ),
+                'mimeInvalid'           => __( 'That is not a valid MIME type (example: image/gif). Fix or clear it before saving.', 'cloudflare-r2-offload' ),
                 'checking'              => __( 'Checking…', 'cloudflare-r2-offload' ),
                 'diagItem'              => __( 'Item', 'cloudflare-r2-offload' ),
                 'diagPrefix'            => __( 'Looking in bucket under:', 'cloudflare-r2-offload' ),
                 // Live logs (never stored).
                 'liveStarting'          => __( 'Starting…', 'cloudflare-r2-offload' ),
+                'liveEnded'             => __( 'Live logs stopped — the session ended (switched off elsewhere or idle too long). Turn on again to resume.', 'cloudflare-r2-offload' ),
+                'level_error'           => __( 'Error', 'cloudflare-r2-offload' ),
+                'level_warning'         => __( 'Warning', 'cloudflare-r2-offload' ),
+                'level_info'            => __( 'Info', 'cloudflare-r2-offload' ),
+                'level_debug'           => __( 'Debug', 'cloudflare-r2-offload' ),
                 'liveWaiting'           => __( 'Waiting for activity… upload media or run an offload to see it here.', 'cloudflare-r2-offload' ),
                 /* translators: %s: number of entries */
                 'liveCount'             => __( 'Live · %s entries · cleared when you turn this off', 'cloudflare-r2-offload' ),

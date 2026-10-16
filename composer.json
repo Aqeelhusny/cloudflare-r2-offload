@@ -50,7 +50,8 @@
             "php tests/test-security.php",
             "php tests/test-url-rewriter.php",
             "php tests/test-attachment-sync.php",
-            "php tests/test-batch-processor.php"
+            "php tests/test-batch-processor.php",
+            "php tests/test-logger.php"
         ],
         "release": [
             "Composer\\Config::disableProcessTimeout",

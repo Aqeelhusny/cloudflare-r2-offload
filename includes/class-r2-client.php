@@ -141,6 +141,10 @@ class R2Client {
      * Download an R2 object and write it to a local path.
      * Uses streaming (SaveAs) so large files do not exhaust PHP memory.
      *
+     * Streams into a temp file and moves it into place only on success: on a failed
+     * request SaveAs leaves R2's error body (e.g. <Error><Code>NoSuchKey…) in the target,
+     * which would then pass file_exists() checks as a corrupt "restored" image.
+     *
      * @param string $r2_key     Object key in R2.
      * @param string $local_path Absolute path to write the file to.
      * @return bool
@@ -150,12 +154,17 @@ class R2Client {
         if ( ! $client ) {
             return false;
         }
+        $tmp = $local_path . '.r2part';
         try {
             $client->getObject( [
                 'Bucket' => $this->settings->get_bucket(),
                 'Key'    => $r2_key,
-                'SaveAs' => $local_path,
+                'SaveAs' => $tmp,
             ] );
+            if ( ! @rename( $tmp, $local_path ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors -- failure is handled below.
+                $this->logger->error( 'R2 download: could not move file into place.', [ 'key' => $r2_key, 'local' => $local_path ] );
+                return false;
+            }
             return true;
         } catch ( AwsException $e ) {
             $this->logger->error( 'R2 getObject (download) failed.', [
@@ -165,6 +174,10 @@ class R2Client {
                 'message' => $e->getMessage(),
             ] );
             return false;
+        } finally {
+            if ( file_exists( $tmp ) ) {
+                wp_delete_file( $tmp );
+            }
         }
     }
 

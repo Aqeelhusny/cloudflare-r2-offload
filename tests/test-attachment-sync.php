@@ -122,6 +122,7 @@ $result = make_sync( null, $r2 )->sync_attachment( 102 );
 
 $t->assertEqual( 1, $result['failed'], '1.3 Upload failure counted' );
 $t->assertEqual( '', get_post_meta( 102, '_r2_offload_synced', true ), '1.3b NOT marked synced on failure' );
+$t->assertEqual( 1, ( get_option( 'r2_offload_stats_' . gmdate( 'Y-m-d' ) )['failures'] ?? 0 ), '1.3c failed sync counted in daily stats (Stats page "Failed syncs")' );
 
 // 1.4 Missing local file — counted as missing
 reset_state(); cleanup_upload_dir();

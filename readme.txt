@@ -76,7 +76,7 @@ Media URLs revert to your local server. Your files remain in R2 — nothing is d
 
 = What happens if I delete the plugin? =
 
-The uninstaller removes all plugin data from the database (options, post meta, queue tables, cron events, and local log files). Your R2 objects are NOT deleted — use Restore & Remove from R2 before deleting if you want to clean up R2.
+The uninstaller removes all plugin data from the database (options, post meta, queue tables and cron events). Logs are never stored, so there are none to remove. Your R2 objects are NOT deleted — use Restore & Remove from R2 before deleting if you want to clean up R2.
 
 = Can I restore files from R2 back to my server? =
 
@@ -121,7 +121,15 @@ If you reset WordPress security keys in wp-config.php, your stored R2 secret key
 * Fixed: WordPress 7.1 /finalize uploads only offloaded the scaled file — sync now uses the metadata being finalized, so every client-made size is uploaded.
 * Fixed: WordPress 7.1 companion files (animated GIF video + poster, HEIC source image) are offloaded, so their CDN URLs no longer 404.
 * Fixed: release zip used Windows "\" path separators (broke installs on Linux hosts); packaging now uses forward slashes and verifies every entry.
-* Tested with WordPress 7.1 and WooCommerce 11.1.
+* New: redesigned Settings screen — status cards, four tabs, one Save bar, clear upload modes, live URL preview; "Serve from R2" now requires a public domain (it previously did nothing without one).
+* New: redesigned Migration screen — storage overview, a single offload job with pause/resume and time estimate, one activity log, collapsible tools, and a typed-confirmation danger zone.
+* Fixed: a failed restore download saved R2's error response as the image file, and later restores then skipped it as "present". Downloads now go to a temp file that is moved into place only on success.
+* Fixed: restore, free-space, claim and disconnect jobs reported success even when items failed — failed rows are now kept and shown.
+* Fixed: Media Library "Restore from R2" / "Delete local file" row links and status badges did nothing on the Media screen (script and styles were not loaded there).
+* New: redesigned Stats screen — KPI cards and daily chart with a 7 / 30-day range.
+* Changed: logs are no longer stored anywhere. A "Live logs" switch (Stats and Migration screens) streams activity while it is on; switching it off deletes everything shown, and the session expires on its own if the page is closed. Log files kept by earlier versions are deleted on upgrade.
+* Fixed: the Stats "Failures" count was always 0 — failed syncs are now counted.
+* Tested with WordPress 7.1.3 and WooCommerce 11.2.1.
 
 = 1.3.1 =
 * New: Restore & Remove from R2 — fully disconnect from R2 by restoring all files to the server, verifying downloads, then deleting from R2 and clearing all sync metadata.

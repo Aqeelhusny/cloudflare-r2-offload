@@ -39,8 +39,6 @@ class FileManagerPage {
         $objects = $result['objects'] ?? [];
         $next    = $result['next_token'] ?? '';
 
-        // Recent log entries (local).
-        $log_entries = $this->logger->get_recent_entries( 20 );
         ?>
         <div class="wrap r2-offload-wrap">
             <h1><?php esc_html_e( 'R2 Offload — File Manager', 'cloudflare-r2-offload' ); ?></h1>
@@ -273,41 +271,6 @@ class FileManagerPage {
             </div>
             <?php endif; ?>
 
-            <!-- Logs section -->
-            <div class="r2-logs-section">
-                <h2>
-                    <?php esc_html_e( 'Activity Logs', 'cloudflare-r2-offload' ); ?>
-                    <button type="button" id="r2-btn-delete-logs" class="button button-small button-link-delete" style="margin-left:12px;">
-                        <?php esc_html_e( 'Delete Logs', 'cloudflare-r2-offload' ); ?>
-                    </button>
-                    <span id="r2-delete-logs-result" class="r2-inline-result"></span>
-                </h2>
-
-                <?php if ( empty( $log_entries ) ) : ?>
-                    <p><?php esc_html_e( 'No log entries found.', 'cloudflare-r2-offload' ); ?></p>
-                <?php else : ?>
-                <table class="wp-list-table widefat fixed striped">
-                    <thead>
-                        <tr>
-                            <th style="width:160px;"><?php esc_html_e( 'Time', 'cloudflare-r2-offload' ); ?></th>
-                            <th style="width:70px;"><?php esc_html_e( 'Level', 'cloudflare-r2-offload' ); ?></th>
-                            <th><?php esc_html_e( 'Message', 'cloudflare-r2-offload' ); ?></th>
-                            <th><?php esc_html_e( 'Context', 'cloudflare-r2-offload' ); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ( $log_entries as $entry ) : ?>
-                        <tr class="r2-log-<?php echo esc_attr( $entry['level'] ?? 'info' ); ?>">
-                            <td><?php echo esc_html( $entry['timestamp'] ?? '' ); ?></td>
-                            <td><span class="r2-log-level"><?php echo esc_html( strtoupper( $entry['level'] ?? '' ) ); ?></span></td>
-                            <td><?php echo esc_html( $entry['message'] ?? '' ); ?></td>
-                            <td><code><?php echo esc_html( wp_json_encode( $entry['context'] ?? [] ) ); ?></code></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-                <?php endif; ?>
-            </div>
         </div>
         <?php
     }

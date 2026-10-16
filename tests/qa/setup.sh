@@ -5,7 +5,7 @@
 #   bash tests/qa/setup.sh        # build / refresh the site at http://localhost:8088 (admin/admin)
 #   bash tests/qa/setup.sh down   # destroy containers + volumes
 #
-# Versions: WP_VERSION (default 7.1), WC_VERSION (default 11.1.1).
+# Versions: WP_VERSION (default 7.1.3), WC_VERSION (default 11.2.1).
 set -euo pipefail
 export MSYS_NO_PATHCONV=1                       # Git Bash: don't rewrite container paths
 DIR="$(cd "$(dirname "$0")" && (pwd -W 2>/dev/null || pwd))"   # pwd -W: Windows path for Docker under Git Bash
@@ -23,7 +23,7 @@ ZIP="$PLUGIN/dist/cloudflare-r2-offload-$VERSION.zip"
 "${DC[@]}" cp "$DIR/router.php" wp:/var/www/html/router.php
 
 if ! wp core is-installed 2>/dev/null; then
-  wp core download --version="${WP_VERSION:-7.1}" --force --quiet
+  wp core download --version="${WP_VERSION:-7.1.3}" --force --quiet
   "${DC[@]}" cp "$DIR/router.php" wp:/var/www/html/router.php
   wp config create --dbname=wp --dbuser=wp --dbpass=wp --dbhost=db --force --quiet --extra-php <<'PHP'
 define( 'WP_DEBUG', true );
@@ -36,7 +36,7 @@ PHP
   wp core install --url=http://localhost:8088 --title=R2QA --admin_user=admin --admin_password=admin \
      --admin_email=qa@example.com --skip-email --quiet
   wp rewrite structure '/%postname%/' --quiet
-  wp plugin install woocommerce --version="${WC_VERSION:-11.1.1}" --activate --quiet
+  wp plugin install woocommerce --version="${WC_VERSION:-11.2.1}" --activate --quiet
   # A fresh WooCommerce redirects the first admin page view to its setup wizard; skip it
   # like any configured store, otherwise the first visit to the plugin's settings is hijacked.
   wp transient delete _wc_activation_redirect --quiet || true

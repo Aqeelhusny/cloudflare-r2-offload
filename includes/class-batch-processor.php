@@ -629,16 +629,17 @@ class BatchProcessor {
             )
         );
 
+        // Keep 'failed' rows: they are the only record of what went wrong, and the status
+        // endpoints report them to the admin. The next start of this job clears them.
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM `{$table}` WHERE job_type = %s AND status = 'complete'",
+                $job_type
+            )
+        );
+
         if ( $remaining === 0 ) {
-            $wpdb->delete( $table, [ 'job_type' => $job_type ], [ '%s' ] );
             delete_option( $pause_option );
-        } else {
-            $wpdb->query(
-                $wpdb->prepare(
-                    "DELETE FROM `{$table}` WHERE job_type = %s AND status IN ('complete', 'failed')",
-                    $job_type
-                )
-            );
         }
     }
 }

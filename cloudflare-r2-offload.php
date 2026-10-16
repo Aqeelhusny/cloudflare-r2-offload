@@ -13,7 +13,7 @@
  * Requires PHP: 8.1
  * Requires at least: 5.8
  * WC requires at least: 7.1
- * WC tested up to: 11.1
+ * WC tested up to: 11.2
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -33,7 +33,7 @@ define( 'R2_OFFLOAD_VERSION',    '1.5.0' );
 define( 'R2_OFFLOAD_PATH',       plugin_dir_path( __FILE__ ) );
 define( 'R2_OFFLOAD_URL',        plugin_dir_url( __FILE__ ) );
 define( 'R2_OFFLOAD_BASENAME',   plugin_basename( __FILE__ ) );
-define( 'R2_OFFLOAD_DB_VERSION', '1.3.0' );
+define( 'R2_OFFLOAD_DB_VERSION', '1.4.0' );
 
 // Autoloader — scoped vendor (AWS SDK via Strauss) + plugin classes.
 $autoload = R2_OFFLOAD_PATH . 'vendor/autoload.php';

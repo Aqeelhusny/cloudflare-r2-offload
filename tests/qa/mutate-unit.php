@@ -33,6 +33,11 @@ $killed = 0; $total = 0;
 foreach ( $catalogue as [ $id, $file, $find, $repl, $desc ] ) {
     $orig = file_get_contents( $file );
     $p    = strpos( $orig, $find );
+    if ( $p === false ) {                       // git autocrlf may check files out with CRLF
+        $find = str_replace( "\n", "\r\n", $find );
+        $repl = str_replace( "\n", "\r\n", $repl );
+        $p    = strpos( $orig, $find );
+    }
     if ( $p === false ) { printf( "%s NOMATCH  %s\n", $id, $desc ); continue; }
     $total++;
     try {

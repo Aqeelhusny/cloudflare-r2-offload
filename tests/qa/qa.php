@@ -103,7 +103,7 @@ try {
 section( 'A. Install / activation / compatibility' );
 $q = h( 'queue' );
 ok( count( $q['tables'] ?? [] ) === 2, 'A1 activation created both queue tables', $q['tables'] ?? $q );
-ok( wp( 'option get r2_offload_db_version' ) === '1.3.0', 'A2 DB version recorded' );
+ok( wp( 'option get r2_offload_db_version' ) === '1.4.0', 'A2 DB version recorded (1.4.0: legacy log files purged)' );
 $hp = h( 'hpos' );
 ok( ! empty( $hp['hpos_compatible'] ), 'A3 WooCommerce reports plugin HPOS-compatible', $hp );
 ok( ! empty( $hp['blocks_compatible'] ), 'A4 WooCommerce reports plugin Cart/Checkout-Blocks-compatible', $hp );
@@ -151,6 +151,42 @@ $r  = ajax( 'r2_offload_save_credentials', [ '_nonce' => $sn, 'r2_offload_accoun
 ok( $sn !== '' && ( $r['json']['success'] ?? null ) === false && wp( 'option get r2_offload_bucket' ) === $env['R2_BUCKET'], 'B10b subscriber WITH their own valid nonce is stopped by the capability check', [ 'nonce' => $sn !== '', 'resp' => $r['json'] ?? $r['body'] ] );
 $r = http( 'GET', '/wp-admin/admin.php?page=r2-offload', [ 'cookie' => 'sub' ] );
 ok( $r['code'] === 403 || stripos( $r['body'], 'not allowed' ) !== false, 'B11 subscriber cannot open plugin settings page', $r['code'] );
+
+// The redesigned screen saves everything through ONE options.php form. Submit it the way the
+// browser does (every enabled field + hidden mode inputs) and check what lands in the DB.
+function form_fields( string $html, string $form_id ): array {
+    libxml_use_internal_errors( true );
+    $doc = new DOMDocument();
+    $doc->loadHTML( $html );
+    $form = $doc->getElementById( $form_id );
+    $out  = [];
+    foreach ( [ 'input', 'select', 'textarea' ] as $tag ) {
+        foreach ( $form ? $form->getElementsByTagName( $tag ) : [] as $el ) {
+            $name = $el->getAttribute( 'name' );
+            if ( $name === '' || $el->hasAttribute( 'disabled' ) ) { continue; }
+            $type = strtolower( $el->getAttribute( 'type' ) );
+            if ( in_array( $type, [ 'checkbox', 'radio' ], true ) && ! $el->hasAttribute( 'checked' ) ) { continue; }
+            if ( $tag === 'select' ) {
+                $val = '';
+                foreach ( $el->getElementsByTagName( 'option' ) as $o ) { if ( $o->hasAttribute( 'selected' ) ) { $val = $o->getAttribute( 'value' ); } }
+                $out[ $name ] = $val;
+            } else {
+                $out[ $name ] = $tag === 'textarea' ? $el->textContent : $el->getAttribute( 'value' );
+            }
+        }
+    }
+    return $out;
+}
+$page = http( 'GET', '/wp-admin/admin.php?page=r2-offload', [ 'cookie' => 'admin' ] )['body'];
+$f    = form_fields( $page, 'r2ui-form' );
+ok( isset( $f['option_page'], $f['_wpnonce'], $f['r2_offload_upload_on_save'], $f['r2_offload_background_offload'] ) && ( $f['r2_offload_secret_access_key'] ?? '' ) === '__R2_SECRET_UNCHANGED__', 'B12 settings form carries nonce, hidden upload-mode fields and the keep-secret placeholder', array_keys( $f ) );
+$f['r2_offload_upload_on_save'] = '1'; $f['r2_offload_background_offload'] = '1';   // "Queue and upload in the background"
+$f['r2_offload_excluded_mime_types'] = "image/x-qa\nvideo/x-qa";
+$r = http( 'POST', '/wp-admin/options.php', [ 'cookie' => 'admin', 'form' => $f ] );
+$sec = h( 'secret', $env['R2_SECRET_ACCESS_KEY'] );
+ok( wp( 'option get r2_offload_upload_on_save' ) === '1' && wp( 'option get r2_offload_background_offload' ) === '1', 'B13 Save changes (options.php) stores the chosen upload mode in both real options', $r['code'] );
+ok( ! empty( $sec['decrypts_ok'] ) && $sec['stored_prefix'] === 'r2enc:' && strpos( wp( 'option get r2_offload_excluded_mime_types --format=json' ), 'image\/x-qa' ) !== false, 'B14 same save keeps the encrypted secret intact and stores excluded types', $sec );
+set( [ 'r2_offload_background_offload' => 0, 'r2_offload_excluded_mime_types' => [] ] );
 
 // =====================================================================
 section( 'C. Uploads (server-side image processing)' );
@@ -282,9 +318,12 @@ if ( want( 'G' ) ) {
 // =====================================================================
 section( 'G. Background offload (WP-Cron queue)' );
 set( [ 'r2_offload_background_offload' => 1 ] );
+ajax( 'r2_offload_live_logs_start' );                 // logs are live-only: watch while uploading
 $id = upload( "{$IMG}/bg.jpg" ); $created[] = $id;
 for ( $i = 0, $s = []; $i < 30 && ( $s['synced'] ?? '' ) !== '1'; $i++ ) { sleep( 1 ); $s = h( 'state', $id ); }
-$log = csh( "grep -h '\"attachment_id\":{$id}' wp-content/uploads/r2-offload-logs/*.log" );
+$mine = array_filter( ajax( 'r2_offload_live_logs_poll', [ 'offset' => 0 ] )['json']['data']['entries'] ?? [], fn( $e ) => (int) ( $e['context']['attachment_id'] ?? 0 ) === $id );
+$log  = implode( ' | ', array_column( $mine, 'message' ) );
+ajax( 'r2_offload_live_logs_stop' );
 ok( strpos( $log, 'queued for background' ) !== false && strpos( $log, 'via wp_generate_attachment_metadata' ) === false, 'G1 upload was queued, not synced inline in the upload request', $log );
 ok( $s['synced'] === '1' && all_on_r2( $s ), "G2 queued upload synced by itself via kick()+spawn_cron (~{$i}s, no visitor, no manual cron)", brief( $s ) );
 $q = h( 'queue' );
@@ -340,6 +379,24 @@ $s = h( 'state', $BIG );
 ok( ( $r['json']['success'] ?? false ) && all_local( $s ), 'I3 "Restore from R2" brings every file back (incl. original)', [ $r['json']['data']['message'] ?? $r['body'], brief( $s ) ] );
 $sha_local = csh( 'sha1sum wp-content/uploads/' . dirname( wp( "post meta get {$BIG} _wp_attached_file" ) ) . '/' . $s['original'] );
 ok( str_starts_with( $sha_local, sha1_file( "{$IMG}/big.jpg" ) ), 'I4 restored full-res original is byte-identical to the uploaded file', $sha_local );
+
+// Objects missing on R2 (deleted behind WordPress's back) → restore must FAIL loudly and leave no
+// corrupt local files (the SDK used to save R2's <Error> XML body as the "image").
+$mid  = upload( "{$IMG}/cli2.jpg" ); $created[] = $mid;
+ajax( 'r2_offload_delete_local_single', [ 'attachment_id' => $mid ] );
+wp( 'eval', "R2Offload\\Plugin::get_instance()->r2->delete_files( json_decode( get_post_meta( {$mid}, '_r2_offload_keys', true ), true ) );" );
+$st = ajax( 'r2_offload_start_restore_all', [ 'only_missing' => 1 ] );
+for ( $i = 0, $rs = []; $i < 30; $i++ ) {
+    sleep( 2 );
+    $rs = ajax( 'r2_offload_restore_status' )['json']['data'] ?? [];
+    if ( ( $rs['total'] ?? 0 ) > 0 && ( $rs['done'] ?? 0 ) + ( $rs['failed'] ?? 0 ) >= $rs['total'] ) { break; }
+}
+ok( ( $rs['failed'] ?? 0 ) >= 1, 'I5 restore of files missing on R2 is reported as FAILED (not "Done")', [ 'start' => $st['json']['data'] ?? null, 'status' => $rs ] );
+$junk = csh( 'n=0; for f in $(find wp-content/uploads -size -2k -type f); do grep -q "<Code>NoSuchKey</Code>" "$f" && n=$((n+1)); done; echo $n' );
+$s = h( 'state', $mid );
+ok( $junk === '0' && none_local( $s ), 'I6 failed downloads leave no corrupt files on disk (R2 error XML never saved as an image)', [ 'corrupt' => $junk, 'files' => brief( $s ) ] );
+$ml = http( 'GET', '/wp-admin/upload.php?mode=list', [ 'cookie' => 'admin' ] )['body'];
+ok( strpos( $ml, 'assets/js/media-library.js' ) !== false && strpos( $ml, 'var R2Offload' ) !== false, 'I7 Media Library loads the row-action script (Restore / Delete local links work)' );
 
 }
 if ( want( 'J' ) ) {
@@ -412,6 +469,26 @@ $log = csh( 'cat wp-content/debug.log 2>/dev/null' );
 $ours = array_filter( explode( "\n", $log ), fn( $l ) => stripos( $l, 'cloudflare-r2-offload' ) !== false || stripos( $l, 'R2Offload' ) !== false );
 ok( ! $ours, 'N1 no PHP errors/warnings/notices from the plugin during the whole run', array_slice( array_values( $ours ), 0, 5 ) );
 
+}
+if ( want( 'O' ) ) {
+// =====================================================================
+section( 'O. Logs are never stored — live view only (Stats + Migration)' );
+$ls = fn() => array_values( array_diff( preg_split( '/\s+/', csh( 'ls -A wp-content/uploads/r2-offload-logs 2>/dev/null' ) ), [ '', '.htaccess', 'index.php' ] ) );
+ok( ! array_filter( $ls(), fn( $f ) => preg_match( '/\.log$|terminal\.jsonl$/', $f ) ), 'O1 upgrade removed the log files earlier versions kept on disk', $ls() );
+csh( 'rm -f wp-content/uploads/r2-offload-logs/live.jsonl wp-content/uploads/r2-offload-logs/live.on' );
+$oid = upload( "{$IMG}/cli1.jpg" ); $created[] = $oid;           // real activity: logs info lines
+ok( $ls() === [], 'O2 with Live logs OFF, real activity (an upload) writes nothing anywhere', $ls() );
+$st = ajax( 'r2_offload_live_logs_start' );
+ok( ( $st['json']['data']['live'] ?? false ) === true, 'O3a switching Live logs ON opens a session', $st['json'] ?? $st['body'] );
+$oid2 = upload( "{$IMG}/cli2.jpg" ); $created[] = $oid2;
+$pl = ajax( 'r2_offload_live_logs_poll', [ 'offset' => 0 ] )['json']['data'] ?? [];
+$msgs = implode( ' | ', array_column( $pl['entries'] ?? [], 'message' ) );
+ok( stripos( $msgs, 'synced' ) !== false || stripos( $msgs, 'uploaded' ) !== false, 'O3b an upload made while ON streams into the view', $msgs );
+ajax( 'r2_offload_live_logs_stop' );
+$pl2 = ajax( 'r2_offload_live_logs_poll', [ 'offset' => 0 ] )['json']['data'] ?? [];
+ok( $ls() === [] && ( $pl2['live'] ?? true ) === false, 'O4 switching OFF deletes the buffer and everything shown', [ 'files' => $ls(), 'poll' => $pl2 ] );
+$sp = http( 'GET', '/wp-admin/admin.php?page=r2-offload-stats', [ 'cookie' => 'admin' ] )['body'];
+ok( strpos( $sp, 'id="r2s-data"' ) !== false && strpos( $sp, 'data-live-logs' ) !== false && strpos( $sp, 'assets/js/stats.js' ) !== false && strpos( $sp, 'assets/js/live-logs.js' ) !== false, 'O5 Stats page renders chart data, KPI script and the Live logs panel' );
 }
 if ( want( 'R' ) ) {
 // =====================================================================

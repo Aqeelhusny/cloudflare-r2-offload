@@ -2,8 +2,10 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
+
+declare(strict_types=1);
 
 namespace R2Offload\Vendor\GuzzleHttp;
 
@@ -31,16 +33,16 @@ use R2Offload\Vendor\Psr\Http\Message\ResponseInterface;
  * - {code}:           Status code of the response (if available)
  * - {phrase}:         Reason phrase of the response  (if available)
  * - {error}:          Any error messages (if available)
- * - {req_header_*}:   Replace `*` with the lowercased name of a request header to add to the message
- * - {res_header_*}:   Replace `*` with the lowercased name of a response header to add to the message
+ * - {req_header_*}:   Replace `*` with the lowercased name of a request header
+ *                     to add to the message
+ * - {res_header_*}:   Replace `*` with the lowercased name of a response header
+ *                     to add to the message
  * - {req_headers}:    Request headers
  * - {res_headers}:    Response headers
  * - {req_body}:       Request body
  * - {res_body}:       Response body
- *
- * @final
  */
-class MessageFormatter implements MessageFormatterInterface
+final class MessageFormatter implements MessageFormatterInterface
 {
     /**
      * Apache Common Log Format.
@@ -56,7 +58,7 @@ class MessageFormatter implements MessageFormatterInterface
     /**
      * @var string Template used to format log messages
      */
-    private $template;
+    private string $template;
 
     /**
      * @param string $template Log message template
@@ -77,10 +79,9 @@ class MessageFormatter implements MessageFormatterInterface
     {
         $cache = [];
 
-        /** @var string */
-        return \preg_replace_callback(
+        $result = \preg_replace_callback(
             '/{\s*([A-Za-z_\-\.0-9]+)\s*}/',
-            function (array $matches) use ($request, $response, $error, &$cache) {
+            function (array $matches) use ($request, $response, $error, &$cache): string {
                 if (isset($cache[$matches[1]])) {
                     return $cache[$matches[1]];
                 }
@@ -95,7 +96,7 @@ class MessageFormatter implements MessageFormatterInterface
                         break;
                     case 'req_headers':
                         $result = \trim($request->getMethod()
-                                .' '.$request->getRequestTarget())
+                                .' '.$request->getRequestTarget(), " \n\r\t\0\x0B")
                             .' HTTP/'.$request->getProtocolVersion()."\r\n"
                             .$this->headers($request);
                         break;
@@ -181,12 +182,19 @@ class MessageFormatter implements MessageFormatterInterface
                         }
                 }
 
+                $result = (string) $result;
                 $cache[$matches[1]] = $result;
 
                 return $result;
             },
             $this->template
         );
+
+        if ($result === null) {
+            throw new \RuntimeException('Unable to format message: '.\preg_last_error_msg());
+        }
+
+        return $result;
     }
 
     /**
@@ -199,6 +207,6 @@ class MessageFormatter implements MessageFormatterInterface
             $result .= $name.': '.\implode(', ', $values)."\r\n";
         }
 
-        return \trim($result);
+        return \trim($result, " \n\r\t\0\x0B");
     }
 }

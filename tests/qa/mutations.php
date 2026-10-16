@@ -1,0 +1,49 @@
+<?php
+/**
+ * Mutation catalogue: each entry = one deliberate, realistic bug.
+ * [ id, file (relative to plugin dir), find, replace, sections to run, scenarios that MUST fail ]
+ */
+return [
+    [ 'M01', 'includes/class-upload-handler.php', "if ( \$context === 'create' && self::client_side_sizes_pending() ) {", 'if ( false ) {',
+      'D', 'WP 7.1: sync on the create pass (no deferral)', [ 'D1', 'D2' ] ],
+    [ 'M02', 'includes/class-attachment-sync.php', '$metadata = $metadata ?: ( wp_get_attachment_metadata( $attachment_id ) ?: null );', '$metadata = wp_get_attachment_metadata( $attachment_id ) ?: null;',
+      'D', 'Finalize: ignore filtered metadata (read stale stored copy)', [ 'D7' ] ],
+    [ 'M03', 'includes/class-attachment-sync.php', "foreach ( [ 'original_image', 'source_image', 'animated_video', 'animated_video_poster' ] as \$companion ) {", 'foreach ( [] as $companion ) {',
+      'DJ', 'Do not collect original_image / companion files', [ 'C5', 'D7', 'D10', 'J3' ] ],
+    [ 'M04', 'includes/class-attachment-sync.php', 'if ( $tracked_set !== null && ! isset( $tracked_set[ $r2_key ] ) ) {', 'if ( false ) {',
+      'J', 'Delete-local ignores whether the file is on R2', [ 'J2' ] ],
+    [ 'M05', 'includes/class-upload-handler.php', "if ( is_callable( [ \$product, 'get_gallery_image_ids' ] ) ) {", 'if ( false ) {',
+      'F', 'WC REST save: skip gallery images', [ 'F8' ] ],
+    [ 'M06', 'includes/class-url-rewriter.php', 'public function register_hooks(): void {', 'public function register_hooks(): void { return;',
+      'EFI', 'URL rewriting never registers', [ 'E1', 'E2', 'E3', 'E4', 'E5', 'E7', 'F2', 'F4', 'F5', 'F6', 'I2' ] ],
+    [ 'M07', 'includes/class-migration.php', '$secret_to_store = $this->settings->sanitize_secret_key( $secret_raw );', '$secret_to_store = $secret_raw;',
+      '-', 'AJAX save skips encryption (EQUIVALENT: register_setting sanitizer still encrypts)', [] ],
+    [ 'M08', 'includes/class-migration.php', "if ( ! current_user_can( 'manage_options' ) ) {", 'if ( false ) {',
+      '-', 'AJAX handler drops the capability check', [ 'B10b' ] ],
+    [ 'M09', 'includes/class-attachment-sync.php', "if ( \$result['failed'] === 0 ) {", 'if ( true ) {',
+      'K', 'Failed upload still marked synced', [ 'K1', 'K2' ] ],
+    [ 'M10', 'includes/class-batch-processor.php', "wp_schedule_single_event( time(), \$hook );\n        }\n        spawn_cron();", "wp_schedule_single_event( time(), \$hook );\n        }",
+      'G', 'kick() schedules but never spawns cron (only visible with DISABLE_WP_CRON: WP 7.1 spawns on shutdown itself)', [ 'G5' ] ],
+    [ 'M11', 'includes/class-upload-handler.php', "add_action( 'delete_attachment', [ \$this, 'on_delete_attachment' ], 10, 1 );", '',
+      'L', 'Deleting media leaves objects on R2', [ 'L1' ] ],
+    [ 'M12', 'includes/class-r2-client.php', "'SaveAs' => \$local_path,", "'SaveAs' => \$local_path . '.tmp',",
+      'I', 'Restore writes to the wrong path', [ 'I3', 'I4' ] ],
+    [ 'M13', 'cloudflare-r2-offload.php', "version_compare( PHP_VERSION, '8.1', '<' )", "version_compare( PHP_VERSION, '7.0', '<' )",
+      'P', 'PHP minimum guard lowered back to 7.x', [ 'P1' ] ],
+    [ 'M14', 'includes/class-plugin.php', "wp_clear_scheduled_hook( BatchProcessor::CRON_HOOK );", '',
+      'M', 'Deactivation leaves the batch cron event', [ 'M1' ] ],
+    [ 'M15', 'includes/class-attachment-sync.php', "if ( \$mime && in_array( \$mime, \$this->settings->get_excluded_mime_types(), true ) ) {\n            \$result['skipped']++;", "if ( false ) {\n            \$result['skipped']++;",
+      '-', 'Excluded MIME types are uploaded anyway', [ 'C7' ] ],
+    [ 'M16', 'includes/class-upload-handler.php', "if ( ! \$this->settings->get_upload_on_save() ) {\n            return \$metadata;", "if ( false ) {\n            return \$metadata;",
+      '-', '"Upload on save" OFF is ignored', [ 'C8' ] ],
+    [ 'M17', 'includes/class-upload-handler.php', "if ( \$this->settings->get_background_offload() ) {\n            \$this->enqueue_for_background( \$attachment_id );", "if ( false ) {\n            \$this->enqueue_for_background( \$attachment_id );",
+      'G', 'Background mode ignored (syncs inline)', [ 'G1' ] ],
+    [ 'M18', 'includes/class-url-rewriter.php', "public function rewrite_url( string \$url, int \$attachment_id ): string {
+        if ( ! \$this->is_synced( \$attachment_id ) ) {", "public function rewrite_url( string \$url, int \$attachment_id ): string {
+        if ( false ) {",
+      'E', 'Rewrites URLs of media that is NOT on R2 (CDN 404s)', [ 'E6' ] ],
+    [ 'M19', 'includes/class-batch-processor.php', '$token = substr( md5( uniqid( (string) getmypid(), true ) ), 0, 32 );', "\$token = 'same-for-every-worker';",
+      'R', 'Queue claim token shared by all workers (double-processing race)', [ 'R1' ] ],
+    [ 'M20', 'includes/class-settings.php', 'return $this->encrypt( sanitize_text_field( $value ) );', 'return sanitize_text_field( $value );',
+      '-', 'Secret stored in plain text (encryption removed)', [ 'B5' ] ],
+];

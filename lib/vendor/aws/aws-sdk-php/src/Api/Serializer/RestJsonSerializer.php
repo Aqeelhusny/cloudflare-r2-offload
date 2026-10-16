@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\Api\Serializer;
 
@@ -40,7 +40,7 @@ class RestJsonSerializer extends RestSerializer
     {
         $opts['headers']['Content-Type'] = $this->contentType;
         $body = $this->jsonFormatter->build($member, $value);
-        $opts['headers']['Content-Length'] = strlen($body);
+        $opts['headers']['Content-Length'] = (string) strlen($body);
         $opts['body'] = $body;
     }
 }

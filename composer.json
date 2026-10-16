@@ -4,7 +4,7 @@
     "type": "wordpress-plugin",
     "license": "GPL-2.0+",
     "require": {
-        "php": ">=7.4"
+        "php": ">=8.1"
     },
     "require-dev": {
         "aws/aws-sdk-php": "^3.0",
@@ -70,6 +70,9 @@
         "vendor-dir": "vendor",
         "allow-plugins": {
             "brianhenryie/strauss": true
+        },
+        "platform": {
+            "php": "8.1.0"
         }
     },
     "prefer-stable": true

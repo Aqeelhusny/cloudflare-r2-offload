@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\CloudFrontKeyValueStore;
 
@@ -11,16 +11,40 @@ use R2Offload\Vendor\Aws\AwsClient;
 /**
  * This client is used to interact with the **Amazon CloudFront KeyValueStore** service.
  * @method \R2Offload\Vendor\Aws\Result deleteKey(array $args = [])
+ * @phpstan-method \Aws\Result deleteKey(array{KvsARN?: string, Key?: string, IfMatch?: string, ...} $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise deleteKeyAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise deleteKeyAsync(array{KvsARN?: string, Key?: string, IfMatch?: string, ...} $args = [])
  * @method \R2Offload\Vendor\Aws\Result describeKeyValueStore(array $args = [])
+ * @phpstan-method \Aws\Result describeKeyValueStore(array{KvsARN?: string, ...} $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise describeKeyValueStoreAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise describeKeyValueStoreAsync(array{KvsARN?: string, ...} $args = [])
  * @method \R2Offload\Vendor\Aws\Result getKey(array $args = [])
+ * @phpstan-method \Aws\Result getKey(array{KvsARN?: string, Key?: string, ...} $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getKeyAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise getKeyAsync(array{KvsARN?: string, Key?: string, ...} $args = [])
  * @method \R2Offload\Vendor\Aws\Result listKeys(array $args = [])
+ * @phpstan-method \Aws\Result listKeys(array{KvsARN?: string, NextToken?: string, MaxResults?: int, ...} $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listKeysAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise listKeysAsync(array{KvsARN?: string, NextToken?: string, MaxResults?: int, ...} $args = [])
  * @method \R2Offload\Vendor\Aws\Result putKey(array $args = [])
+ * @phpstan-method \Aws\Result putKey(array{Key?: string, Value?: string, KvsARN?: string, IfMatch?: string, ...} $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise putKeyAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise putKeyAsync(array{Key?: string, Value?: string, KvsARN?: string, IfMatch?: string, ...} $args = [])
  * @method \R2Offload\Vendor\Aws\Result updateKeys(array $args = [])
+ * @phpstan-method \Aws\Result updateKeys(array{
+ *     KvsARN?: string,
+ *     IfMatch?: string,
+ *     Puts?: list<array{Key?: string, Value?: string, ...}>,
+ *     Deletes?: list<array{Key?: string, ...}>,
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateKeysAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise updateKeysAsync(array{
+ *     KvsARN?: string,
+ *     IfMatch?: string,
+ *     Puts?: list<array{Key?: string, Value?: string, ...}>,
+ *     Deletes?: list<array{Key?: string, ...}>,
+ *     ...,
+ * } $args = [])
  */
 class CloudFrontKeyValueStoreClient extends AwsClient {}

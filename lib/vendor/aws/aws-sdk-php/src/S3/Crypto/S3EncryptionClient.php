@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\S3\Crypto;
 
@@ -132,8 +132,15 @@ class S3EncryptionClient extends AbstractCryptoClient
 
         $envelope = new MetadataEnvelope();
 
+        $bodyStream = Psr7\Utils::streamFor($args['Body']);
+        // User-owned resource which should be detached instead of closed
+        // during garbage-collection
+        if (is_resource($args['Body'])) {
+            $bodyStream = \R2Offload\Vendor\Aws\detach_on_close_stream($bodyStream);
+        }
+
         return Promise\Create::promiseFor($this->encrypt(
-            Psr7\Utils::streamFor($args['Body']),
+            $bodyStream,
             $args['@CipherOptions'] ?: [],
             $provider,
             $envelope

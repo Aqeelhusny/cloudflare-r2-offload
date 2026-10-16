@@ -2,8 +2,10 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
+
+declare(strict_types=1);
 
 namespace R2Offload\Vendor\GuzzleHttp\Handler;
 
@@ -13,6 +15,10 @@ interface CurlFactoryInterface
 {
     /**
      * Creates a cURL handle resource.
+     *
+     * Implementations must return an EasyHandle whose public state properties,
+     * including the request and sink, contain values compatible with Guzzle's
+     * cURL handlers.
      *
      * @param RequestInterface $request Request
      * @param array            $options Transfer options

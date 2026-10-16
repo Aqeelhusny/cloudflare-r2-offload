@@ -8,7 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace R2Offload\Vendor\Symfony\Component\Filesystem\Exception;
@@ -22,12 +22,12 @@ namespace R2Offload\Vendor\Symfony\Component\Filesystem\Exception;
  */
 class IOException extends \RuntimeException implements IOExceptionInterface
 {
-    public function __construct(
-        string $message,
-        int $code = 0,
-        ?\Throwable $previous = null,
-        private ?string $path = null,
-    ) {
+    private ?string $path;
+
+    public function __construct(string $message, int $code = 0, ?\Throwable $previous = null, ?string $path = null)
+    {
+        $this->path = $path;
+
         parent::__construct($message, $code, $previous);
     }
 

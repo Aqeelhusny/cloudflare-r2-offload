@@ -2,8 +2,10 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
+
+declare(strict_types=1);
 
 namespace R2Offload\Vendor\GuzzleHttp;
 
@@ -11,10 +13,7 @@ use R2Offload\Vendor\Psr\Http\Message\MessageInterface;
 
 final class BodySummarizer implements BodySummarizerInterface
 {
-    /**
-     * @var int|null
-     */
-    private $truncateAt;
+    private ?int $truncateAt;
 
     public function __construct(?int $truncateAt = null)
     {
@@ -26,8 +25,10 @@ final class BodySummarizer implements BodySummarizerInterface
      */
     public function summarize(MessageInterface $message): ?string
     {
-        return $this->truncateAt === null
-            ? Psr7\Message::bodySummary($message)
-            : Psr7\Message::bodySummary($message, $this->truncateAt);
+        try {
+            return Psr7\Message::bodySummary($message, $this->truncateAt);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }

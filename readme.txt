@@ -2,9 +2,9 @@
 Contributors: aqeelhusny
 Tags: cloudflare, r2, media, offload, cdn
 Requires at least: 5.8
-Tested up to: 6.8
-Requires PHP: 7.4
-Stable tag: 1.3.1
+Tested up to: 7.1
+Requires PHP: 8.1
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -46,7 +46,7 @@ Cloudflare R2 Offload automatically uploads your WordPress media library to Clou
 
 **Requirements:**
 
-* PHP 7.4 or higher
+* PHP 8.1 or higher
 * WordPress 5.8 or higher
 * A Cloudflare account with R2 storage enabled
 * An R2 API token with Object Read & Write permissions
@@ -112,6 +112,17 @@ If you reset WordPress security keys in wp-config.php, your stored R2 secret key
 
 == Changelog ==
 
+= 1.5.0 =
+* Requirement: PHP 8.1+ (the bundled AWS SDK requires it; older PHP would fatal on first R2 call).
+* Compatibility: WordPress 7.1 client-side media processing — upload sync now waits for the finalize pass, so attachments are never marked synced (or local files deleted) before their sub-sizes exist.
+* Fixed: the full-resolution original of big images ("-scaled" uploads, metadata original_image) is now offloaded, restored and removed with the attachment.
+* Fixed: Delete Local only removes files whose R2 key is confirmed, protecting originals of attachments synced by earlier versions.
+* WooCommerce: REST product/variation saves re-sync gallery images too (variation galleries are core in WooCommerce 11.1).
+* Fixed: WordPress 7.1 /finalize uploads only offloaded the scaled file — sync now uses the metadata being finalized, so every client-made size is uploaded.
+* Fixed: WordPress 7.1 companion files (animated GIF video + poster, HEIC source image) are offloaded, so their CDN URLs no longer 404.
+* Fixed: release zip used Windows "\" path separators (broke installs on Linux hosts); packaging now uses forward slashes and verifies every entry.
+* Tested with WordPress 7.1 and WooCommerce 11.1.
+
 = 1.3.1 =
 * New: Restore & Remove from R2 — fully disconnect from R2 by restoring all files to the server, verifying downloads, then deleting from R2 and clearing all sync metadata.
 * New: Restore progress polling — bulk restore now shows live progress with 3-second polling.
@@ -151,6 +162,9 @@ If you reset WordPress security keys in wp-config.php, your stored R2 secret key
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.5.0 =
+Requires PHP 8.1+. Adds WordPress 7.1 / WooCommerce 11.1 compatibility and offloads full-resolution originals of large images.
 
 = 1.3.1 =
 Adds Restore & Remove from R2 feature, fixes progress bar bugs, and adds live dashboard auto-refresh. Recommended for all users.

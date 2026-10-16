@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\CloudSearchDomain;
 
@@ -17,11 +17,57 @@ use R2Offload\Vendor\GuzzleHttp\Psr7;
  * This client is used to search and upload documents to an **Amazon CloudSearch** Domain.
  *
  * @method \R2Offload\Vendor\Aws\Result search(array $args = [])
+ * @phpstan-method \Aws\Result search(array{
+ *     cursor?: string,
+ *     expr?: string,
+ *     facet?: string,
+ *     filterQuery?: string,
+ *     highlight?: string,
+ *     partial?: bool,
+ *     query?: string,
+ *     queryOptions?: string,
+ *     queryParser?: 'dismax'|'lucene'|'simple'|'structured',
+ *     return?: string,
+ *     size?: int,
+ *     sort?: string,
+ *     start?: int,
+ *     stats?: string,
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise searchAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise searchAsync(array{
+ *     cursor?: string,
+ *     expr?: string,
+ *     facet?: string,
+ *     filterQuery?: string,
+ *     highlight?: string,
+ *     partial?: bool,
+ *     query?: string,
+ *     queryOptions?: string,
+ *     queryParser?: 'dismax'|'lucene'|'simple'|'structured',
+ *     return?: string,
+ *     size?: int,
+ *     sort?: string,
+ *     start?: int,
+ *     stats?: string,
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\Aws\Result suggest(array $args = [])
+ * @phpstan-method \Aws\Result suggest(array{query?: string, suggester?: string, size?: int, ...} $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise suggestAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise suggestAsync(array{query?: string, suggester?: string, size?: int, ...} $args = [])
  * @method \R2Offload\Vendor\Aws\Result uploadDocuments(array $args = [])
+ * @phpstan-method \Aws\Result uploadDocuments(array{
+ *     documents?: string|resource|\R2Offload\Vendor\Psr\Http\Message\StreamInterface,
+ *     contentType?: 'application/json'|'application/xml',
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise uploadDocumentsAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise uploadDocumentsAsync(array{
+ *     documents?: string|resource|\R2Offload\Vendor\Psr\Http\Message\StreamInterface,
+ *     contentType?: 'application/json'|'application/xml',
+ *     ...,
+ * } $args = [])
  */
 class CloudSearchDomainClient extends AwsClient
 {
@@ -83,7 +129,7 @@ class CloudSearchDomainClient extends AwsClient
         $query = $r->getUri()->getQuery();
         $req = $r->withMethod('POST')
             ->withBody(Psr7\Utils::streamFor($query))
-            ->withHeader('Content-Length', strlen($query))
+            ->withHeader('Content-Length', (string) strlen($query))
             ->withHeader('Content-Type', 'application/x-www-form-urlencoded')
             ->withUri($r->getUri()->withQuery(''));
         return $req;

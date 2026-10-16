@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\JmesPath;
 
@@ -112,7 +112,7 @@ class TreeCompiler
         return $this
             ->write('%s = $value;', $a)
             ->dispatch($node['children'][0])
-            ->write('if (!$value && $value !== "0" && $value !== 0) {')
+            ->write('if (!Utils::isTruthy($value)) {')
                 ->indent()
                 ->write('$value = %s;', $a)
                 ->dispatch($node['children'][1])
@@ -126,7 +126,7 @@ class TreeCompiler
         return $this
             ->write('%s = $value;', $a)
             ->dispatch($node['children'][0])
-            ->write('if ($value || $value === "0" || $value === 0) {')
+            ->write('if (Utils::isTruthy($value)) {')
                 ->indent()
                 ->write('$value = %s;', $a)
                 ->dispatch($node['children'][1])
@@ -262,8 +262,8 @@ class TreeCompiler
         }
 
         return $this->write(
-            '$value = Fd::getInstance()->__invoke("%s", %s);',
-            $node['value'], $args
+            '$value = Fd::getInstance()->__invoke(%s, %s);',
+            var_export($node['value'], true), $args
         );
     }
 
@@ -337,7 +337,7 @@ class TreeCompiler
             ->write('');
 
         if (!isset($node['from'])) {
-            $this->write('if (!is_array($value) || !($value instanceof \stdClass)) { $value = null; }');
+            $this->write('if (!is_array($value) && !($value instanceof \stdClass)) { $value = null; }');
         } elseif ($node['from'] == 'object') {
             $this->write('if (!Utils::isObject($value)) { $value = null; }');
         } elseif ($node['from'] == 'array') {

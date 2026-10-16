@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 declare(strict_types=1);
@@ -17,11 +17,11 @@ use R2Offload\Vendor\Psr\Http\Message\StreamInterface;
 final class NoSeekStream implements StreamInterface
 {
     use StreamDecoratorTrait;
+    use NonSerializableStreamTrait;
 
-    /** @var StreamInterface */
-    private $stream;
+    private StreamInterface $stream;
 
-    public function seek($offset, $whence = SEEK_SET): void
+    public function seek(int $offset, int $whence = SEEK_SET): void
     {
         throw new \RuntimeException('Cannot seek a NoSeekStream');
     }

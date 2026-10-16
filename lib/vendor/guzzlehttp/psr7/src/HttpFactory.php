@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 declare(strict_types=1);
@@ -41,7 +41,13 @@ final class HttpFactory implements RequestFactoryInterface, ResponseFactoryInter
             $size = $stream->getSize();
         }
 
-        return new UploadedFile($stream, $size, $error, $clientFilename, $clientMediaType);
+        return new UploadedFile(
+            $stream,
+            Integers::assertOptionalNonNegativeSize($size, 'Uploaded file size'),
+            $error,
+            $clientFilename,
+            $clientMediaType
+        );
     }
 
     public function createStream(string $content = ''): StreamInterface
@@ -55,7 +61,7 @@ final class HttpFactory implements RequestFactoryInterface, ResponseFactoryInter
             $resource = Utils::tryFopen($file, $mode);
         } catch (\RuntimeException $e) {
             if ('' === $mode || false === \in_array($mode[0], ['r', 'w', 'a', 'x', 'c'], true)) {
-                throw new \InvalidArgumentException(sprintf('Invalid file opening mode "%s"', $mode), 0, $e);
+                throw new \InvalidArgumentException(sprintf('Invalid file opening mode: %s', DiagnosticValue::escape($mode)), 0, $e);
             }
 
             throw $e;
@@ -69,8 +75,12 @@ final class HttpFactory implements RequestFactoryInterface, ResponseFactoryInter
         return Utils::streamFor($resource);
     }
 
-    public function createServerRequest(string $method, $uri, array $serverParams = []): ServerRequestInterface
-    {
+    public function createServerRequest(
+        string $method,
+        $uri,
+        #[\SensitiveParameter]
+        array $serverParams = []
+    ): ServerRequestInterface {
         if (empty($method)) {
             if (!empty($serverParams['REQUEST_METHOD'])) {
                 $method = $serverParams['REQUEST_METHOD'];

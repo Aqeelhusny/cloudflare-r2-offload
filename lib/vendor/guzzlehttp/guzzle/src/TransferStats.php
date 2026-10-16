@@ -2,8 +2,10 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
+
+declare(strict_types=1);
 
 namespace R2Offload\Vendor\GuzzleHttp;
 
@@ -17,25 +19,13 @@ use R2Offload\Vendor\Psr\Http\Message\UriInterface;
  */
 final class TransferStats
 {
-    /**
-     * @var RequestInterface
-     */
-    private $request;
+    private RequestInterface $request;
 
-    /**
-     * @var ResponseInterface|null
-     */
-    private $response;
+    private ?ResponseInterface $response;
 
-    /**
-     * @var float|null
-     */
-    private $transferTime;
+    private ?float $transferTime;
 
-    /**
-     * @var array
-     */
-    private $handlerStats;
+    private array $handlerStats;
 
     /**
      * @var mixed|null

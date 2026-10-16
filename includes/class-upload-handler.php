@@ -36,7 +36,7 @@ class UploadHandler {
     public function register_hooks(): void {
         // Primary hook: fires after WordPress AND WooCommerce have generated all image sizes.
         // Priority 20 ensures third-party sizes (woocommerce_thumbnail, etc.) already exist.
-        add_filter( 'wp_generate_attachment_metadata', [ $this, 'on_generate_metadata' ], 20, 2 );
+        add_filter( 'wp_generate_attachment_metadata', [ $this, 'on_generate_metadata' ], 20, 3 );
 
         // WooCommerce REST API: product image may be set without going through the media uploader.
         // Attachment creation still triggers wp_generate_attachment_metadata, so we are covered.
@@ -58,16 +58,28 @@ class UploadHandler {
      * Also fires when WooCommerce regenerates sizes (wc_product_maybe_generate_image_resize).
      * This filter MUST return $metadata unchanged.
      *
-     * @param array $metadata      Attachment metadata.
-     * @param int   $attachment_id Attachment post ID.
+     * WP 7.1 client-side media processing: the browser uploads the original with
+     * generate_sub_sizes=false, sideloads each size, then /finalize re-fires this
+     * filter with context 'update'. The 'create' pass is skipped — syncing then
+     * would mark the attachment synced (and, with delete-local, remove the
+     * original) before its sizes exist. If finalize never runs (tab closed),
+     * the attachment stays unsynced and bulk migration picks it up.
+     *
+     * @param array  $metadata      Attachment metadata.
+     * @param int    $attachment_id Attachment post ID.
+     * @param string $context       'create' or 'update'.
      * @return array
      */
-    public function on_generate_metadata( array $metadata, int $attachment_id ): array {
+    public function on_generate_metadata( array $metadata, int $attachment_id, string $context = 'create' ): array {
         if ( ! $this->settings->get_upload_on_save() ) {
             return $metadata;
         }
 
         if ( ! $this->settings->is_configured() ) {
+            return $metadata;
+        }
+
+        if ( $context === 'create' && self::client_side_sizes_pending() ) {
             return $metadata;
         }
 
@@ -79,7 +91,7 @@ class UploadHandler {
         // Always re-sync: WooCommerce may have added new sizes since the last sync.
         // AttachmentSync handles skipping individual files that are already on R2
         // (via the r2_offload_keys postmeta diff logic).
-        $result = $this->sync->sync_attachment( $attachment_id );
+        $result = $this->sync->sync_attachment( $attachment_id, $metadata );
 
         $this->logger->info( 'Attachment synced to R2 via wp_generate_attachment_metadata.', [
             'attachment_id' => $attachment_id,
@@ -89,6 +101,16 @@ class UploadHandler {
         ] );
 
         return $metadata;
+    }
+
+    /**
+     * True when the current upload asked the server NOT to generate sub-sizes
+     * (WP 7.1+ client-side processing — sizes arrive later via sideload/finalize).
+     * Media uploads are multipart, so the param lands in $_POST or the query string.
+     */
+    private static function client_side_sizes_pending(): bool {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only flag; REST auth already ran.
+        return isset( $_REQUEST['generate_sub_sizes'] ) && ! wp_validate_boolean( wp_unslash( $_REQUEST['generate_sub_sizes'] ) );
     }
 
     /**
@@ -131,23 +153,26 @@ class UploadHandler {
             return;
         }
 
-        $image_id = (int) $product->get_image_id();
-        if ( ! $image_id ) {
-            return;
+        // Featured image + gallery (products, and variations since WC 11.1).
+        $ids = [ (int) $product->get_image_id() ];
+        if ( is_callable( [ $product, 'get_gallery_image_ids' ] ) ) {
+            $ids = array_merge( $ids, array_map( 'intval', (array) $product->get_gallery_image_ids() ) );
         }
 
-        // Only re-sync if the attachment was previously marked synced — meaning new WC sizes
-        // may have been generated after the original sync.
-        if ( get_post_meta( $image_id, '_r2_offload_synced', true ) !== '1' ) {
-            return;
-        }
+        foreach ( array_unique( array_filter( $ids ) ) as $image_id ) {
+            // Only re-sync if the attachment was previously marked synced — meaning new WC sizes
+            // may have been generated after the original sync.
+            if ( get_post_meta( $image_id, '_r2_offload_synced', true ) !== '1' ) {
+                continue;
+            }
 
-        if ( $this->settings->get_background_offload() ) {
-            $this->enqueue_for_background( $image_id );
-            return;
-        }
+            if ( $this->settings->get_background_offload() ) {
+                $this->enqueue_for_background( $image_id );
+                continue;
+            }
 
-        $this->sync->sync_attachment( $image_id );
+            $this->sync->sync_attachment( $image_id );
+        }
     }
 
     /**

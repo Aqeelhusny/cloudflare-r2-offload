@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws;
 
@@ -96,12 +96,13 @@ class MultiRegionClient implements AwsClientInterface
                                 . ' or "aws-us-gov").'
                             );
                         }
-                        $ruleset = EndpointDefinitionProvider::getEndpointRuleset(
-                            $args['service'],
-                            isset($args['version']) ? $args['version'] : 'latest'
-                        );
                         $partitions = EndpointDefinitionProvider::getPartitions();
-                        $args['endpoint_provider'] = new EndpointProviderV2($ruleset, $partitions);
+                        $parsed = EndpointDefinitionProvider::getParsedRuleset(
+                            $args['service'],
+                            isset($args['version']) ? $args['version'] : 'latest',
+                            $partitions
+                        );
+                        $args['endpoint_provider'] = new EndpointProviderV2($parsed, $partitions);
                     }
                 ],
             ];

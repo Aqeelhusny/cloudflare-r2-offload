@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\Route53RecoveryCluster;
 
@@ -11,12 +11,28 @@ use R2Offload\Vendor\Aws\AwsClient;
 /**
  * This client is used to interact with the **Route53 Recovery Cluster** service.
  * @method \R2Offload\Vendor\Aws\Result getRoutingControlState(array $args = [])
+ * @phpstan-method \Aws\Result getRoutingControlState(array{RoutingControlArn?: string, ...} $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getRoutingControlStateAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise getRoutingControlStateAsync(array{RoutingControlArn?: string, ...} $args = [])
  * @method \R2Offload\Vendor\Aws\Result listRoutingControls(array $args = [])
+ * @phpstan-method \Aws\Result listRoutingControls(array{ControlPanelArn?: string, NextToken?: string, MaxResults?: int, ...} $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listRoutingControlsAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise listRoutingControlsAsync(array{ControlPanelArn?: string, NextToken?: string, MaxResults?: int, ...} $args = [])
  * @method \R2Offload\Vendor\Aws\Result updateRoutingControlState(array $args = [])
+ * @phpstan-method \Aws\Result updateRoutingControlState(array{RoutingControlArn?: string, RoutingControlState?: 'Off'|'On', SafetyRulesToOverride?: list<string>, ...} $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateRoutingControlStateAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise updateRoutingControlStateAsync(array{RoutingControlArn?: string, RoutingControlState?: 'Off'|'On', SafetyRulesToOverride?: list<string>, ...} $args = [])
  * @method \R2Offload\Vendor\Aws\Result updateRoutingControlStates(array $args = [])
+ * @phpstan-method \Aws\Result updateRoutingControlStates(array{
+ *     UpdateRoutingControlStateEntries?: list<array{RoutingControlArn?: string, RoutingControlState?: 'Off'|'On', ...}>,
+ *     SafetyRulesToOverride?: list<string>,
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise updateRoutingControlStatesAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise updateRoutingControlStatesAsync(array{
+ *     UpdateRoutingControlStateEntries?: list<array{RoutingControlArn?: string, RoutingControlState?: 'Off'|'On', ...}>,
+ *     SafetyRulesToOverride?: list<string>,
+ *     ...,
+ * } $args = [])
  */
 class Route53RecoveryClusterClient extends AwsClient {}

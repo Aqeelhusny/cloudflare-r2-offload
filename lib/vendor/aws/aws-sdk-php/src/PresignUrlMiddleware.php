@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws;
 
@@ -16,7 +16,7 @@ use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
  */
 class PresignUrlMiddleware
 {
-    private $client;
+    private \WeakReference $client;
     private $endpointProvider;
     private $nextHandler;
     /** @var array names of operations that require presign url */
@@ -37,7 +37,7 @@ class PresignUrlMiddleware
         callable $nextHandler
     ) {
         $this->endpointProvider = $endpointProvider;
-        $this->client = $client;
+        $this->client = \WeakReference::create($client);
         $this->nextHandler = $nextHandler;
         $this->commandPool = $options['operations'];
         $this->serviceName = $options['service'];
@@ -55,9 +55,8 @@ class PresignUrlMiddleware
         $endpointProvider,
         array $options = []
     ) {
-        return function (callable $handler) use ($endpointProvider, $client, $options) {
-            $f = new PresignUrlMiddleware($options, $endpointProvider, $client, $handler);
-            return $f;
+        return static function (callable $handler) use ($endpointProvider, $client, $options) {
+            return new PresignUrlMiddleware($options, $endpointProvider, $client, $handler);
         };
     }
 
@@ -66,7 +65,8 @@ class PresignUrlMiddleware
         if (in_array($cmd->getName(), $this->commandPool)
             && (!isset($cmd['__skip' . $cmd->getName()]))
         ) {
-            $cmd['DestinationRegion'] = $this->client->getRegion();
+            $client = $this->client->get();
+            $cmd['DestinationRegion'] = $client->getRegion();
             if (!empty($cmd['SourceRegion']) && !empty($cmd[$this->presignParam])) {
                 goto nexthandler;
             }
@@ -74,7 +74,7 @@ class PresignUrlMiddleware
                 || (!empty($cmd['SourceRegion'])
                     && $cmd['SourceRegion'] !== $cmd['DestinationRegion'])
             ) {
-                $cmd[$this->presignParam] = $this->createPresignedUrl($this->client, $cmd);
+                $cmd[$this->presignParam] = $this->createPresignedUrl($client, $cmd);
             }
         }
         nexthandler:
@@ -96,7 +96,7 @@ class PresignUrlMiddleware
         // Create the new endpoint for the target endpoint.
         if ($this->endpointProvider instanceof \R2Offload\Vendor\Aws\EndpointV2\EndpointProviderV2) {
             $providerArgs = array_merge(
-                $this->client->getEndpointProviderArgs(),
+                $this->client->get()->getEndpointProviderArgs(),
                 ['Region' => $cmd['SourceRegion']]
             );
             $endpoint = $this->endpointProvider->resolveEndpoint($providerArgs)->getUrl();

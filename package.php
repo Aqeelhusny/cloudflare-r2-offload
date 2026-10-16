@@ -128,16 +128,29 @@ if ( class_exists( 'ZipArchive' ) ) {
     }
     $zip->close();
 } elseif ( PHP_OS_FAMILY === 'Windows' ) {
-    $cmd = 'powershell -NoProfile -Command "Compress-Archive -Path ' . escapeshellarg( $staging )
-         . ' -DestinationPath ' . escapeshellarg( $zip_path ) . ' -Force"';
-    passthru( $cmd, $exit );
+    // Windows' bundled bsdtar writes '/' separators. Never Compress-Archive: PowerShell 5.1
+    // stores '\' in entry names, which WordPress on Linux extracts as flat files.
+    $tar = getenv( 'SystemRoot' ) . '\\System32\\tar.exe';
+    passthru( escapeshellarg( $tar ) . ' -a -cf ' . escapeshellarg( $zip_path ) . ' -C ' . escapeshellarg( $dist ) . ' ' . SLUG, $exit );
     if ( $exit !== 0 ) {
-        fail( 'Compress-Archive failed.' );
+        fail( 'tar.exe (bsdtar) failed.' );
     }
 } else {
     passthru( 'cd ' . escapeshellarg( $dist ) . ' && zip -rq ' . escapeshellarg( $zip_path ) . ' ' . SLUG, $exit );
     if ( $exit !== 0 ) {
         fail( 'zip failed.' );
+    }
+}
+
+// Guard: read entry names straight from the central directory (zip readers such as
+// Python's normalise '\' and hide the bug). Any '\' = broken install on Linux hosts.
+$raw = file_get_contents( $zip_path );
+for ( $off = 0; ( $off = strpos( $raw, "PK\x01\x02", $off ) ) !== false; $off += 46 + $len ) {
+    $len  = unpack( 'v', substr( $raw, $off + 28, 2 ) )[1];
+    $name = substr( $raw, $off + 46, $len );
+    if ( strpos( $name, '\\' ) !== false || strpos( $name, SLUG . '/' ) !== 0 ) {
+        unlink( $zip_path );
+        fail( "Bad zip entry name '{$name}' — must be '" . SLUG . "/...' with forward slashes." );
     }
 }
 

@@ -34,10 +34,13 @@ class AttachmentSync {
      * Upload all files for an attachment to R2 and update post meta.
      * On re-sync (WooCommerce size regeneration) only genuinely new files are uploaded.
      *
-     * @param int $attachment_id
+     * @param int        $attachment_id
+     * @param array|null $metadata Metadata being filtered. Pass it from wp_generate_attachment_metadata:
+     *                             WP 7.1's /finalize applies that filter BEFORE saving, so the stored
+     *                             copy still lacks the client-made sizes at that point.
      * @return array{ uploaded: int, failed: int, skipped: int, missing: int }
      */
-    public function sync_attachment( int $attachment_id ): array {
+    public function sync_attachment( int $attachment_id, ?array $metadata = null ): array {
         $sync_started = microtime( true );
         $result       = [ 'uploaded' => 0, 'failed' => 0, 'skipped' => 0, 'missing' => 0 ];
 
@@ -47,7 +50,7 @@ class AttachmentSync {
             return $result;
         }
 
-        $metadata = wp_get_attachment_metadata( $attachment_id ) ?: null;
+        $metadata = $metadata ?: ( wp_get_attachment_metadata( $attachment_id ) ?: null );
         $attached = get_post_meta( $attachment_id, '_wp_attached_file', true );
 
         if ( ! $attached ) {
@@ -377,9 +380,20 @@ class AttachmentSync {
         // Collect local paths the same way collect_files() does.
         $all_files = $this->collect_files( $attached, $metadata, $base_dir, $this->settings->get_path_prefix() );
 
+        // Only delete files whose key is confirmed on R2. Attachments synced before
+        // original_image was collected (< 1.5.0) never uploaded it — without this
+        // gate a bulk delete-local would destroy the only copy. Legacy rows with no
+        // keys meta keep the old behaviour.
+        $keys_json   = get_post_meta( $attachment_id, '_r2_offload_keys', true );
+        $tracked_set = $keys_json ? array_flip( (array) json_decode( $keys_json, true ) ) : null;
+
         $any_local_exists = false;
 
-        foreach ( array_keys( $all_files ) as $local_path ) {
+        foreach ( $all_files as $local_path => $r2_key ) {
+            if ( $tracked_set !== null && ! isset( $tracked_set[ $r2_key ] ) ) {
+                $result['skipped']++;
+                continue;
+            }
             if ( ! file_exists( $local_path ) ) {
                 $result['skipped']++;
                 continue;
@@ -596,15 +610,28 @@ class AttachmentSync {
         $original_key             = $path_prefix ? "{$path_prefix}/{$attached}" : $attached;
         $files[ $original_local ] = $original_key;
 
+        // Sizes (and the pre-scale original) are stored relative to the
+        // attached file's directory (year/month subdir).
+        $subdir = trailingslashit( dirname( $attached ) );
+        // Normalise '.' subdir (root-level uploads, no year/month).
+        if ( $subdir === './' ) {
+            $subdir = '';
+        }
+
+        // Companion files stored beside the attached file, outside 'sizes':
+        // original_image = full-res upload behind "photo-scaled.jpg" (WP 5.3+);
+        // WP 7.1 client-side processing adds source_image (e.g. HEIC original)
+        // and animated_video(+_poster) for GIFs — the image block builds their
+        // URLs from the (CDN-rewritten) source_url, so they must be on R2 too.
+        foreach ( [ 'original_image', 'source_image', 'animated_video', 'animated_video_poster' ] as $companion ) {
+            if ( ! empty( $metadata[ $companion ] ) && is_string( $metadata[ $companion ] ) ) {
+                $relative                       = $subdir . $metadata[ $companion ];
+                $files[ $base_dir . $relative ] = $path_prefix ? "{$path_prefix}/{$relative}" : $relative;
+            }
+        }
+
         // All generated sizes — this is where WooCommerce sizes appear.
         if ( ! empty( $metadata['sizes'] ) && is_array( $metadata['sizes'] ) ) {
-            // Sizes are stored relative to the original's directory (year/month subdir).
-            $subdir = trailingslashit( dirname( $attached ) );
-            // Normalise '.' subdir (root-level uploads, no year/month).
-            if ( $subdir === './' ) {
-                $subdir = '';
-            }
-
             foreach ( $metadata['sizes'] as $size_name => $size_data ) {
                 if ( empty( $size_data['file'] ) ) {
                     continue;

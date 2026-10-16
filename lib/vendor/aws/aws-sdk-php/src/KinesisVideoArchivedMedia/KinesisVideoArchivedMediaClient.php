@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\KinesisVideoArchivedMedia;
 
@@ -11,16 +11,154 @@ use R2Offload\Vendor\Aws\AwsClient;
 /**
  * This client is used to interact with the **Amazon Kinesis Video Streams Archived Media** service.
  * @method \R2Offload\Vendor\Aws\Result getClip(array $args = [])
+ * @phpstan-method \Aws\Result getClip(array{
+ *     StreamName?: string,
+ *     StreamARN?: string,
+ *     ClipFragmentSelector?: array{
+ *         FragmentSelectorType?: 'PRODUCER_TIMESTAMP'|'SERVER_TIMESTAMP',
+ *         TimestampRange?: array{StartTimestamp?: int|string|\DateTimeInterface, EndTimestamp?: int|string|\DateTimeInterface, ...},
+ *         ...,
+ *     },
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getClipAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise getClipAsync(array{
+ *     StreamName?: string,
+ *     StreamARN?: string,
+ *     ClipFragmentSelector?: array{
+ *         FragmentSelectorType?: 'PRODUCER_TIMESTAMP'|'SERVER_TIMESTAMP',
+ *         TimestampRange?: array{StartTimestamp?: int|string|\DateTimeInterface, EndTimestamp?: int|string|\DateTimeInterface, ...},
+ *         ...,
+ *     },
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\Aws\Result getDASHStreamingSessionURL(array $args = [])
+ * @phpstan-method \Aws\Result getDASHStreamingSessionURL(array{
+ *     StreamName?: string,
+ *     StreamARN?: string,
+ *     PlaybackMode?: 'LIVE'|'LIVE_REPLAY'|'ON_DEMAND',
+ *     DisplayFragmentTimestamp?: 'ALWAYS'|'NEVER',
+ *     DisplayFragmentNumber?: 'ALWAYS'|'NEVER',
+ *     DASHFragmentSelector?: array{
+ *         FragmentSelectorType?: 'PRODUCER_TIMESTAMP'|'SERVER_TIMESTAMP',
+ *         TimestampRange?: array{StartTimestamp?: int|string|\DateTimeInterface, EndTimestamp?: int|string|\DateTimeInterface, ...},
+ *         ...,
+ *     },
+ *     Expires?: int,
+ *     MaxManifestFragmentResults?: int,
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getDASHStreamingSessionURLAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise getDASHStreamingSessionURLAsync(array{
+ *     StreamName?: string,
+ *     StreamARN?: string,
+ *     PlaybackMode?: 'LIVE'|'LIVE_REPLAY'|'ON_DEMAND',
+ *     DisplayFragmentTimestamp?: 'ALWAYS'|'NEVER',
+ *     DisplayFragmentNumber?: 'ALWAYS'|'NEVER',
+ *     DASHFragmentSelector?: array{
+ *         FragmentSelectorType?: 'PRODUCER_TIMESTAMP'|'SERVER_TIMESTAMP',
+ *         TimestampRange?: array{StartTimestamp?: int|string|\DateTimeInterface, EndTimestamp?: int|string|\DateTimeInterface, ...},
+ *         ...,
+ *     },
+ *     Expires?: int,
+ *     MaxManifestFragmentResults?: int,
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\Aws\Result getHLSStreamingSessionURL(array $args = [])
+ * @phpstan-method \Aws\Result getHLSStreamingSessionURL(array{
+ *     StreamName?: string,
+ *     StreamARN?: string,
+ *     PlaybackMode?: 'LIVE'|'LIVE_REPLAY'|'ON_DEMAND',
+ *     HLSFragmentSelector?: array{
+ *         FragmentSelectorType?: 'PRODUCER_TIMESTAMP'|'SERVER_TIMESTAMP',
+ *         TimestampRange?: array{StartTimestamp?: int|string|\DateTimeInterface, EndTimestamp?: int|string|\DateTimeInterface, ...},
+ *         ...,
+ *     },
+ *     ContainerFormat?: 'FRAGMENTED_MP4'|'MPEG_TS',
+ *     DiscontinuityMode?: 'ALWAYS'|'NEVER'|'ON_DISCONTINUITY',
+ *     DisplayFragmentTimestamp?: 'ALWAYS'|'NEVER',
+ *     Expires?: int,
+ *     MaxMediaPlaylistFragmentResults?: int,
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getHLSStreamingSessionURLAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise getHLSStreamingSessionURLAsync(array{
+ *     StreamName?: string,
+ *     StreamARN?: string,
+ *     PlaybackMode?: 'LIVE'|'LIVE_REPLAY'|'ON_DEMAND',
+ *     HLSFragmentSelector?: array{
+ *         FragmentSelectorType?: 'PRODUCER_TIMESTAMP'|'SERVER_TIMESTAMP',
+ *         TimestampRange?: array{StartTimestamp?: int|string|\DateTimeInterface, EndTimestamp?: int|string|\DateTimeInterface, ...},
+ *         ...,
+ *     },
+ *     ContainerFormat?: 'FRAGMENTED_MP4'|'MPEG_TS',
+ *     DiscontinuityMode?: 'ALWAYS'|'NEVER'|'ON_DISCONTINUITY',
+ *     DisplayFragmentTimestamp?: 'ALWAYS'|'NEVER',
+ *     Expires?: int,
+ *     MaxMediaPlaylistFragmentResults?: int,
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\Aws\Result getImages(array $args = [])
+ * @phpstan-method \Aws\Result getImages(array{
+ *     StreamName?: string,
+ *     StreamARN?: string,
+ *     ImageSelectorType?: 'PRODUCER_TIMESTAMP'|'SERVER_TIMESTAMP',
+ *     StartTimestamp?: int|string|\DateTimeInterface,
+ *     EndTimestamp?: int|string|\DateTimeInterface,
+ *     SamplingInterval?: int,
+ *     Format?: 'JPEG'|'PNG',
+ *     FormatConfig?: array<string, string>,
+ *     WidthPixels?: int,
+ *     HeightPixels?: int,
+ *     MaxResults?: int,
+ *     NextToken?: string,
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getImagesAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise getImagesAsync(array{
+ *     StreamName?: string,
+ *     StreamARN?: string,
+ *     ImageSelectorType?: 'PRODUCER_TIMESTAMP'|'SERVER_TIMESTAMP',
+ *     StartTimestamp?: int|string|\DateTimeInterface,
+ *     EndTimestamp?: int|string|\DateTimeInterface,
+ *     SamplingInterval?: int,
+ *     Format?: 'JPEG'|'PNG',
+ *     FormatConfig?: array<string, string>,
+ *     WidthPixels?: int,
+ *     HeightPixels?: int,
+ *     MaxResults?: int,
+ *     NextToken?: string,
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\Aws\Result getMediaForFragmentList(array $args = [])
+ * @phpstan-method \Aws\Result getMediaForFragmentList(array{StreamName?: string, StreamARN?: string, Fragments?: list<string>, ...} $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise getMediaForFragmentListAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise getMediaForFragmentListAsync(array{StreamName?: string, StreamARN?: string, Fragments?: list<string>, ...} $args = [])
  * @method \R2Offload\Vendor\Aws\Result listFragments(array $args = [])
+ * @phpstan-method \Aws\Result listFragments(array{
+ *     StreamName?: string,
+ *     StreamARN?: string,
+ *     MaxResults?: int,
+ *     NextToken?: string,
+ *     FragmentSelector?: array{
+ *         FragmentSelectorType?: 'PRODUCER_TIMESTAMP'|'SERVER_TIMESTAMP',
+ *         TimestampRange?: array{StartTimestamp?: int|string|\DateTimeInterface, EndTimestamp?: int|string|\DateTimeInterface, ...},
+ *         ...,
+ *     },
+ *     ...,
+ * } $args = [])
  * @method \R2Offload\Vendor\GuzzleHttp\Promise\Promise listFragmentsAsync(array $args = [])
+ * @phpstan-method \GuzzleHttp\Promise\Promise listFragmentsAsync(array{
+ *     StreamName?: string,
+ *     StreamARN?: string,
+ *     MaxResults?: int,
+ *     NextToken?: string,
+ *     FragmentSelector?: array{
+ *         FragmentSelectorType?: 'PRODUCER_TIMESTAMP'|'SERVER_TIMESTAMP',
+ *         TimestampRange?: array{StartTimestamp?: int|string|\DateTimeInterface, EndTimestamp?: int|string|\DateTimeInterface, ...},
+ *         ...,
+ *     },
+ *     ...,
+ * } $args = [])
  */
 class KinesisVideoArchivedMediaClient extends AwsClient {}

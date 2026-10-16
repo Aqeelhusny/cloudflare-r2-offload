@@ -192,6 +192,12 @@ $url = attach( 40, '2024/08/photo.jpg' );
 $c   = '<img src="' . $url . '">';
 $t->assertEqual( '<img src="' . CDN_BASE . '/2024/08/photo.jpg">', make_rewriter()->rewrite_content( $c ), '4.2 Synced image rewritten' );
 
+// Content almost always embeds a sized variant; only the original maps to an ID.
+reset_url_state();
+attach( 42, '2024/08/hero.jpg' );
+$c = '<img src="' . LOCAL_BASE . '/2024/08/hero-300x200.jpg">';
+$t->assertEqual( '<img src="' . CDN_BASE . '/2024/08/hero-300x200.jpg">', make_rewriter()->rewrite_content( $c ), '4.2b Sized variant of synced image resolved + rewritten' );
+
 reset_url_state();
 $url = attach( 41, '2024/08/pending.jpg', false );
 $c   = '<img src="' . $url . '">';

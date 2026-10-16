@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\Api\Serializer;
 
@@ -83,7 +83,7 @@ abstract class AbstractRpcV2Serializer
         // Content-Type must not be set
         if ($operation['input'] !== null) {
             $body = $this->serialize($operation->getInput(), $commandArgs);
-            $headers['Content-Length'] = strlen($body);
+            $headers['Content-Length'] = (string) strlen($body);
         } else {
             unset($headers['Content-Type']);
         }

@@ -2,13 +2,13 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\Signature;
 
 use R2Offload\Vendor\Psr\Http\Message\RequestInterface;
 use R2Offload\Vendor\Psr\Http\Message\UriInterface;
-use Random\RandomException;
+use R2Offload\Vendor\Random\RandomException;
 
 final class DpopSignature
 {

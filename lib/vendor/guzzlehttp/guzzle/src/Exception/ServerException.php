@@ -2,13 +2,15 @@
 /**
  * @license MIT
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
+
+declare(strict_types=1);
 
 namespace R2Offload\Vendor\GuzzleHttp\Exception;
 
 /**
- * Exception when a server error is encountered (5xx codes)
+ * Exception thrown for HTTP responses with 5xx status codes.
  */
 class ServerException extends BadResponseException
 {

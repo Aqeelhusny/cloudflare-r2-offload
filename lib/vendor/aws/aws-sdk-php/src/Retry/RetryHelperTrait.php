@@ -2,7 +2,7 @@
 /**
  * @license Apache-2.0
  *
- * Modified by aqeelhusny on 12-June-2026 using {@see https://github.com/BrianHenryIE/strauss}.
+ * Modified by aqeelhusny on 07-October-2026 using {@see https://github.com/BrianHenryIE/strauss}.
  */
 namespace R2Offload\Vendor\Aws\Retry;
 
@@ -11,9 +11,14 @@ use R2Offload\Vendor\Aws\ResultInterface;
 
 trait RetryHelperTrait
 {
-    private function addRetryHeader($request, $retries, $delayBy)
+    private function addRetryHeader($request, $retries, $maxAttempts = null)
     {
-        return $request->withHeader('aws-sdk-retry', "{$retries}/{$delayBy}");
+        $header = ['attempt=' . ($retries + 1)];
+        if ($maxAttempts !== null) {
+            $header[] = 'max=' . $maxAttempts;
+        }
+
+        return $request->withHeader('amz-sdk-request', implode('; ', $header));
     }
 
 

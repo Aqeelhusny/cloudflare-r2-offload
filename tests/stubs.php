@@ -108,4 +108,9 @@ class Settings {
     public function set_excluded_mime_types( array $v ): void { $this->excluded_mimes = $v; }
 
     public function get_batch_size(): int { return 10; }
+
+    public bool $upload_on_save     = true;
+    public bool $background_offload = false;
+    public function get_upload_on_save(): bool { return $this->upload_on_save; }
+    public function get_background_offload(): bool { return $this->background_offload; }
 }

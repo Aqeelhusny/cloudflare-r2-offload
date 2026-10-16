@@ -91,7 +91,7 @@ class UploadHandler {
         // Always re-sync: WooCommerce may have added new sizes since the last sync.
         // AttachmentSync handles skipping individual files that are already on R2
         // (via the r2_offload_keys postmeta diff logic).
-        $result = $this->sync->sync_attachment( $attachment_id );
+        $result = $this->sync->sync_attachment( $attachment_id, $metadata );
 
         $this->logger->info( 'Attachment synced to R2 via wp_generate_attachment_metadata.', [
             'attachment_id' => $attachment_id,

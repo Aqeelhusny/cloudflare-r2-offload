@@ -11,9 +11,10 @@
  *
  * Required env:  R2_ACCOUNT_ID  R2_ACCESS_KEY_ID  R2_SECRET_ACCESS_KEY  R2_BUCKET
  * Optional env:  R2_CDN_URL  (e.g. https://cdn.example.com — verifies public serving)
+ * Values are read from env vars, else from .env.r2-test in the plugin root
+ * (KEY=value lines; gitignored via /.env* and never packaged).
  *
- * Run: R2_ACCOUNT_ID=... R2_ACCESS_KEY_ID=... R2_SECRET_ACCESS_KEY=... R2_BUCKET=... \
- *        php tests/test-r2-live.php
+ * Run: php tests/test-r2-live.php
  * Not part of `composer test` (needs network + credentials). Skips (exit 0) without env.
  */
 
@@ -48,6 +49,16 @@ namespace R2Offload {
 }
 
 namespace {
+
+    // Local creds file (gitignored, never packaged). Real env vars take precedence.
+    $env_file = __DIR__ . '/../.env.r2-test';
+    if ( is_readable( $env_file ) ) {
+        foreach ( (array) parse_ini_file( $env_file, false, INI_SCANNER_RAW ) as $k => $val ) {
+            if ( getenv( $k ) === false ) {
+                putenv( "{$k}={$val}" );
+            }
+        }
+    }
 
     foreach ( [ 'R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET' ] as $v ) {
         if ( ! getenv( $v ) ) {

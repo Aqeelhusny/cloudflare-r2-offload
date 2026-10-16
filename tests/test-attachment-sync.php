@@ -501,6 +501,30 @@ $result = make_sync( null, $r2 )->sync_attachment( 1102 );
 $t->assertEqual( 1, $result['uploaded'], '11.3 Only the original uploaded on re-sync' );
 $t->assertEqual( $orig_key, $r2->uploaded[0]['key'] ?? '', '11.3b Uploaded key is the original' );
 
+// 11.4 Finalize-style: stored metadata is stale (no sizes yet) — the filtered
+// metadata passed in must drive the file list (WP 7.1 /finalize saves AFTER the filter).
+reset_state(); cleanup_upload_dir();
+setup_scaled_attachment( 1103 );
+$fresh = $GLOBALS['__wp_postmeta'][1103]['_wp_attachment_metadata'];
+$GLOBALS['__wp_postmeta'][1103]['_wp_attachment_metadata'] = [];
+$r2     = new R2Client();
+$result = make_sync( null, $r2 )->sync_attachment( 1103, $fresh );
+$t->assertEqual( 3, $result['uploaded'], '11.4 passed-in metadata used: scaled + original + thumbnail uploaded' );
+
+// 11.5 WP 7.1 companions: animated GIF → video + poster, HEIC → source_image.
+reset_state(); cleanup_upload_dir();
+foreach ( [ 'anim.gif', 'anim.mp4', 'anim-poster.jpg', 'anim.heic' ] as $f ) {
+    create_test_file( "2024/03/{$f}" );
+}
+$GLOBALS['__wp_postmeta'][1104]['_wp_attached_file']       = '2024/03/anim.gif';
+$GLOBALS['__wp_postmeta'][1104]['_wp_attachment_metadata'] = [
+    'animated_video' => 'anim.mp4', 'animated_video_poster' => 'anim-poster.jpg', 'source_image' => 'anim.heic',
+];
+$r2     = new R2Client();
+$result = make_sync( null, $r2 )->sync_attachment( 1104 );
+$t->assertEqual( 4, $result['uploaded'], '11.5 gif + animated_video + poster + source_image uploaded' );
+$t->assertEqual( true, in_array( 'wp-content/uploads/2024/03/anim.mp4', array_column( $r2->uploaded, 'key' ), true ), '11.5b animated_video key on R2' );
+
 // =============================================================================
 // 12. UploadHandler: WP 7.1 client-side processing + WC gallery re-sync
 // =============================================================================
@@ -511,8 +535,10 @@ $t->section( '12. UploadHandler' );
 
 class SpySync extends AttachmentSync {
     public array $synced_ids = [];
-    public function sync_attachment( int $attachment_id ): array {
+    public array $metas      = [];
+    public function sync_attachment( int $attachment_id, ?array $metadata = null ): array {
         $this->synced_ids[] = $attachment_id;
+        $this->metas[]      = $metadata;
         return [ 'uploaded' => 1, 'failed' => 0, 'skipped' => 0, 'missing' => 0 ];
     }
 }
@@ -531,6 +557,7 @@ $t->assertEqual( [], $spy->synced_ids, '12.1 create pass skipped while sizes pen
 // 12.2 Finalize ('update') pass syncs.
 make_handler( $spy )->on_generate_metadata( [ 'sizes' => [] ], 1200, 'update' );
 $t->assertEqual( [ 1200 ], $spy->synced_ids, '12.2 update pass syncs' );
+$t->assertEqual( [ 'sizes' => [] ], $spy->metas[0], '12.2b filtered metadata is passed through to sync' );
 
 // 12.3 Server-side upload (no flag) syncs on create as before.
 unset( $_REQUEST['generate_sub_sizes'] );

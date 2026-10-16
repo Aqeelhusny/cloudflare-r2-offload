@@ -118,6 +118,9 @@ If you reset WordPress security keys in wp-config.php, your stored R2 secret key
 * Fixed: the full-resolution original of big images ("-scaled" uploads, metadata original_image) is now offloaded, restored and removed with the attachment.
 * Fixed: Delete Local only removes files whose R2 key is confirmed, protecting originals of attachments synced by earlier versions.
 * WooCommerce: REST product/variation saves re-sync gallery images too (variation galleries are core in WooCommerce 11.1).
+* Fixed: WordPress 7.1 /finalize uploads only offloaded the scaled file — sync now uses the metadata being finalized, so every client-made size is uploaded.
+* Fixed: WordPress 7.1 companion files (animated GIF video + poster, HEIC source image) are offloaded, so their CDN URLs no longer 404.
+* Fixed: release zip used Windows "\" path separators (broke installs on Linux hosts); packaging now uses forward slashes and verifies every entry.
 * Tested with WordPress 7.1 and WooCommerce 11.1.
 
 = 1.3.1 =

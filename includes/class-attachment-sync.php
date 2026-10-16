@@ -34,10 +34,13 @@ class AttachmentSync {
      * Upload all files for an attachment to R2 and update post meta.
      * On re-sync (WooCommerce size regeneration) only genuinely new files are uploaded.
      *
-     * @param int $attachment_id
+     * @param int        $attachment_id
+     * @param array|null $metadata Metadata being filtered. Pass it from wp_generate_attachment_metadata:
+     *                             WP 7.1's /finalize applies that filter BEFORE saving, so the stored
+     *                             copy still lacks the client-made sizes at that point.
      * @return array{ uploaded: int, failed: int, skipped: int, missing: int }
      */
-    public function sync_attachment( int $attachment_id ): array {
+    public function sync_attachment( int $attachment_id, ?array $metadata = null ): array {
         $sync_started = microtime( true );
         $result       = [ 'uploaded' => 0, 'failed' => 0, 'skipped' => 0, 'missing' => 0 ];
 
@@ -47,7 +50,7 @@ class AttachmentSync {
             return $result;
         }
 
-        $metadata = wp_get_attachment_metadata( $attachment_id ) ?: null;
+        $metadata = $metadata ?: ( wp_get_attachment_metadata( $attachment_id ) ?: null );
         $attached = get_post_meta( $attachment_id, '_wp_attached_file', true );
 
         if ( ! $attached ) {
@@ -615,11 +618,16 @@ class AttachmentSync {
             $subdir = '';
         }
 
-        // Big images: _wp_attached_file is "photo-scaled.jpg" and the full-res
-        // upload lives in original_image (WP 5.3+, also produced client-side in 7.1).
-        if ( ! empty( $metadata['original_image'] ) && is_string( $metadata['original_image'] ) ) {
-            $relative                       = $subdir . $metadata['original_image'];
-            $files[ $base_dir . $relative ] = $path_prefix ? "{$path_prefix}/{$relative}" : $relative;
+        // Companion files stored beside the attached file, outside 'sizes':
+        // original_image = full-res upload behind "photo-scaled.jpg" (WP 5.3+);
+        // WP 7.1 client-side processing adds source_image (e.g. HEIC original)
+        // and animated_video(+_poster) for GIFs — the image block builds their
+        // URLs from the (CDN-rewritten) source_url, so they must be on R2 too.
+        foreach ( [ 'original_image', 'source_image', 'animated_video', 'animated_video_poster' ] as $companion ) {
+            if ( ! empty( $metadata[ $companion ] ) && is_string( $metadata[ $companion ] ) ) {
+                $relative                       = $subdir . $metadata[ $companion ];
+                $files[ $base_dir . $relative ] = $path_prefix ? "{$path_prefix}/{$relative}" : $relative;
+            }
         }
 
         // All generated sizes — this is where WooCommerce sizes appear.

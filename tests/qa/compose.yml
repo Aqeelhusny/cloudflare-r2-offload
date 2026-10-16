@@ -1,0 +1,15 @@
+name: r2qa
+services:
+  db:
+    image: mariadb:11
+    environment: { MARIADB_ROOT_PASSWORD: root, MARIADB_DATABASE: wp, MARIADB_USER: wp, MARIADB_PASSWORD: wp }
+    healthcheck: { test: ["CMD", "healthcheck.sh", "--connect"], interval: 3s, retries: 30 }
+  wp:
+    image: wordpress:cli-php8.1
+    user: "33:33"
+    depends_on: { db: { condition: service_healthy } }
+    working_dir: /var/www/html
+    volumes: [ "site:/var/www/html" ]
+    ports: [ "8088:8088" ]
+    command: sh -c "until [ -f wp-settings.php ]; do sleep 2; done; exec php -d memory_limit=512M -d upload_max_filesize=64M -d post_max_size=64M -S 0.0.0.0:8088 -t /var/www/html /var/www/html/router.php"
+volumes: { site: {} }

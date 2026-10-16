@@ -219,6 +219,12 @@ class Plugin {
             }
         }
 
+        // 1.4.0: logs are live-only (see ErrorLogger). Earlier versions kept up to 14 days of
+        // log files under uploads/r2-offload-logs/ — remove them so nothing lingers.
+        if ( version_compare( $installed_version, '1.4.0', '<' ) ) {
+            ( new ErrorLogger() )->purge_all();
+        }
+
         update_option( 'r2_offload_db_version', R2_OFFLOAD_DB_VERSION );
     }
 

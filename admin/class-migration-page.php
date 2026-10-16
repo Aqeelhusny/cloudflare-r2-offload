@@ -1,11 +1,20 @@
 <?php
 namespace R2Offload\Admin;
 
-use R2Offload\Settings;
+use R2Offload\BatchProcessor;
 use R2Offload\ErrorLogger;
+use R2Offload\Migration;
+use R2Offload\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Migration screen: where media lives, one offload job, one activity log,
+ * collapsed tools and a typed-confirmation danger zone.
+ *
+ * Markup only — migration.js drives every job through the existing AJAX
+ * endpoints and refreshes the numbers rendered here.
+ */
 class MigrationPage {
 
     private Settings    $settings;
@@ -19,470 +28,161 @@ class MigrationPage {
     public function render(): void {
         global $wpdb;
 
-        $table = $wpdb->prefix . 'r2_offload_migration_queue';
-
-        $total      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
-        $complete   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status = %s", 'complete' ) );
-        $failed     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status = %s", 'failed' ) );
-        $pending    = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE status IN (%s,%s)", 'pending', 'processing' ) );
-        $paused     = (bool) get_option( 'r2_offload_migration_paused', false );
-
-        // Total WP attachments.
-        $all_attachments = (int) $wpdb->get_var(
-            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s", 'attachment' )
-        );
-        $synced_all = (int) $wpdb->get_var(
-            $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s", '_r2_offload_synced', '1' )
-        );
-
-        $recent_errors = $this->logger->get_recent_entries( 20 );
-        $recent_errors = array_filter( $recent_errors, fn( $e ) => $e['level'] === 'error' );
+        $queue   = $wpdb->prefix . 'r2_offload_migration_queue';
+        $failed  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$queue}` WHERE status = %s", 'failed' ) );
+        $total   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s", 'attachment' ) );
+        $synced  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s", '_r2_offload_synced', '1' ) );
+        $r2_only = Migration::count_r2_only();
+        $both    = max( 0, $synced - $r2_only );
+        $local   = max( 0, $total - $synced - $failed );
+        $next    = wp_next_scheduled( BatchProcessor::CRON_HOOK );
+        $n       = 'number_format_i18n';
         ?>
-        <div class="wrap r2-offload-wrap">
-            <h1><?php esc_html_e( 'R2 Offload — Migration', 'cloudflare-r2-offload' ); ?></h1>
-
-            <!-- Stats Bar -->
-            <div class="r2-stats-bar">
-                <div class="r2-stat">
-                    <span class="r2-stat-number" id="r2-stat-total-attachments"><?php echo esc_html( $all_attachments ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Total Attachments', 'cloudflare-r2-offload' ); ?></span>
-                </div>
-                <div class="r2-stat r2-stat--success">
-                    <span class="r2-stat-number" id="r2-stat-synced"><?php echo esc_html( $synced_all ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Synced to R2', 'cloudflare-r2-offload' ); ?></span>
-                </div>
-                <div class="r2-stat r2-stat--pending">
-                    <span class="r2-stat-number" id="r2-stat-pending"><?php echo esc_html( $pending ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'In Queue', 'cloudflare-r2-offload' ); ?></span>
-                </div>
-                <div class="r2-stat r2-stat--error">
-                    <span class="r2-stat-number" id="r2-stat-failed"><?php echo esc_html( $failed ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Failed', 'cloudflare-r2-offload' ); ?></span>
-                </div>
+        <div class="wrap r2ui r2ui--migration" data-bucket="<?php echo esc_attr( $this->settings->get_bucket() ); ?>">
+            <div class="r2ui-head">
+                <h1><?php esc_html_e( 'Migration', 'cloudflare-r2-offload' ); ?></h1>
             </div>
 
-            <!-- Progress Bar -->
-            <div class="r2-progress-wrap" id="r2-progress-wrap" style="<?php echo $total === 0 ? 'display:none;' : ''; ?>">
-                <div class="r2-progress-bar-track">
-                    <?php $pct = $total > 0 ? round( $complete / $total * 100 ) : 0; ?>
-                    <div class="r2-progress-bar-fill" id="r2-progress-fill" style="width:<?php echo esc_attr( $pct ); ?>%"></div>
-                </div>
-                <div class="r2-progress-label">
-                    <span id="r2-progress-text"><?php echo esc_html( "{$complete} / {$total}" ); ?></span>
-                    <span id="r2-progress-pct"><?php echo esc_html( $pct . '%' ); ?></span>
-                </div>
-            </div>
+            <?php if ( ! $this->settings->is_configured() ) : ?>
+                <div class="notice notice-warning inline"><p>
+                    <?php
+                    printf(
+                        /* translators: %s: settings page URL */
+                        wp_kses( __( 'Add your R2 credentials in <a href="%s">Settings</a> before offloading.', 'cloudflare-r2-offload' ), [ 'a' => [ 'href' => [] ] ] ),
+                        esc_url( admin_url( 'admin.php?page=r2-offload' ) )
+                    );
+                    ?>
+                </p></div>
+            <?php endif; ?>
 
-            <!-- Status message -->
-            <div id="r2-migration-message" class="r2-message" style="display:none;"></div>
-
-            <!-- Controls -->
-            <div class="r2-controls">
-                <button type="button" id="r2-btn-start" class="button button-primary">
-                    <?php esc_html_e( 'Start Migration', 'cloudflare-r2-offload' ); ?>
-                </button>
-                <button type="button" id="r2-btn-run-now" class="button"
-                        style="<?php echo $pending > 0 ? '' : 'display:none;'; ?>"
-                        title="<?php esc_attr_e( 'Manually process one batch now — use this if cron is not running.', 'cloudflare-r2-offload' ); ?>">
-                    <?php esc_html_e( 'Process Batch Now', 'cloudflare-r2-offload' ); ?>
-                </button>
-                <button type="button" id="r2-btn-run-all" class="button button-primary"
-                        style="<?php echo $pending > 0 ? '' : 'display:none;'; ?>"
-                        title="<?php esc_attr_e( 'Bypass WP-Cron and run batches continuously from your browser until the queue is empty. Keep this tab open.', 'cloudflare-r2-offload' ); ?>">
-                    <?php esc_html_e( '⚡ Run Until Complete', 'cloudflare-r2-offload' ); ?>
-                </button>
-                <button type="button" id="r2-btn-pause" class="button"
-                        style="<?php echo ( ! $paused && $pending > 0 ) ? '' : 'display:none;'; ?>">
-                    <?php esc_html_e( 'Pause', 'cloudflare-r2-offload' ); ?>
-                </button>
-                <button type="button" id="r2-btn-resume" class="button"
-                        style="<?php echo $paused ? '' : 'display:none;'; ?>">
-                    <?php esc_html_e( 'Resume', 'cloudflare-r2-offload' ); ?>
-                </button>
-                <button type="button" id="r2-btn-cancel" class="button button-link-delete"
-                        style="<?php echo $total > 0 ? '' : 'display:none;'; ?>">
-                    <?php esc_html_e( 'Cancel', 'cloudflare-r2-offload' ); ?>
-                </button>
-                <?php if ( $failed > 0 ) : ?>
-                <button type="button" id="r2-btn-retry" class="button">
-                    <?php esc_html_e( 'Retry Failed', 'cloudflare-r2-offload' ); ?>
-                </button>
-                <?php endif; ?>
-            </div>
-
-            <!-- Migration mini terminal -->
-            <div id="r2-mig-terminal-wrap" style="display:none;margin-top:16px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                    <span style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.05em;">Upload Output</span>
-                    <span id="r2-mig-terminal-status" style="font-size:11px;color:#888;"></span>
+            <!-- Where your media lives -->
+            <section class="r2ui-box" aria-labelledby="r2m-lib-h">
+                <div class="r2ui-box-head">
+                    <h2 id="r2m-lib-h"><?php esc_html_e( 'Where your media lives', 'cloudflare-r2-offload' ); ?></h2>
+                    <span class="r2ui-muted"><span data-stat="total"><?php echo esc_html( $n( $total ) ); ?></span> <?php esc_html_e( 'media items', 'cloudflare-r2-offload' ); ?></span>
                 </div>
-                <div id="r2-mig-terminal"
-                     style="background:#1a1a2e;color:#e0e0e0;font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.65;padding:12px 14px;border-radius:6px;height:260px;overflow-y:auto;border:1px solid #2d2d4e;">
-                    <div id="r2-mig-terminal-lines"></div>
-                    <span id="r2-mig-terminal-cursor" style="display:inline-block;width:8px;height:13px;background:#7c7cff;vertical-align:middle;animation:r2blink 1s step-end infinite;"></span>
+                <div class="r2ui-bar" role="img" id="r2m-bar" aria-label="">
+                    <span class="r2ui-bar-seg is-both" data-seg="both"></span>
+                    <span class="r2ui-bar-seg is-r2" data-seg="r2"></span>
+                    <span class="r2ui-bar-seg is-fail" data-seg="fail"></span>
                 </div>
-            </div>
+                <div class="r2ui-legend">
+                    <span><i class="is-both" aria-hidden="true"></i><b data-stat="both"><?php echo esc_html( $n( $both ) ); ?></b><em><?php esc_html_e( 'On R2 + this server', 'cloudflare-r2-offload' ); ?></em></span>
+                    <span><i class="is-r2" aria-hidden="true"></i><b data-stat="r2"><?php echo esc_html( $n( $r2_only ) ); ?></b><em><?php esc_html_e( 'R2 only (local freed)', 'cloudflare-r2-offload' ); ?></em></span>
+                    <span><i class="is-local" aria-hidden="true"></i><b data-stat="local"><?php echo esc_html( $n( $local ) ); ?></b><em><?php esc_html_e( 'Not on R2 yet', 'cloudflare-r2-offload' ); ?></em></span>
+                    <span><i class="is-fail" aria-hidden="true"></i><b data-stat="failed"><?php echo esc_html( $n( $failed ) ); ?></b><em><?php esc_html_e( 'Failed', 'cloudflare-r2-offload' ); ?></em></span>
+                </div>
+            </section>
 
-            <hr style="margin:32px 0 24px;">
-
-            <!-- ============================================================
-                 Feature: Background Offload Queue
-                 ============================================================ -->
-            <?php if ( $this->settings->get_background_offload() ) : ?>
-            <h2><?php esc_html_e( 'Background Offload Queue', 'cloudflare-r2-offload' ); ?></h2>
-            <p class="description">
-                <?php esc_html_e( 'New media uploads are queued and offloaded to R2 in the background via WP-Cron. This prevents upload requests from blocking while waiting for R2 transfers.', 'cloudflare-r2-offload' ); ?>
-            </p>
-
-            <div class="r2-stats-bar" style="margin:12px 0 16px;">
-                <div class="r2-stat r2-stat--pending">
-                    <span class="r2-stat-number" id="r2-bg-queue-pending"><?php echo esc_html( $pending ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Queued', 'cloudflare-r2-offload' ); ?></span>
+            <!-- Offload: one job, one primary action -->
+            <section class="r2ui-box" aria-labelledby="r2m-off-h" id="r2m-offload" data-state="idle">
+                <div class="r2ui-box-head r2ui-box-head--top">
+                    <div>
+                        <h2 id="r2m-off-h"><?php esc_html_e( 'Offload media to R2', 'cloudflare-r2-offload' ); ?></h2>
+                        <p class="r2ui-muted" id="r2m-off-help"></p>
+                    </div>
+                    <div class="r2ui-btns">
+                        <button type="button" class="button button-primary" id="r2m-start"><?php esc_html_e( 'Offload', 'cloudflare-r2-offload' ); ?></button>
+                        <button type="button" class="button" id="r2m-pause" hidden><?php esc_html_e( 'Pause', 'cloudflare-r2-offload' ); ?></button>
+                        <button type="button" class="button button-primary" id="r2m-resume" hidden><?php esc_html_e( 'Resume', 'cloudflare-r2-offload' ); ?></button>
+                        <button type="button" class="button-link r2ui-danger-link" id="r2m-cancel" hidden><?php esc_html_e( 'Cancel', 'cloudflare-r2-offload' ); ?></button>
+                    </div>
                 </div>
-                <div class="r2-stat r2-stat--success">
-                    <span class="r2-stat-number" id="r2-bg-queue-synced"><?php echo esc_html( $synced_all ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Synced', 'cloudflare-r2-offload' ); ?></span>
+                <div class="r2ui-progress" id="r2m-progress" hidden>
+                    <div class="r2ui-progress-track" role="progressbar" aria-label="<?php esc_attr_e( 'Offload progress', 'cloudflare-r2-offload' ); ?>" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <span class="r2ui-progress-fill"></span>
+                    </div>
+                    <div class="r2ui-progress-meta"><span data-progress="count"></span><span data-progress="eta"></span></div>
                 </div>
-                <div class="r2-stat r2-stat--error">
-                    <span class="r2-stat-number" id="r2-bg-queue-failed"><?php echo esc_html( $failed ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Failed', 'cloudflare-r2-offload' ); ?></span>
-                </div>
-                <div class="r2-stat">
-                    <span class="r2-stat-number" id="r2-bg-queue-next-cron">
-                        <?php
-                        $next = wp_next_scheduled( 'r2_offload_process_batch' );
-                        echo $next ? esc_html( human_time_diff( time(), $next ) ) : '—';
-                        ?>
+                <label class="r2ui-check">
+                    <input type="checkbox" id="r2m-fast" checked>
+                    <span><b><?php esc_html_e( 'Go faster while this page is open', 'cloudflare-r2-offload' ); ?></b> — <?php esc_html_e( 'processes batches directly from this tab instead of waiting for WP-Cron. Safe to close any time; the rest continues in the background.', 'cloudflare-r2-offload' ); ?></span>
+                </label>
+                <p class="r2ui-muted r2ui-small" id="r2m-cron-note">
+                    <?php
+                    echo $next
+                        /* translators: %s: human time difference, e.g. "2 mins" */
+                        ? esc_html( sprintf( __( 'Next background run in %s.', 'cloudflare-r2-offload' ), human_time_diff( time(), max( time(), (int) $next ) ) ) )
+                        : esc_html__( 'No background run scheduled.', 'cloudflare-r2-offload' );
+                    ?>
+                </p>
+                <div class="r2ui-alert" id="r2m-failed" hidden>
+                    <span><b data-stat="failed"><?php echo esc_html( $n( $failed ) ); ?></b> <?php esc_html_e( 'items failed after 3 attempts — usually a missing local file or a network error. Turn on Live logs below and retry to see why.', 'cloudflare-r2-offload' ); ?></span>
+                    <span class="r2ui-btns">
+                        <button type="button" class="button-link" id="r2m-retry"><?php esc_html_e( 'Retry failed', 'cloudflare-r2-offload' ); ?></button>
                     </span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Next Batch', 'cloudflare-r2-offload' ); ?></span>
                 </div>
-            </div>
+                <div class="r2ui-message" id="r2m-message" role="status" hidden></div>
+            </section>
 
-            <div id="r2-bg-queue-message" class="r2-message" style="display:none;"></div>
+            <?php StatsPage::render_live_logs(); ?>
 
-            <!-- Background Queue Logs — terminal style -->
-            <div id="r2-bg-logs-wrap" style="margin-top:16px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                    <div style="display:flex;align-items:center;gap:6px;">
-                        <span style="font-size:13px;font-weight:600;color:#1d2327;"><?php esc_html_e( 'Recent Activity', 'cloudflare-r2-offload' ); ?></span>
-                        <button type="button" id="r2-bg-refresh-logs" class="button button-small"><?php esc_html_e( 'Refresh', 'cloudflare-r2-offload' ); ?></button>
-                        <button type="button" id="r2-bg-clear-logs" class="button button-small" style="color:#d63638;"><?php esc_html_e( 'Clear Logs', 'cloudflare-r2-offload' ); ?></button>
+            <!-- Less common tools -->
+            <h2 class="r2ui-section-h"><?php esc_html_e( 'Tools', 'cloudflare-r2-offload' ); ?></h2>
+
+            <details class="r2ui-tool" data-job="validate">
+                <summary><?php esc_html_e( 'Already copied your uploads to R2 yourself?', 'cloudflare-r2-offload' ); ?> <span><?php esc_html_e( 'Claim them without re-uploading', 'cloudflare-r2-offload' ); ?></span></summary>
+                <div class="r2ui-tool-body">
+                    <p class="r2ui-muted"><?php esc_html_e( 'For uploads you copied with rclone or Wrangler. Each unsynced item is checked in the bucket and marked as synced only if every size is found. Safe to run alongside an offload.', 'cloudflare-r2-offload' ); ?></p>
+                    <div class="r2ui-btns">
+                        <button type="button" class="button" id="r2m-diagnose"><?php esc_html_e( 'Check one item first', 'cloudflare-r2-offload' ); ?></button>
+                        <button type="button" class="button" id="r2m-validate"><?php esc_html_e( 'Claim existing files', 'cloudflare-r2-offload' ); ?></button>
+                        <button type="button" class="button-link r2ui-danger-link" id="r2m-validate-cancel" hidden><?php esc_html_e( 'Cancel', 'cloudflare-r2-offload' ); ?></button>
                     </div>
-                    <span id="r2-bg-log-count" style="font-size:11px;color:#888;"></span>
+                    <pre class="r2ui-pre" id="r2m-diagnose-out" hidden></pre>
+                    <div class="r2ui-job" data-job-status hidden></div>
                 </div>
-                <div id="r2-bg-terminal"
-                     style="background:#1a1a2e;color:#e0e0e0;font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.65;padding:12px 14px;border-radius:6px;height:300px;overflow-y:auto;border:1px solid #2d2d4e;">
-                    <div id="r2-bg-terminal-lines">
+            </details>
+
+            <details class="r2ui-tool" data-job="restore">
+                <summary><?php esc_html_e( 'Restore files to this server', 'cloudflare-r2-offload' ); ?> <span><b data-stat="r2"><?php echo esc_html( $n( $r2_only ) ); ?></b> <?php esc_html_e( 'items exist only on R2', 'cloudflare-r2-offload' ); ?></span></summary>
+                <div class="r2ui-tool-body">
+                    <p class="r2ui-muted"><?php esc_html_e( 'Downloads files back from R2. Items stay synced, so media keeps serving from your CDN.', 'cloudflare-r2-offload' ); ?></p>
+                    <fieldset class="r2ui-radios">
+                        <legend><?php esc_html_e( 'Restore', 'cloudflare-r2-offload' ); ?></legend>
+                        <label><input type="radio" name="r2m_restore" value="1" checked> <?php esc_html_e( 'Only items missing locally', 'cloudflare-r2-offload' ); ?> (<span data-stat="r2"><?php echo esc_html( $n( $r2_only ) ); ?></span>)</label>
+                        <label><input type="radio" name="r2m_restore" value="0"> <?php esc_html_e( 'Everything on R2, overwriting local copies', 'cloudflare-r2-offload' ); ?> (<span data-stat="synced"><?php echo esc_html( $n( $synced ) ); ?></span>)</label>
+                    </fieldset>
+                    <div><button type="button" class="button" id="r2m-restore"><?php esc_html_e( 'Start restore', 'cloudflare-r2-offload' ); ?></button></div>
+                    <div class="r2ui-job" data-job-status hidden></div>
+                </div>
+            </details>
+
+            <details class="r2ui-tool" data-job="local_delete">
+                <summary><?php esc_html_e( 'Free up server space', 'cloudflare-r2-offload' ); ?> <span><b data-stat="both"><?php echo esc_html( $n( $both ) ); ?></b> <?php esc_html_e( "items have a local copy that's also on R2", 'cloudflare-r2-offload' ); ?></span></summary>
+                <div class="r2ui-tool-body">
+                    <p class="r2ui-muted"><?php echo wp_kses( __( 'Deletes local copies only where every file is confirmed on R2. You can bring them back with <b>Restore files to this server</b>.', 'cloudflare-r2-offload' ), [ 'b' => [] ] ); ?></p>
+                    <div><button type="button" class="button r2ui-btn-danger" id="r2m-local-delete"><?php esc_html_e( 'Delete local copies', 'cloudflare-r2-offload' ); ?></button></div>
+                    <div class="r2ui-job" data-job-status hidden></div>
+                </div>
+            </details>
+
+            <!-- Danger zone -->
+            <section class="r2ui-box r2ui-box--danger" aria-labelledby="r2m-dz-h" data-job="desync">
+                <h2 id="r2m-dz-h"><?php esc_html_e( 'Danger zone', 'cloudflare-r2-offload' ); ?></h2>
+                <div class="r2ui-box-head r2ui-box-head--top">
+                    <div>
+                        <span class="r2ui-row-title"><?php esc_html_e( 'Move everything back and disconnect from R2', 'cloudflare-r2-offload' ); ?></span>
+                        <span class="r2ui-help"><?php esc_html_e( 'Restores every file to this server, verifies each one, then deletes them from the bucket and clears sync status. Media will be served from this server only.', 'cloudflare-r2-offload' ); ?></span>
+                    </div>
+                    <button type="button" class="button r2ui-btn-danger" id="r2m-dz-open" aria-expanded="false" aria-controls="r2m-dz-confirm"><?php esc_html_e( 'Disconnect from R2…', 'cloudflare-r2-offload' ); ?></button>
+                </div>
+                <div class="r2ui-confirm" id="r2m-dz-confirm" hidden>
+                    <label for="r2m-dz-input">
                         <?php
-                        $bg_logs = $this->logger->get_recent_entries( 50 );
-                        if ( empty( $bg_logs ) ) :
+                        /* translators: %s: bucket name */
+                        echo wp_kses( sprintf( __( 'Type the bucket name %s to confirm', 'cloudflare-r2-offload' ), '<code>' . esc_html( $this->settings->get_bucket() ) . '</code>' ), [ 'code' => [] ] );
                         ?>
-                        <span style="color:#555;font-style:italic;"><?php esc_html_e( 'No log entries yet.', 'cloudflare-r2-offload' ); ?></span>
-                        <?php else :
-                            foreach ( array_reverse( $bg_logs ) as $entry ) :
-                                $level   = $entry['level']   ?? 'info';
-                                $ts      = $entry['timestamp'] ?? '';
-                                $msg     = $entry['message']  ?? '';
-                                $ctx     = $entry['context']  ?? [];
-                                $ts_short = strlen( $ts ) >= 19 ? substr( $ts, 11, 8 ) : $ts;
-                                $color = match ( $level ) {
-                                    'error'   => '#ff6b6b',
-                                    'warning' => '#ffaa44',
-                                    'debug'   => '#666',
-                                    default   => '#4ec94e',
-                                };
-                                $label = match ( $level ) {
-                                    'error'   => 'ERR ',
-                                    'warning' => 'WARN',
-                                    'debug'   => 'DBG ',
-                                    default   => 'INFO',
-                                };
-                                $ctx_empty = empty( $ctx ) || ( is_array( $ctx ) && count( $ctx ) === 0 );
-                                $ctx_str   = $ctx_empty ? '' : '  ' . wp_json_encode( $ctx );
-                        ?>
-                        <div style="color:<?php echo esc_attr( $color ); ?>;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                            <span style="color:#555;user-select:none;">[<?php echo esc_html( $ts_short ); ?>]</span>
-                            <span style="opacity:.7;"><?php echo esc_html( $label ); ?></span>
-                            &nbsp;<?php echo esc_html( $msg ); ?>
-                            <?php if ( ! $ctx_empty ) : ?><span style="color:#888;font-size:11px;"><?php echo esc_html( $ctx_str ); ?></span><?php endif; ?>
-                        </div>
-                        <?php endforeach; endif; ?>
+                    </label>
+                    <div class="r2ui-btns">
+                        <input type="text" id="r2m-dz-input" autocomplete="off" spellcheck="false">
+                        <button type="button" class="button r2ui-btn-danger-solid" id="r2m-desync" disabled><?php esc_html_e( 'Restore & remove from R2', 'cloudflare-r2-offload' ); ?></button>
+                        <button type="button" class="button-link" id="r2m-dz-close"><?php esc_html_e( 'Keep R2', 'cloudflare-r2-offload' ); ?></button>
                     </div>
                 </div>
-            </div>
-
-            <hr style="margin:32px 0 24px;">
-            <?php endif; ?>
-
-            <!-- ============================================================
-                 Feature: Validate Pre-Uploaded Files
-                 ============================================================ -->
-            <h2><?php esc_html_e( 'Validate Pre-Uploaded Files', 'cloudflare-r2-offload' ); ?></h2>
-            <p class="description">
-                <?php esc_html_e( 'If you manually uploaded your wp-content/uploads folder to R2 (e.g. via rclone or Wrangler) before running migration, use this to claim those files. Each attachment is checked against R2 — if all its files are already there, WordPress is updated to treat it as synced and migration will skip it entirely.', 'cloudflare-r2-offload' ); ?>
-            </p>
-            <p class="description">
-                <?php esc_html_e( 'Safe to run alongside an active migration — they use separate queues and locks and will not conflict.', 'cloudflare-r2-offload' ); ?>
-            </p>
-            <?php
-            $val_counts = $this->bulk_queue_counts( 'validate' );
-            $val_done   = $val_counts['complete'];
-            $val_failed = $val_counts['failed'];
-            $val_total  = $val_counts['pending'] + $val_counts['processing'] + $val_done + $val_failed;
-            ?>
-            <div class="r2-stats-bar" style="margin:12px 0 16px;">
-                <div class="r2-stat">
-                    <span class="r2-stat-number" id="r2-val-stat-unsynced"><?php echo esc_html( $all_attachments - $synced_all ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Not Yet Synced', 'cloudflare-r2-offload' ); ?></span>
-                </div>
-                <div class="r2-stat r2-stat--success">
-                    <span class="r2-stat-number" id="r2-val-stat-claimed">—</span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Claimed from R2', 'cloudflare-r2-offload' ); ?></span>
-                </div>
-                <div class="r2-stat r2-stat--error">
-                    <span class="r2-stat-number" id="r2-val-stat-failed"><?php echo esc_html( $val_failed ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Not Found in R2', 'cloudflare-r2-offload' ); ?></span>
-                </div>
-            </div>
-            <?php if ( $val_total > 0 ) : ?>
-            <div class="r2-progress-wrap" id="r2-val-progress-wrap">
-                <div class="r2-progress-bar-track">
-                    <?php $val_pct = $val_total > 0 ? round( ( $val_done + $val_failed ) / $val_total * 100 ) : 0; ?>
-                    <div class="r2-progress-bar-fill" id="r2-val-fill" style="width:<?php echo esc_attr( $val_pct ); ?>%;background:#2271b1;"></div>
-                </div>
-                <div class="r2-progress-label">
-                    <span id="r2-val-text"><?php echo esc_html( ( $val_done + $val_failed ) . ' / ' . $val_total ); ?></span>
-                    <span id="r2-val-pct"><?php echo esc_html( $val_pct . '%' ); ?></span>
-                </div>
-            </div>
-            <?php else : ?>
-            <div class="r2-progress-wrap" id="r2-val-progress-wrap" style="display:none;">
-                <div class="r2-progress-bar-track">
-                    <div class="r2-progress-bar-fill" id="r2-val-fill" style="width:0%;background:#2271b1;"></div>
-                </div>
-                <div class="r2-progress-label">
-                    <span id="r2-val-text">0 / 0</span>
-                    <span id="r2-val-pct">0%</span>
-                </div>
-            </div>
-            <?php endif; ?>
-            <div id="r2-val-message" class="r2-message" style="display:none;"></div>
-            <div class="r2-controls">
-                <button type="button" id="r2-btn-validate" class="button button-primary">
-                    <?php esc_html_e( 'Validate Pre-Uploaded Files', 'cloudflare-r2-offload' ); ?>
-                </button>
-                <button type="button" id="r2-btn-validate-cancel" class="button button-link-delete"
-                        style="<?php echo $val_total > 0 ? '' : 'display:none;'; ?>">
-                    <?php esc_html_e( 'Cancel', 'cloudflare-r2-offload' ); ?>
-                </button>
-                <button type="button" id="r2-btn-diagnose" class="button" style="margin-left:8px;"
-                        title="<?php esc_attr_e( 'Check one sample attachment to confirm the plugin\'s expected R2 path matches where you uploaded your files.', 'cloudflare-r2-offload' ); ?>">
-                    <?php esc_html_e( 'Check Path', 'cloudflare-r2-offload' ); ?>
-                </button>
-                <p class="description" style="margin:6px 0 0;">
-                    <?php esc_html_e( 'Before running validation, click "Check Path" to confirm your manual upload path matches what the plugin expects. Attachments with missing files in R2 are marked "Not Found in R2" — migration will upload those normally.', 'cloudflare-r2-offload' ); ?>
-                </p>
-            </div>
-
-            <!-- Validate mini terminal -->
-            <div id="r2-val-terminal-wrap" style="display:none;margin-top:16px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                    <span style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.05em;">Validation Output</span>
-                    <span id="r2-val-terminal-status" style="font-size:11px;color:#888;"></span>
-                </div>
-                <div id="r2-val-terminal"
-                     style="background:#1a1a2e;color:#e0e0e0;font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.65;padding:12px 14px;border-radius:6px;height:280px;overflow-y:auto;border:1px solid #2d2d4e;">
-                    <div id="r2-val-terminal-lines"></div>
-                    <span id="r2-val-terminal-cursor" style="display:inline-block;width:8px;height:13px;background:#7c7cff;vertical-align:middle;animation:r2blink 1s step-end infinite;"></span>
-                </div>
-            </div>
-            <style>
-            @keyframes r2blink { 0%,100%{opacity:1} 50%{opacity:0} }
-            </style>
-
-            <div id="r2-diagnose-result" style="display:none;margin-top:12px;padding:12px;background:#f6f7f7;border:1px solid #ddd;border-radius:4px;font-family:monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-all;"></div>
-
-            <hr style="margin:32px 0 24px;">
-
-            <!-- ============================================================
-                 Feature: Restore from R2 → Server
-                 ============================================================ -->
-            <h2><?php esc_html_e( 'Restore Files from R2 to Server', 'cloudflare-r2-offload' ); ?></h2>
-            <p class="description">
-                <?php esc_html_e( 'Download files from R2 back to the local server. Use this if you previously deleted local files and need to restore them, or if you want to migrate away from R2.', 'cloudflare-r2-offload' ); ?>
-            </p>
-            <?php
-            $r2only_count = (int) $wpdb->get_var(
-                $wpdb->prepare(
-                    "SELECT COUNT(DISTINCT pm.post_id)
-                     FROM {$wpdb->postmeta} pm
-                     WHERE pm.meta_key = %s AND pm.meta_value = %s
-                       AND EXISTS (
-                           SELECT 1 FROM {$wpdb->postmeta} pm2
-                           WHERE pm2.post_id = pm.post_id
-                             AND pm2.meta_key = %s AND pm2.meta_value = %s
-                       )",
-                    '_r2_offload_synced', '1',
-                    '_r2_offload_local_deleted', '1'
-                )
-            );
-            ?>
-            <div class="r2-stats-bar" style="margin:12px 0 16px;">
-                <div class="r2-stat r2-stat--r2only">
-                    <span class="r2-stat-number"><?php echo esc_html( $r2only_count ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'R2-only (local deleted)', 'cloudflare-r2-offload' ); ?></span>
-                </div>
-            </div>
-            <div id="r2-restore-message" class="r2-message" style="display:none;"></div>
-            <div class="r2-progress-wrap" id="r2-restore-progress-wrap" style="display:none;">
-                <div class="r2-progress-bar-track">
-                    <div class="r2-progress-bar-fill r2-progress-bar-fill--restore" id="r2-restore-fill" style="width:0%;"></div>
-                </div>
-                <div class="r2-progress-label">
-                    <span id="r2-restore-text">0 / 0</span>
-                    <span id="r2-restore-pct">0%</span>
-                </div>
-            </div>
-            <div class="r2-controls">
-                <button type="button" id="r2-btn-restore-missing" class="button button-primary">
-                    <?php esc_html_e( 'Restore Missing Files from R2', 'cloudflare-r2-offload' ); ?>
-                </button>
-                <button type="button" id="r2-btn-restore-all" class="button">
-                    <?php esc_html_e( 'Restore ALL Synced Files from R2', 'cloudflare-r2-offload' ); ?>
-                </button>
-                <p class="description" style="margin:6px 0 0;">
-                    <?php esc_html_e( '"Restore Missing" only downloads files that are R2-only. "Restore ALL" re-downloads every synced file regardless.', 'cloudflare-r2-offload' ); ?>
-                </p>
-            </div>
-
-            <hr style="margin:32px 0 24px;">
-
-            <!-- ============================================================
-                 Feature: Auto-delete local files (bulk)
-                 ============================================================ -->
-            <h2><?php esc_html_e( 'Delete Local Files (Free Up Server Space)', 'cloudflare-r2-offload' ); ?></h2>
-            <p class="description">
-                <?php esc_html_e( 'Delete local copies of all files that are already synced to R2. Use this after a bulk migration to reclaim server disk space. Files remain fully accessible via R2/CDN.', 'cloudflare-r2-offload' ); ?>
-            </p>
-            <p class="description" style="color:#d63638;font-weight:600;">
-                <?php esc_html_e( 'Warning: This is irreversible without using the Restore feature above. Ensure your R2 connection is stable before proceeding.', 'cloudflare-r2-offload' ); ?>
-            </p>
-            <?php
-            $del_counts       = $this->bulk_queue_counts( 'local_delete' );
-            $local_del_done   = $del_counts['complete'];
-            $local_del_failed = $del_counts['failed'];
-            $local_del_total  = $del_counts['pending'] + $del_counts['processing'] + $local_del_done + $local_del_failed;
-            ?>
-            <?php if ( $local_del_total > 0 ) : ?>
-            <div class="r2-progress-wrap" id="r2-local-del-progress-wrap">
-                <div class="r2-progress-bar-track">
-                    <?php $del_pct = $local_del_total > 0 ? round( $local_del_done / $local_del_total * 100 ) : 0; ?>
-                    <div class="r2-progress-bar-fill r2-progress-bar-fill--delete" id="r2-local-del-fill"
-                         style="width:<?php echo esc_attr( $del_pct ); ?>%;"></div>
-                </div>
-                <div class="r2-progress-label">
-                    <span id="r2-local-del-text"><?php echo esc_html( "{$local_del_done} / {$local_del_total}" ); ?></span>
-                    <span id="r2-local-del-pct"><?php echo esc_html( $del_pct . '%' ); ?></span>
-                </div>
-            </div>
-            <?php else : ?>
-            <div class="r2-progress-wrap" id="r2-local-del-progress-wrap" style="display:none;">
-                <div class="r2-progress-bar-track">
-                    <div class="r2-progress-bar-fill r2-progress-bar-fill--delete" id="r2-local-del-fill" style="width:0%;"></div>
-                </div>
-                <div class="r2-progress-label">
-                    <span id="r2-local-del-text">0 / 0</span>
-                    <span id="r2-local-del-pct">0%</span>
-                </div>
-            </div>
-            <?php endif; ?>
-            <div id="r2-local-del-message" class="r2-message" style="display:none;"></div>
-            <div class="r2-controls">
-                <button type="button" id="r2-btn-local-delete" class="button button-primary" style="background:#d63638;border-color:#d63638;">
-                    <?php esc_html_e( 'Delete Local Files for All Synced Attachments', 'cloudflare-r2-offload' ); ?>
-                </button>
-            </div>
-
-            <hr style="margin:32px 0 24px;">
-
-            <!-- ============================================================
-                 Feature: Restore & Desync — restore from R2, verify, delete from R2
-                 ============================================================ -->
-            <h2><?php esc_html_e( 'Restore & Remove from R2', 'cloudflare-r2-offload' ); ?></h2>
-            <p class="description">
-                <?php esc_html_e( 'Download all synced files from R2 back to the server, verify each file exists locally, then delete the copies from R2 and remove all sync metadata. Use this to fully disconnect from R2.', 'cloudflare-r2-offload' ); ?>
-            </p>
-            <p class="description" style="color:#d63638;font-weight:600;">
-                <?php esc_html_e( 'Warning: This will remove all files from your R2 bucket and clear sync status. Your files will only exist on the local server afterwards.', 'cloudflare-r2-offload' ); ?>
-            </p>
-            <div id="r2-desync-message" class="r2-message" style="display:none;"></div>
-            <div class="r2-progress-wrap" id="r2-desync-progress-wrap" style="display:none;">
-                <div class="r2-progress-bar-track">
-                    <div class="r2-progress-bar-fill r2-progress-bar-fill--delete" id="r2-desync-fill" style="width:0%;"></div>
-                </div>
-                <div class="r2-progress-label">
-                    <span id="r2-desync-text">0 / 0</span>
-                    <span id="r2-desync-pct">0%</span>
-                </div>
-            </div>
-            <div class="r2-controls">
-                <button type="button" id="r2-btn-desync" class="button button-primary" style="background:#d63638;border-color:#d63638;">
-                    <?php esc_html_e( 'Restore & Remove All from R2', 'cloudflare-r2-offload' ); ?>
-                </button>
-            </div>
-
-            <hr style="margin:32px 0 24px;">
-
-            <!-- Error log -->
-            <?php if ( ! empty( $recent_errors ) ) : ?>
-            <h2><?php esc_html_e( 'Recent Errors', 'cloudflare-r2-offload' ); ?></h2>
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th><?php esc_html_e( 'Time', 'cloudflare-r2-offload' ); ?></th>
-                        <th><?php esc_html_e( 'Message', 'cloudflare-r2-offload' ); ?></th>
-                        <th><?php esc_html_e( 'Context', 'cloudflare-r2-offload' ); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ( $recent_errors as $entry ) : ?>
-                    <tr>
-                        <td><?php echo esc_html( $entry['timestamp'] ?? '' ); ?></td>
-                        <td><?php echo esc_html( $entry['message'] ?? '' ); ?></td>
-                        <td><code><?php echo esc_html( wp_json_encode( $entry['context'] ?? [] ) ); ?></code></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-            <?php endif; ?>
+                <div class="r2ui-job" data-job-status hidden></div>
+            </section>
         </div>
         <?php
-    }
-
-    private function bulk_queue_counts( string $job_type ): array {
-        global $wpdb;
-        $table    = $wpdb->prefix . 'r2_offload_bulk_queue';
-        $defaults = [ 'pending' => 0, 'processing' => 0, 'complete' => 0, 'failed' => 0 ];
-
-        $exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
-        if ( ! $exists ) {
-            return $defaults;
-        }
-
-        $rows = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT status, COUNT(*) as cnt FROM `{$table}` WHERE job_type = %s GROUP BY status",
-                $job_type
-            ),
-            OBJECT_K
-        );
-
-        foreach ( $defaults as $status => $_ ) {
-            if ( isset( $rows[ $status ] ) ) {
-                $defaults[ $status ] = (int) $rows[ $status ]->cnt;
-            }
-        }
-
-        return $defaults;
     }
 }

@@ -10,7 +10,7 @@ and `.env.r2-test` in the plugin root (see `tests/test-r2-live.php`). Use a **te
 everything is written under a unique `qa-<timestamp>/` prefix and deleted at the end.
 
 ```bash
-bash tests/qa/setup.sh            # PHP 8.1 + WP 7.1 + WC 11.1.1 + plugin from dist zip → http://localhost:8088 (admin/admin)
+bash tests/qa/setup.sh            # PHP 8.1 + WP 7.1.3 + WC 11.2.1 + plugin from dist zip → http://localhost:8088 (admin/admin)
 php  tests/qa/qa.php              # full scenario suite (A–R, P)
 QA_ONLY=DJ php tests/qa/qa.php    # subset; A,B,C always run (they set up credentials + shared media)
 php  tests/qa/mutate.php          # inject each bug in mutations.php into the installed plugin, expect red

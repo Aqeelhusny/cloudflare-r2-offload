@@ -19,7 +19,7 @@ WordPress plugin that offloads your entire media library to **Cloudflare R2** ob
 - **Optimized multipart upload** — files under 5 MB use a single request; larger files use AWS SDK `MultipartUploader` with parallel part uploads and automatic retry (up to 3 attempts with exponential backoff)
 - **Advanced file manager** — browse, filter, copy URLs, and delete objects directly in the R2 bucket (enable/disable toggle)
 - **Upload stats dashboard** — 30-day chart of uploads, bytes offloaded, and failures
-- **Structured logging** — JSON-lines log files using WordPress timezone with in-admin log viewer and one-click delete
+- **Live logs, never stored** — a switch on the Stats and Migration screens streams activity while it is on; switching it off deletes everything shown
 - **Secure credential storage** — secret key encrypted at rest with AES-256-CBC; never echoed back to the browser
 - **Media Library integration** — R2 Status column, per-attachment row actions, and bulk actions directly in the WordPress Media Library
 - **Live dashboard** — migration page auto-refreshes stats every 10 seconds; all operations show real-time progress with polling
@@ -248,8 +248,6 @@ Once enabled, the **File Manager** submenu appears with:
 - Prefix/folder navigation with filter bar
 - **Copy URL** — copies the full CDN URL to clipboard
 - **Delete** — removes the object from R2 (with confirmation)
-- **Activity Logs** panel showing the last 20 log entries
-- **Delete Logs** button — removes all local log files (with confirmation)
 
 ---
 
@@ -435,7 +433,7 @@ Deactivating the plugin stops all background processing and clears scheduled cro
 - Deletes all `r2_offload_*` options from `wp_options` (including restore, local-delete, and desync queue state)
 - Deletes all `_r2_offload_*` post meta from `wp_postmeta`
 - Clears all scheduled cron events (migration, restore, local-delete, desync)
-- Deletes all local log files from `wp-content/uploads/r2-offload-logs/`
+- Deletes the temporary live-log buffer folder `wp-content/uploads/r2-offload-logs/` (if a live session was open)
 
 > **R2 objects are NOT deleted** — your files remain in R2 and continue to be served from your CDN. If you want to clean up R2 objects, use the Restore & Remove from R2 feature or the File Manager before deleting the plugin, or manage them directly in the Cloudflare dashboard.
 

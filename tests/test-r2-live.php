@@ -133,6 +133,10 @@ namespace {
         @mkdir( dirname( $dl ), 0755, true );
         $t->assert( $r2->download_file( $small_key, $dl ), '2.5 download_file' );
         $t->assertEqual( sha1_file( $small ), @sha1_file( $dl ), '2.6 downloaded bytes identical' );
+        $ghost = "{$tmp}/dl/ghost.jpg";
+        $t->assert( ! $r2->download_file( "{$prefix}/raw/does-not-exist.jpg", $ghost ), '2.7 download of a missing key returns false' );
+        $t->assert( ! file_exists( $ghost ) && ! file_exists( "{$ghost}.r2part" ), '2.8 failed download leaves NO file behind (no R2 error XML saved as the image)' );
+        $logger->errors = [];
 
         // ---------------------------------------------------------------------
         $t->section( '3. Multipart upload (11 MB, 5 MB parts)' );

@@ -5,7 +5,15 @@ use R2Offload\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Stats screen: KPI cards + daily chart (7/30-day range) and the Live logs panel.
+ *
+ * Daily counters come from the r2_offload_stats_YYYY-MM-DD options (aggregate numbers,
+ * not logs). Logs themselves are never stored — see ErrorLogger / render_live_logs().
+ */
 class StatsPage {
+
+    const DAYS = 30;
 
     private Settings $settings;
 
@@ -14,95 +22,104 @@ class StatsPage {
     }
 
     public function render(): void {
-        $days   = 30;
-        $labels = [];
-        $uploads = [];
-        $bytes   = [];
-        $failures = [];
-
-        for ( $i = $days - 1; $i >= 0; $i-- ) {
-            $date    = gmdate( 'Y-m-d', strtotime( "-{$i} days" ) );
-            $key     = 'r2_offload_stats_' . $date;
-            $stat    = get_option( $key, [ 'uploads' => 0, 'bytes' => 0, 'failures' => 0 ] );
-            if ( ! is_array( $stat ) ) {
-                $stat = [ 'uploads' => 0, 'bytes' => 0, 'failures' => 0 ];
-            }
-            $labels[]   = $date;
-            $uploads[]  = (int) ( $stat['uploads'] ?? 0 );
-            $bytes[]    = (int) ( $stat['bytes'] ?? 0 );
-            $failures[] = (int) ( $stat['failures'] ?? 0 );
-        }
-
-        $total_uploads  = array_sum( $uploads );
-        $total_bytes    = array_sum( $bytes );
-        $total_failures = array_sum( $failures );
-
-        // Total synced count.
         global $wpdb;
-        $total_synced = (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_r2_offload_synced' AND meta_value = '1'"
-        );
+
+        $days = [];
+        for ( $i = self::DAYS - 1; $i >= 0; $i-- ) {
+            $date = gmdate( 'Y-m-d', strtotime( "-{$i} days" ) );
+            $stat = get_option( 'r2_offload_stats_' . $date, [] );
+            $stat = is_array( $stat ) ? $stat : [];
+            $days[] = [
+                'date'     => $date,
+                'uploads'  => (int) ( $stat['uploads'] ?? 0 ),
+                'bytes'    => (int) ( $stat['bytes'] ?? 0 ),
+                'failures' => (int) ( $stat['failures'] ?? 0 ),
+            ];
+        }
+        $synced = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s", '_r2_offload_synced', '1' ) );
+        $total  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s", 'attachment' ) );
         ?>
-        <div class="wrap r2-offload-wrap">
-            <h1><?php esc_html_e( 'R2 Offload — Stats', 'cloudflare-r2-offload' ); ?></h1>
-
-            <!-- Summary cards -->
-            <div class="r2-stats-bar">
-                <div class="r2-stat r2-stat--success">
-                    <span class="r2-stat-number"><?php echo esc_html( number_format( $total_synced ) ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Total Files on R2', 'cloudflare-r2-offload' ); ?></span>
-                </div>
-                <div class="r2-stat">
-                    <span class="r2-stat-number"><?php echo esc_html( number_format( $total_uploads ) ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Uploads (30 days)', 'cloudflare-r2-offload' ); ?></span>
-                </div>
-                <div class="r2-stat">
-                    <span class="r2-stat-number"><?php echo esc_html( $this->format_bytes( $total_bytes ) ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Bytes Offloaded (30 days)', 'cloudflare-r2-offload' ); ?></span>
-                </div>
-                <div class="r2-stat r2-stat--error">
-                    <span class="r2-stat-number"><?php echo esc_html( number_format( $total_failures ) ); ?></span>
-                    <span class="r2-stat-label"><?php esc_html_e( 'Failures (30 days)', 'cloudflare-r2-offload' ); ?></span>
+        <div class="wrap r2ui r2ui--stats">
+            <div class="r2ui-head">
+                <h1><?php esc_html_e( 'Stats', 'cloudflare-r2-offload' ); ?></h1>
+                <div class="r2ui-seg" role="group" aria-label="<?php esc_attr_e( 'Time range', 'cloudflare-r2-offload' ); ?>">
+                    <button type="button" class="r2ui-seg-btn" data-range="7" aria-pressed="false"><?php esc_html_e( '7 days', 'cloudflare-r2-offload' ); ?></button>
+                    <button type="button" class="r2ui-seg-btn" data-range="30" aria-pressed="true"><?php esc_html_e( '30 days', 'cloudflare-r2-offload' ); ?></button>
                 </div>
             </div>
 
-            <!-- Chart -->
-            <div class="r2-chart-wrap">
-                <canvas id="r2-uploads-chart" height="100"></canvas>
+            <div class="r2ui-cards r2ui-cards--4">
+                <div class="r2ui-card">
+                    <span class="r2ui-eyebrow"><?php esc_html_e( 'Media on R2', 'cloudflare-r2-offload' ); ?></span>
+                    <span class="r2ui-kpi"><?php echo esc_html( number_format_i18n( $synced ) ); ?></span>
+                    <?php /* translators: %s: total attachments */ ?>
+                    <span class="r2ui-sub"><?php echo esc_html( sprintf( __( 'of %s media items', 'cloudflare-r2-offload' ), number_format_i18n( $total ) ) ); ?></span>
+                </div>
+                <div class="r2ui-card">
+                    <span class="r2ui-eyebrow"><?php esc_html_e( 'Files uploaded', 'cloudflare-r2-offload' ); ?></span>
+                    <span class="r2ui-kpi" data-kpi="uploads">—</span>
+                    <span class="r2ui-sub" data-kpi-range></span>
+                </div>
+                <div class="r2ui-card">
+                    <span class="r2ui-eyebrow"><?php esc_html_e( 'Data offloaded', 'cloudflare-r2-offload' ); ?></span>
+                    <span class="r2ui-kpi" data-kpi="bytes">—</span>
+                    <span class="r2ui-sub" data-kpi-range></span>
+                </div>
+                <div class="r2ui-card">
+                    <span class="r2ui-eyebrow"><?php esc_html_e( 'Failed syncs', 'cloudflare-r2-offload' ); ?></span>
+                    <span class="r2ui-kpi" data-kpi="failures">—</span>
+                    <span class="r2ui-sub" data-kpi-range></span>
+                </div>
             </div>
 
-            <?php
-            wp_enqueue_script(
-                'r2-offload-chartjs',
-                R2_OFFLOAD_URL . 'assets/js/chart.umd.min.js',
-                [],
-                '4.4.7',
-                true
-            );
+            <section class="r2ui-box" aria-labelledby="r2s-chart-h">
+                <div class="r2ui-box-head">
+                    <h2 id="r2s-chart-h"><?php esc_html_e( 'Uploads per day', 'cloudflare-r2-offload' ); ?></h2>
+                    <span class="r2ui-legend-inline">
+                        <span><i class="is-up" aria-hidden="true"></i><?php esc_html_e( 'Files uploaded', 'cloudflare-r2-offload' ); ?></span>
+                        <span><i class="is-fail" aria-hidden="true"></i><?php esc_html_e( 'Failed syncs', 'cloudflare-r2-offload' ); ?></span>
+                    </span>
+                </div>
+                <div class="r2ui-chart"><canvas id="r2s-chart" role="img" aria-label=""></canvas></div>
+                <p class="r2ui-muted r2ui-small" id="r2s-empty" hidden><?php esc_html_e( 'No uploads in this period yet.', 'cloudflare-r2-offload' ); ?></p>
+            </section>
 
-            $chart_data = wp_json_encode( [
-                'labels'   => $labels,
-                'uploads'  => $uploads,
-                'failures' => $failures,
-                'i18n'     => [
-                    'uploads'  => __( 'Uploads', 'cloudflare-r2-offload' ),
-                    'failures' => __( 'Failures', 'cloudflare-r2-offload' ),
-                ],
-            ] );
+            <?php self::render_live_logs(); ?>
 
-            wp_add_inline_script( 'r2-offload-chartjs', sprintf(
-                '(function(){var d=%s;var ctx=document.getElementById("r2-uploads-chart");if(!ctx)return;new Chart(ctx,{type:"bar",data:{labels:d.labels,datasets:[{label:d.i18n.uploads,data:d.uploads,backgroundColor:"rgba(54,162,235,0.7)",borderRadius:4},{label:d.i18n.failures,data:d.failures,backgroundColor:"rgba(214,54,56,0.7)",borderRadius:4}]},options:{responsive:true,plugins:{legend:{position:"top"}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});})();',
-                $chart_data
-            ) );
-            ?>
+            <script type="application/json" id="r2s-data"><?php echo wp_json_encode( $days ); ?></script>
         </div>
         <?php
     }
 
-    private function format_bytes( int $bytes ): string {
-        if ( $bytes >= 1073741824 ) return round( $bytes / 1073741824, 2 ) . ' GB';
-        if ( $bytes >= 1048576 )   return round( $bytes / 1048576, 2 ) . ' MB';
-        if ( $bytes >= 1024 )      return round( $bytes / 1024, 2 ) . ' KB';
-        return $bytes . ' B';
+    /**
+     * Live logs panel (Stats + Migration). Logs are never stored: switching on opens a
+     * temporary buffer that is streamed here; switching off deletes it and everything shown.
+     */
+    public static function render_live_logs(): void {
+        ?>
+        <section class="r2ui-box r2ui-live" data-live-logs aria-labelledby="r2-live-h">
+            <div class="r2ui-row">
+                <div>
+                    <h2 id="r2-live-h"><?php esc_html_e( 'Live logs', 'cloudflare-r2-offload' ); ?></h2>
+                    <span class="r2ui-help"><?php esc_html_e( 'Logs are not stored. Turn on to watch activity as it happens — turning off deletes everything shown.', 'cloudflare-r2-offload' ); ?></span>
+                </div>
+                <label class="r2ui-switch">
+                    <input type="checkbox" role="switch" data-live-toggle>
+                    <span class="screen-reader-text"><?php esc_html_e( 'Show live logs', 'cloudflare-r2-offload' ); ?></span>
+                </label>
+            </div>
+            <div class="r2ui-live-body" data-live-body hidden>
+                <div class="r2ui-box-head">
+                    <span class="r2ui-live-status" data-live-status aria-live="polite"></span>
+                    <div class="r2ui-pills" role="group" aria-label="<?php esc_attr_e( 'Filter logs', 'cloudflare-r2-offload' ); ?>">
+                        <button type="button" class="r2ui-pill" data-filter="all" aria-pressed="true"><?php esc_html_e( 'All', 'cloudflare-r2-offload' ); ?></button>
+                        <button type="button" class="r2ui-pill" data-filter="error" aria-pressed="false"><?php esc_html_e( 'Errors', 'cloudflare-r2-offload' ); ?></button>
+                        <button type="button" class="r2ui-pill" data-filter="warning" aria-pressed="false"><?php esc_html_e( 'Warnings', 'cloudflare-r2-offload' ); ?></button>
+                    </div>
+                </div>
+                <ul class="r2ui-log" data-live-list></ul>
+            </div>
+        </section>
+        <?php
     }
 }

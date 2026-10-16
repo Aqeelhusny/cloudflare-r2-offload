@@ -23,7 +23,8 @@ foreach ( require "{$Q}/mutations.php" as [ $id, $file, $find, $repl, $sections,
     if ( $only && ! in_array( $id, $only, true ) ) { continue; }
     $restore();
     // Apply: replace FIRST occurrence only, inside the container (argv → no shell quoting).
-    $res = dc( [ 'php', '-r', '$f=$argv[1]; $s=file_get_contents($f); $p=strpos($s,$argv[2]); if($p===false){echo "NOMATCH";exit(1);} file_put_contents($f, substr_replace($s,$argv[3],$p,strlen($argv[2]))); echo "APPLIED";', "{$PD}/{$file}", $find, $repl ] );
+    // Line-ending agnostic: git autocrlf may check files out with CRLF.
+    $res = dc( [ 'php', '-r', '$f=$argv[1]; $s=file_get_contents($f); $a=$argv[2]; $b=$argv[3]; $p=strpos($s,$a); if($p===false){ $a=str_replace("\n","\r\n",$a); $b=str_replace("\n","\r\n",$b); $p=strpos($s,$a); } if($p===false){echo "NOMATCH";exit(1);} file_put_contents($f, substr_replace($s,$b,$p,strlen($a))); echo "APPLIED";', "{$PD}/{$file}", $find, $repl ] );
     $lint = dc( [ 'php', '-l', "{$PD}/{$file}" ] );
     sleep( 3 ); // let the web server's opcache see the mutated file
     dc( [ 'php', '-d', 'memory_limit=1G', '/usr/local/bin/wp', 'user', 'delete', 'sub', '--yes', '--quiet' ] );

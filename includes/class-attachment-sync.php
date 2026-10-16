@@ -191,6 +191,8 @@ class AttachmentSync {
             $current_retry = (int) get_post_meta( $attachment_id, '_r2_offload_retry_count', true );
             update_post_meta( $attachment_id, '_r2_offload_retry_count', $current_retry + 1 );
             update_post_meta( $attachment_id, '_r2_offload_error', "Uploaded: {$result['uploaded']}, Failed: {$result['failed']}" );
+            // Stats page "Failures" card + chart (was never incremented before).
+            $this->record_stat( $result['uploaded'], $bytes_uploaded, 1 );
         }
 
         // Write to the migration terminal so the live UI can show per-attachment progress.
@@ -680,14 +682,15 @@ class AttachmentSync {
     /**
      * Increment daily upload stats stored in wp_options.
      */
-    private function record_stat( int $count, int $bytes ): void {
+    private function record_stat( int $count, int $bytes, int $failures = 0 ): void {
         $key     = 'r2_offload_stats_' . gmdate( 'Y-m-d' );
         $current = get_option( $key, [ 'uploads' => 0, 'bytes' => 0, 'failures' => 0 ] );
         if ( ! is_array( $current ) ) {
             $current = [ 'uploads' => 0, 'bytes' => 0, 'failures' => 0 ];
         }
-        $current['uploads'] += $count;
-        $current['bytes']   += $bytes;
+        $current['uploads']  += $count;
+        $current['bytes']    += $bytes;
+        $current['failures']  = (int) ( $current['failures'] ?? 0 ) + $failures;
         update_option( $key, $current, false );
     }
 }

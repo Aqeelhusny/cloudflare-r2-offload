@@ -35,7 +35,6 @@ class Migration {
             'r2_offload_migration_status',
             'r2_offload_retry_failed',
             'r2_offload_test_connection',
-            'r2_offload_delete_logs',
             // Feature: Restore from R2 → server (single attachment).
             'r2_offload_restore_attachment',
             // Feature: Delete local file for a single synced attachment (row action).
@@ -49,37 +48,38 @@ class Migration {
             // Feature: Restore & desync — restore from R2, verify, delete from R2.
             'r2_offload_start_desync',
             'r2_offload_desync_status',
-            // Migration terminal log (read-only streaming endpoint).
-            'r2_offload_migration_log',
             // Feature: Background offload queue stats and logs.
             'r2_offload_background_queue_status',
-            'r2_offload_background_queue_logs',
-            'r2_offload_clear_activity_logs',
             // Feature: Validate pre-uploaded files (customer manually uploaded to R2).
             'r2_offload_start_validate',
             'r2_offload_validate_status',
             'r2_offload_cancel_validate',
-            // Streaming terminal output for the validate mini-terminal UI.
-            'r2_offload_validate_log',
             // Feature: Path diagnostic — shows expected R2 keys vs what actually exists.
             'r2_offload_validate_diagnose',
+            // Live logs: nothing is kept unless an admin is watching (see ErrorLogger).
+            'r2_offload_live_logs_start',
+            'r2_offload_live_logs_poll',
+            'r2_offload_live_logs_stop',
         ];
         foreach ( $actions as $action ) {
             add_action( "wp_ajax_{$action}", [ $this, 'handle_ajax' ] );
         }
     }
 
-    private const READ_ONLY_ACTIONS = [
-        'r2_offload_migration_log',
+    private const UNTHROTTLED_ACTIONS = [
         'r2_offload_migration_status',
         'r2_offload_restore_status',
         'r2_offload_local_delete_status',
         'r2_offload_desync_status',
         'r2_offload_background_queue_status',
-        'r2_offload_background_queue_logs',
         'r2_offload_validate_status',
-        'r2_offload_validate_log',
         'r2_offload_validate_diagnose',
+        'r2_offload_live_logs_start',
+        'r2_offload_live_logs_poll',
+        'r2_offload_live_logs_stop',
+        // Called back-to-back by the Migration page's "go faster" loop; claim_batch()
+        // already makes overlapping runs safe, so the per-action throttle must not apply.
+        'r2_offload_run_batch_now',
     ];
 
     public function handle_ajax(): void {
@@ -99,7 +99,7 @@ class Migration {
         // Throttle mutating endpoints: one call per action per 3 seconds.
         // Use 200 status so jQuery's .done() fires and the error message is shown,
         // not .fail() which swallows the response body and shows "Request failed."
-        if ( ! in_array( $action, self::READ_ONLY_ACTIONS, true ) ) {
+        if ( ! in_array( $action, self::UNTHROTTLED_ACTIONS, true ) ) {
             $throttle_key = 'r2_throttle_' . md5( $action . get_current_user_id() );
             if ( get_transient( $throttle_key ) ) {
                 wp_send_json_error( [ 'message' => __( 'Please wait a few seconds before trying again.', 'cloudflare-r2-offload' ) ] );
@@ -175,10 +175,6 @@ class Migration {
         ] );
     }
 
-    private function ajax_migration_log(): void {
-        $offset = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
-        wp_send_json_success( $this->logger->read_migration_terminal( $offset ) );
-    }
 
     private function ajax_start_migration(): void {
         global $wpdb;
@@ -201,10 +197,9 @@ class Migration {
             }
         }
 
-        // Clear any existing queue and migration terminal.
+        // Clear any existing queue.
         $wpdb->query( "TRUNCATE TABLE `{$table}`" );
         delete_option( 'r2_offload_migration_paused' );
-        $this->logger->clear_migration_terminal();
 
         $now = current_time( 'mysql', true );
 
@@ -322,7 +317,26 @@ class Migration {
             wp_cache_set( 'r2_offload_synced_count', $synced, '', 30 );
         }
 
-        wp_send_json_success( compact( 'total', 'complete', 'failed', 'pending', 'processing', 'paused', 'all_attachments', 'synced' ) );
+        $r2_only = wp_cache_get( 'r2_offload_r2_only_count' );
+        if ( false === $r2_only ) {
+            $r2_only = self::count_r2_only();
+            wp_cache_set( 'r2_offload_r2_only_count', $r2_only, '', 30 );
+        }
+
+        wp_send_json_success( compact( 'total', 'complete', 'failed', 'pending', 'processing', 'paused', 'all_attachments', 'synced', 'r2_only' ) );
+    }
+
+    /** Attachments that are synced AND have had their local copy deleted (live only on R2). */
+    public static function count_r2_only(): int {
+        global $wpdb;
+        return (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(DISTINCT pm.post_id) FROM {$wpdb->postmeta} pm
+                 INNER JOIN {$wpdb->postmeta} pm2 ON pm2.post_id = pm.post_id AND pm2.meta_key = %s AND pm2.meta_value = %s
+                 WHERE pm.meta_key = %s AND pm.meta_value = %s",
+                '_r2_offload_local_deleted', '1', '_r2_offload_synced', '1'
+            )
+        );
     }
 
     private function ajax_retry_failed(): void {
@@ -397,20 +411,6 @@ class Migration {
         }
     }
 
-    private function ajax_delete_logs(): void {
-        $logger = Plugin::get_instance()->logger;
-        $r2     = Plugin::get_instance()->r2;
-
-        // Delete local logs.
-        $logger->delete_local_logs();
-
-        // Delete R2 logs (if file manager is enabled).
-        if ( $this->settings->get_file_manager_enabled() ) {
-            $r2->delete_by_prefix( 'r2-offload-logs/' );
-        }
-
-        wp_send_json_success( [ 'message' => __( 'Logs deleted.', 'cloudflare-r2-offload' ) ] );
-    }
 
     // =========================================================================
     // Feature: Restore single attachment from R2 → local server
@@ -733,33 +733,7 @@ class Migration {
         ] );
     }
 
-    private function ajax_background_queue_logs(): void {
-        $limit   = isset( $_POST['limit'] ) ? absint( $_POST['limit'] ) : 50;
-        $entries = $this->logger->get_recent_entries( max( 10, min( 200, $limit ) ) );
 
-        $logs = [];
-        foreach ( $entries as $entry ) {
-            $logs[] = [
-                'timestamp' => $entry['timestamp'] ?? '',
-                'level'     => $entry['level'] ?? 'info',
-                'message'   => $entry['message'] ?? '',
-                'context'   => $entry['context'] ?? [],
-            ];
-        }
-
-        wp_send_json_success( [ 'logs' => $logs ] );
-    }
-
-    private function ajax_clear_activity_logs(): void {
-        $this->logger->delete_local_logs();
-
-        if ( $this->settings->get_file_manager_enabled() ) {
-            $r2 = Plugin::get_instance()->r2;
-            $r2->delete_by_prefix( 'r2-offload-logs/' );
-        }
-
-        wp_send_json_success( [ 'message' => __( 'Activity logs cleared.', 'cloudflare-r2-offload' ) ] );
-    }
 
     // =========================================================================
     // Feature: Path diagnostic for validate pre-upload.
@@ -888,7 +862,6 @@ class Migration {
         $wpdb->delete( $table, [ 'job_type' => 'validate' ], [ '%s' ] );
         delete_option( 'r2_offload_validate_paused' );
         delete_option( 'r2_offload_validate_claimed' );
-        $this->logger->clear_validate_terminal();
 
         $now = current_time( 'mysql', true );
 
@@ -958,15 +931,6 @@ class Migration {
         wp_send_json_success( [ 'message' => __( 'Validation cancelled.', 'cloudflare-r2-offload' ) ] );
     }
 
-    /**
-     * Return new validate terminal entries from a given byte offset.
-     * The JS polls this every 2 seconds and appends new lines to the terminal.
-     */
-    private function ajax_validate_log(): void {
-        $offset = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
-        $result = $this->logger->read_validate_terminal( $offset );
-        wp_send_json_success( $result );
-    }
 
     // =========================================================================
     // Helpers
@@ -1005,5 +969,28 @@ class Migration {
         }
 
         return $defaults;
+    }
+
+    // =========================================================================
+    // Live logs — streamed while an admin watches; deleted when they stop.
+    // =========================================================================
+
+    private function ajax_live_logs_start(): void {
+        if ( ! $this->logger->live_start() ) {
+            wp_send_json_error( [ 'message' => __( 'Live logs could not start: the uploads folder is not writable.', 'cloudflare-r2-offload' ) ] );
+        }
+        $this->logger->info( __( 'Live logs started.', 'cloudflare-r2-offload' ) );
+        wp_send_json_success( $this->logger->live_poll( 0 ) );
+    }
+
+    private function ajax_live_logs_poll(): void {
+        $offset = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
+        $gen    = isset( $_POST['gen'] ) ? absint( $_POST['gen'] ) : 0;
+        wp_send_json_success( $this->logger->live_poll( $offset, $gen ) );
+    }
+
+    private function ajax_live_logs_stop(): void {
+        $this->logger->live_stop();
+        wp_send_json_success( [ 'live' => false ] );
     }
 }

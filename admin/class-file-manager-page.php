@@ -124,9 +124,10 @@ class FileManagerPage {
                 <span class="r2-fm-folder-meta" style="align-self:center;">
                     <?php
                     printf(
+                        /* translators: 1: image count, 2: file count, 3: human-readable total size. */
                         esc_html__( '%1$d images, %2$d files, %3$s total', 'cloudflare-r2-offload' ),
-                        $total_images,
-                        $total_files,
+                        absint( $total_images ),
+                        absint( $total_files ),
                         esc_html( $this->format_bytes( $total_size ) )
                     );
                     ?>
@@ -175,7 +176,7 @@ class FileManagerPage {
                         <span class="r2-fm-image-stats">
                             <?php echo esc_html( $orig_size ); ?>
                             <?php if ( $thumb_count > 0 ) : ?>
-                                &middot; <?php printf( esc_html__( '%d sizes', 'cloudflare-r2-offload' ), $thumb_count ); ?>
+                                &middot; <?php /* translators: %d: number of image sizes. */ printf( esc_html__( '%d sizes', 'cloudflare-r2-offload' ), absint( $thumb_count ) ); ?>
                             <?php endif; ?>
                             &middot; <?php echo esc_html( $this->format_bytes( $group_size ) ); ?> <?php esc_html_e( 'total', 'cloudflare-r2-offload' ); ?>
                         </span>

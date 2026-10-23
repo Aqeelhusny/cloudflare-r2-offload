@@ -10,7 +10,7 @@
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: cloudflare-r2-offload
  * Domain Path: /languages
- * Requires PHP: 8.1
+ * Requires PHP: 8.4
  * Requires at least: 5.8
  * WC requires at least: 7.1
  * WC tested up to: 11.2
@@ -19,10 +19,10 @@
 defined( 'ABSPATH' ) || exit;
 
 // Minimum PHP version check.
-if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
+if ( version_compare( PHP_VERSION, '8.4', '<' ) ) {
     add_action( 'admin_notices', function () {
         echo '<div class="notice notice-error"><p>' .
-             esc_html__( 'Cloudflare R2 Offload requires PHP 8.1 or higher.', 'cloudflare-r2-offload' ) .
+             esc_html__( 'Cloudflare R2 Offload requires PHP 8.4 or higher.', 'cloudflare-r2-offload' ) .
              '</p></div>';
     } );
     return;

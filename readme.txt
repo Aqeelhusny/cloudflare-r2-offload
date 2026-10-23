@@ -3,7 +3,7 @@ Contributors: aqeelhusny
 Tags: cloudflare, r2, media, offload, cdn
 Requires at least: 5.8
 Tested up to: 7.1
-Requires PHP: 8.1
+Requires PHP: 8.4
 Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -46,7 +46,7 @@ Cloudflare R2 Offload automatically uploads your WordPress media library to Clou
 
 **Requirements:**
 
-* PHP 8.1 or higher
+* PHP 8.4 or higher (tested on 8.5)
 * WordPress 5.8 or higher
 * A Cloudflare account with R2 storage enabled
 * An R2 API token with Object Read & Write permissions
@@ -113,7 +113,7 @@ If you reset WordPress security keys in wp-config.php, your stored R2 secret key
 == Changelog ==
 
 = 1.5.0 =
-* Requirement: PHP 8.1+ (the bundled AWS SDK requires it; older PHP would fatal on first R2 call).
+* Requirement: PHP 8.4+ (verified on PHP 8.5; the bundled AWS SDK needs 8.1+, older PHP would fatal on first R2 call).
 * Compatibility: WordPress 7.1 client-side media processing — upload sync now waits for the finalize pass, so attachments are never marked synced (or local files deleted) before their sub-sizes exist.
 * Fixed: the full-resolution original of big images ("-scaled" uploads, metadata original_image) is now offloaded, restored and removed with the attachment.
 * Fixed: Delete Local only removes files whose R2 key is confirmed, protecting originals of attachments synced by earlier versions.

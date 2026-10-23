@@ -197,6 +197,7 @@ class Admin {
                 'confirmDesync'         => __( 'This will restore ALL files from R2 to the server, verify them, then DELETE them from R2. Your R2 bucket will be emptied. Continue?', 'cloudflare-r2-offload' ),
                 'desyncStarting'        => __( 'Restore & desync queued — processing in background…', 'cloudflare-r2-offload' ),
                 'desyncComplete'        => __( 'All files restored and removed from R2.', 'cloudflare-r2-offload' ),
+                /* translators: %d: number of attachments that failed to desync. */
                 'desyncCompleteFailed'  => __( '%d attachment(s) failed to desync. Check the error log.', 'cloudflare-r2-offload' ),
                 // Clear activity logs.
                 'confirmClearLogs'      => __( 'Clear all activity logs? This cannot be undone.', 'cloudflare-r2-offload' ),

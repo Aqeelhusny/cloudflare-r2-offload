@@ -83,7 +83,7 @@ class Migration {
     ];
 
     public function handle_ajax(): void {
-        $action = isset( $_REQUEST['action'] ) ? sanitize_key( $_REQUEST['action'] ) : '';
+        $action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : '';
         $method = 'ajax_' . str_replace( 'r2_offload_', '', $action );
 
         if ( ! method_exists( $this, $method ) ) {
@@ -132,7 +132,7 @@ class Migration {
         // Allow up to 120 seconds — batch processing can be slow for large files.
         // This overrides PHP's default max_execution_time (often 30s) which would
         // otherwise kill the request mid-batch and return a 500 to the browser.
-        if ( ! ini_get( 'safe_mode' ) ) {
+        if ( function_exists( 'set_time_limit' ) ) {
             set_time_limit( 120 );
         }
 
@@ -164,7 +164,8 @@ class Migration {
         );
 
         wp_send_json_success( [
-            'message'         => sprintf( __( 'Batch processed. Complete: %d, Pending: %d, Failed: %d', 'cloudflare-r2-offload' ), $complete, $pending + $processing, $failed ),
+            /* translators: 1: completed count, 2: pending count, 3: failed count. */
+            'message'         => sprintf( __( 'Batch processed. Complete: %1$d, Pending: %2$d, Failed: %3$d', 'cloudflare-r2-offload' ), $complete, $pending + $processing, $failed ),
             'total'           => $total,
             'complete'        => $complete,
             'failed'          => $failed,
